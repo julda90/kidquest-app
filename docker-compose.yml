@@ -1,0 +1,16 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: kidquest-postgres
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - "5432:5432"
+
+  redis:
+    image: redis:7-alpine
+    container_name: kidquest-redis
+    ports:
+      - "${REDIS_PORT}:6379"
