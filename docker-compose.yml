@@ -3,9 +3,9 @@ services:
     image: postgres:16
     container_name: kidquest-postgres
     environment:
-      POSTGRES_DB: ${DB_NAME}
-      POSTGRES_USER: ${DB_USERNAME}
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      ${DB_NAME}: kidquest
+      ${DB_USERNAME}: kidquest
+      ${DB_PASSWORD}: kidquest123
     ports:
       - "5432:5432"
 
