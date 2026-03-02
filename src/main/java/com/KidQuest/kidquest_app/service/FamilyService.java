@@ -1,5 +1,6 @@
 package com.KidQuest.kidquest_app.service;
 
+import com.KidQuest.kidquest_app.dto.response.FamilyResponse;
 import com.KidQuest.kidquest_app.model.Family;
 import com.KidQuest.kidquest_app.repository.FamilyRepository;
 import org.springframework.stereotype.Service;
@@ -17,8 +18,12 @@ public class FamilyService {
         this.familyRepository = familyRepository;
     }
 
-    public List<Family> findAll(){
-        return familyRepository.findAll();
+    public List<FamilyResponse> findAll(){
+        return familyRepository
+                .findAll()
+                .stream()
+                .map(this::response)
+                .toList();
     }
 
     public Family findById(UUID id){
@@ -26,18 +31,26 @@ public class FamilyService {
         return family.orElseThrow(() -> new RuntimeException("Family with this id does not exist:" + id.toString()));
     }
 
-    public Family create(Family family){
-        return familyRepository.save(family);
+    public FamilyResponse create(Family family){
+        return response(familyRepository.save(family));
     }
 
-    public Family update(Family updatedFamily, UUID id){
+    public FamilyResponse update(Family updatedFamily, UUID id){
     Family existing = findById(id);
     existing.setName(updatedFamily.getName());
-    return familyRepository.save(existing);
+    return response(familyRepository.save(existing));
     }
 
     public void deleteById(UUID id){
         findById(id);
         familyRepository.deleteById(id);
+    }
+    public FamilyResponse response(Family family){
+        FamilyResponse response = new FamilyResponse();
+        response.setId(family.getId());
+        response.setName(family.getName());
+        response.setCreatedAt(family.getCreatedAt());
+        response.setUpdatedAt(family.getUpdatedAt());
+        return response;
     }
 }

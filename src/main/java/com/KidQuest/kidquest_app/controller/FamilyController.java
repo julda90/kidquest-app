@@ -1,5 +1,6 @@
 package com.KidQuest.kidquest_app.controller;
 
+import com.KidQuest.kidquest_app.dto.response.FamilyResponse;
 import com.KidQuest.kidquest_app.model.Family;
 import com.KidQuest.kidquest_app.service.FamilyService;
 import org.springframework.http.ResponseEntity;
@@ -25,18 +26,18 @@ public class FamilyController {
     }
 
     @GetMapping
-    public ResponseEntity<List<Family>> findAll(){
-        List<Family> families = familyService.findAll();
+    public ResponseEntity<List<FamilyResponse>> findAll(){
+        List<FamilyResponse> families = familyService.findAll();
         return ResponseEntity.ok(families);
     }
     @PostMapping()
-    public ResponseEntity<Family> create(@RequestBody Family family){
-        Family createdFamily = familyService.create(family);
+    public ResponseEntity<FamilyResponse> create(@RequestBody Family family){
+        FamilyResponse createdFamily = familyService.create(family);
         return ResponseEntity.status(201).body(createdFamily);
     }
     @PutMapping("/{id}")
-    public ResponseEntity<Family> update(@PathVariable UUID id, @RequestBody Family family){
-        Family updatedFamily = familyService.update(family,id);
+    public ResponseEntity<FamilyResponse> update(@PathVariable UUID id, @RequestBody Family family){
+        FamilyResponse updatedFamily = familyService.update(family,id);
         return ResponseEntity.ok(updatedFamily);
     }
     @DeleteMapping("/{id}")
