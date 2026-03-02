@@ -1,5 +1,6 @@
 package com.KidQuest.kidquest_app.service;
 
+import com.KidQuest.kidquest_app.dto.request.FamilyRequest;
 import com.KidQuest.kidquest_app.dto.response.FamilyResponse;
 import com.KidQuest.kidquest_app.model.Family;
 import com.KidQuest.kidquest_app.repository.FamilyRepository;
@@ -31,11 +32,13 @@ public class FamilyService {
         return family.orElseThrow(() -> new RuntimeException("Family with this id does not exist:" + id.toString()));
     }
 
-    public FamilyResponse create(Family family){
+    public FamilyResponse create(FamilyRequest request){
+        Family family = new Family();
+        family.setName(request.getName());
         return response(familyRepository.save(family));
     }
 
-    public FamilyResponse update(Family updatedFamily, UUID id){
+    public FamilyResponse update(FamilyRequest updatedFamily, UUID id){
     Family existing = findById(id);
     existing.setName(updatedFamily.getName());
     return response(familyRepository.save(existing));

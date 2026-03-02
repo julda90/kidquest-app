@@ -1,5 +1,6 @@
 package com.KidQuest.kidquest_app.service;
 
+import com.KidQuest.kidquest_app.dto.request.ChildRequest;
 import com.KidQuest.kidquest_app.dto.response.ChildResponse;
 import com.KidQuest.kidquest_app.model.Child;
 import com.KidQuest.kidquest_app.repository.ChildRepository;
@@ -29,11 +30,15 @@ public class ChildService {
         return childRepository.findById(id).orElseThrow(() -> new RuntimeException("Child Not Found with id:" + id));
     }
 
-    public ChildResponse create(Child child, UUID familyId){
+    public ChildResponse create(ChildRequest request, UUID familyId){
+        Child child = new Child();
+        child.setName(request.getName());
+        child.setAge(request.getAge());
+        child.setAvatar(request.getAvatar());
         child.setFamily(familyService.findById(familyId));
         return response(childRepository.save(child));
     }
-    public ChildResponse update(UUID id, Child updatedChild){
+    public ChildResponse update(UUID id, ChildRequest updatedChild){
         Child existingChild = findById(id);
         existingChild.setName(updatedChild.getName());
         existingChild.setAvatar(updatedChild.getAvatar());

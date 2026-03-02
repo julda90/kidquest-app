@@ -1,5 +1,6 @@
 package com.KidQuest.kidquest_app.controller;
 
+import com.KidQuest.kidquest_app.dto.request.ChildRequest;
 import com.KidQuest.kidquest_app.dto.response.ChildResponse;
 import com.KidQuest.kidquest_app.model.Child;
 import com.KidQuest.kidquest_app.service.ChildService;
@@ -30,13 +31,13 @@ public class ChildController {
         return ResponseEntity.ok().body(child);
     }
     @PostMapping("/family/{familyId}")
-    public ResponseEntity<ChildResponse> create(@PathVariable UUID familyId, @RequestBody Child child) {
-        ChildResponse createdChild = childService.create(child, familyId);
+    public ResponseEntity<ChildResponse> create(@PathVariable UUID familyId, @RequestBody ChildRequest childRequest) {
+        ChildResponse createdChild = childService.create(childRequest, familyId);
         return ResponseEntity.status(201).body(createdChild);
     }
     @PutMapping("/{id}")
-    public ResponseEntity<ChildResponse> update(@PathVariable UUID id, @RequestBody Child child) {
-        ChildResponse updatedChild =  childService.update(id, child);
+    public ResponseEntity<ChildResponse> update(@PathVariable UUID id, @RequestBody ChildRequest childRequest) {
+        ChildResponse updatedChild =  childService.update(id, childRequest);
         return ResponseEntity.ok(updatedChild);
     }
     @DeleteMapping("/{id}")
