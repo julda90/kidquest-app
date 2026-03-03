@@ -11,7 +11,7 @@ import java.util.UUID;
 @Getter
 @Setter
 public class TaskResponse {
-    private UUID id;
+    private UUID taskId;
 
     private String title;
 

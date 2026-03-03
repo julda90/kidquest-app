@@ -1,5 +1,7 @@
 package com.KidQuest.kidquest_app.dto.request;
 
+import com.KidQuest.kidquest_app.model.Child;
+import com.KidQuest.kidquest_app.model.Family;
 import com.KidQuest.kidquest_app.model.TaskStatus;
 import lombok.Getter;
 import lombok.Setter;
@@ -15,6 +17,6 @@ public class TaskRequest {
     private Integer pointValue;
     private LocalDate dueDate;
     private TaskStatus status;
-    private UUID childId;
+    private UUID assignedToId;
 }
 

@@ -51,10 +51,10 @@ public class PointTransactionService {
     public PointTransactionResponse response(PointTransaction pointTransaction){
         PointTransactionResponse pointTransactionResponse = new PointTransactionResponse();
         pointTransactionResponse.setId(pointTransaction.getId());
+        pointTransactionResponse.setTaskId(pointTransaction.getTask().getId());
         pointTransactionResponse.setAmount(pointTransaction.getAmount());
         pointTransactionResponse.setReason(pointTransaction.getReason());
         pointTransactionResponse.setCreatedAt(pointTransaction.getCreatedAt());
-        pointTransactionResponse.setTaskId(pointTransaction.getTask().getId());
         pointTransactionResponse.setChildId(pointTransaction.getChild().getId());
         return pointTransactionResponse;
     }
