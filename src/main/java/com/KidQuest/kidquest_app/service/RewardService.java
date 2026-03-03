@@ -1,5 +1,6 @@
 package com.KidQuest.kidquest_app.service;
 
+import com.KidQuest.kidquest_app.dto.request.RewardRequest;
 import com.KidQuest.kidquest_app.dto.response.RewardResponse;
 import com.KidQuest.kidquest_app.model.Reward;
 import com.KidQuest.kidquest_app.repository.RewardRepository;
@@ -18,9 +19,12 @@ public class RewardService {
         this.rewardRepository = rewardRepository;
         this.familyService = familyService;
     }
-
-    public Reward findById(UUID rewardId){
+    private Reward findEntityById(UUID rewardId){
         return rewardRepository.findById(rewardId).orElseThrow(()-> new RuntimeException("No such reward wit this id: " + rewardId));
+    }
+
+    public RewardResponse findById(UUID rewardId){
+        return response(findEntityById(rewardId));
     }
 
     public List<RewardResponse> findByFamilyId(UUID familyId) {
@@ -31,12 +35,17 @@ public class RewardService {
                 .toList();
     }
 
-    public RewardResponse create(UUID familyId, Reward reward){
+    public RewardResponse create(UUID familyId, RewardRequest rewardRequest){
+        Reward reward = new Reward();
+        reward.setName(rewardRequest.getName());
+        reward.setDescription(rewardRequest.getDescription());
+        reward.setPointCost(rewardRequest.getPointCost());
+        reward.setActive(rewardRequest.getActive());
         reward.setFamily(familyService.findById(familyId));
         return response(rewardRepository.save(reward));
     }
-    public RewardResponse update(UUID rewardId, Reward updatedReward){
-        Reward existingReward = findById(rewardId);
+    public RewardResponse update(UUID rewardId, RewardRequest updatedReward){
+        Reward existingReward = findEntityById(rewardId);
         existingReward.setName(updatedReward.getName());
         existingReward.setDescription(updatedReward.getDescription());
         existingReward.setPointCost(updatedReward.getPointCost());
@@ -54,6 +63,8 @@ public class RewardService {
         response.setDescription(reward.getDescription());
         response.setPointCost(reward.getPointCost());
         response.setActive(reward.getActive());
+        response.setCreatedAt(reward.getCreatedAt());
+        response.setUpdatedAt(reward.getUpdatedAt());
         return response;
     }
 
