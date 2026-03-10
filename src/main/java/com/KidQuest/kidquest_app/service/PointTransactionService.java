@@ -1,5 +1,6 @@
 package com.KidQuest.kidquest_app.service;
 
+import com.KidQuest.kidquest_app.dto.request.PointTransactionRequest;
 import com.KidQuest.kidquest_app.dto.response.PointTransactionResponse;
 import com.KidQuest.kidquest_app.model.PointTransaction;
 import com.KidQuest.kidquest_app.repository.PointTransactionRepository;
@@ -21,10 +22,13 @@ public class PointTransactionService {
         this.childService = childService;
     }
 
-    public PointTransactionResponse createPointTransaction(UUID childId, UUID taskId, PointTransaction pointTransaction) {
-        if (taskId!=null) {
-            pointTransaction.setTask(taskService.findById(taskId));
+    public PointTransactionResponse createPointTransaction(UUID childId, PointTransactionRequest pointTransactionRequest) {
+        PointTransaction  pointTransaction = new PointTransaction();
+        if (pointTransactionRequest.getTaskId()!=null) {
+            pointTransaction.setTask(taskService.findById(pointTransactionRequest.getTaskId()));
         }
+        pointTransaction.setReason(pointTransactionRequest.getReason());
+        pointTransaction.setAmount(pointTransactionRequest.getAmount());
         pointTransaction.setChild(childService.findById(childId));
         return response(pointTransactionRepository.save(pointTransaction));
     }
