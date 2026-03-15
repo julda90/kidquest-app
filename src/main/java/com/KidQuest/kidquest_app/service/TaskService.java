@@ -2,6 +2,7 @@ package com.KidQuest.kidquest_app.service;
 
 import com.KidQuest.kidquest_app.dto.request.TaskRequest;
 import com.KidQuest.kidquest_app.dto.response.TaskResponse;
+import com.KidQuest.kidquest_app.exception.ResourceNotFoundException;
 import com.KidQuest.kidquest_app.model.Task;
 import com.KidQuest.kidquest_app.repository.TaskRepository;
 import org.springframework.stereotype.Service;
@@ -37,7 +38,7 @@ public class TaskService {
     }
 
     public Task findById(UUID id){
-        return taskRepository.findById(id).orElseThrow(()-> new RuntimeException("No task with such id:" + id));
+        return taskRepository.findById(id).orElseThrow(()-> new ResourceNotFoundException("No task with such id:" + id));
     }
 
     public TaskResponse create(UUID familyId, TaskRequest taskRequest) {

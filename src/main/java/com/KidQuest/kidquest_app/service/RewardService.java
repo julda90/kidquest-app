@@ -2,6 +2,7 @@ package com.KidQuest.kidquest_app.service;
 
 import com.KidQuest.kidquest_app.dto.request.RewardRequest;
 import com.KidQuest.kidquest_app.dto.response.RewardResponse;
+import com.KidQuest.kidquest_app.exception.ResourceNotFoundException;
 import com.KidQuest.kidquest_app.model.Reward;
 import com.KidQuest.kidquest_app.repository.RewardRepository;
 import org.springframework.stereotype.Service;
@@ -20,7 +21,7 @@ public class RewardService {
         this.familyService = familyService;
     }
     private Reward findEntityById(UUID rewardId){
-        return rewardRepository.findById(rewardId).orElseThrow(()-> new RuntimeException("No such reward wit this id: " + rewardId));
+        return rewardRepository.findById(rewardId).orElseThrow(()-> new ResourceNotFoundException("No such reward wit this id: " + rewardId));
     }
 
     public RewardResponse findById(UUID rewardId){

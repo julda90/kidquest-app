@@ -2,6 +2,7 @@ package com.KidQuest.kidquest_app.service;
 
 import com.KidQuest.kidquest_app.dto.request.FamilyRequest;
 import com.KidQuest.kidquest_app.dto.response.FamilyResponse;
+import com.KidQuest.kidquest_app.exception.ResourceNotFoundException;
 import com.KidQuest.kidquest_app.model.Family;
 import com.KidQuest.kidquest_app.repository.FamilyRepository;
 import org.springframework.stereotype.Service;
@@ -29,7 +30,7 @@ public class FamilyService {
 
     public Family findById(UUID id){
         Optional<Family> family = familyRepository.findById(id);
-        return family.orElseThrow(() -> new RuntimeException("Family with this id does not exist:" + id.toString()));
+        return family.orElseThrow(() -> new ResourceNotFoundException("Family with this id does not exist:" + id.toString()));
     }
 
     public FamilyResponse create(FamilyRequest request){

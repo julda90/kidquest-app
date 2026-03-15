@@ -3,6 +3,7 @@ package com.KidQuest.kidquest_app.service;
 import com.KidQuest.kidquest_app.dto.request.LoginRequest;
 import com.KidQuest.kidquest_app.dto.request.RegisterRequest;
 import com.KidQuest.kidquest_app.dto.response.AuthResponse;
+import com.KidQuest.kidquest_app.exception.ResourceNotFoundException;
 import com.KidQuest.kidquest_app.model.AppUser;
 import com.KidQuest.kidquest_app.repository.AppUserRepository;
 import com.KidQuest.kidquest_app.security.JwtService;
@@ -46,7 +47,7 @@ public class AuthService {
 
     public AuthResponse login(LoginRequest loginRequest) {
         authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(loginRequest.getEmail(), loginRequest.getPassword()));
-        AppUser appUser = appUserRepository.findByEmail(loginRequest.getEmail()).orElseThrow(() -> new RuntimeException("No User found with email: " + loginRequest.getEmail()));
+        AppUser appUser = appUserRepository.findByEmail(loginRequest.getEmail()).orElseThrow(() -> new ResourceNotFoundException("No User found with email: " + loginRequest.getEmail()));
         String token = jwtService.generateToken(appUser);
         return new AuthResponse(token);
     }

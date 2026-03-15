@@ -4,9 +4,10 @@ import com.KidQuest.kidquest_app.dto.request.ChangePasswordRequest;
 import com.KidQuest.kidquest_app.dto.request.CreateUserRequest;
 import com.KidQuest.kidquest_app.dto.request.UpdateUserRequest;
 import com.KidQuest.kidquest_app.dto.response.AppUserResponse;
+import com.KidQuest.kidquest_app.exception.BadRequestException;
+import com.KidQuest.kidquest_app.exception.ResourceNotFoundException;
 import com.KidQuest.kidquest_app.model.AppUser;
 import com.KidQuest.kidquest_app.repository.AppUserRepository;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -28,7 +29,7 @@ public class AppUserService {
     }
 
     private AppUser findById(UUID id) {
-        return appUserRepository.findById(id).orElseThrow(()->new RuntimeException("No user with id: "+ id));
+        return appUserRepository.findById(id).orElseThrow(()->new ResourceNotFoundException("No user with id: "+ id));
     }
 
     public AppUserResponse getById(UUID id) {
@@ -68,7 +69,7 @@ public class AppUserService {
     public void changePassword(UUID id, ChangePasswordRequest  changePasswordRequest) {
         AppUser existing = findById(id);
         if (!passwordEncoder.matches(changePasswordRequest.getCurrentPassword(),existing.getPassword())) {
-            throw new RuntimeException("Passwords don't match");
+            throw new BadRequestException("Passwords don't match");
         }
         existing.setPassword(passwordEncoder.encode(changePasswordRequest.getNewPassword()));
         appUserRepository.save(existing);

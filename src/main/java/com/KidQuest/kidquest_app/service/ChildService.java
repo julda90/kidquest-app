@@ -2,6 +2,7 @@ package com.KidQuest.kidquest_app.service;
 
 import com.KidQuest.kidquest_app.dto.request.ChildRequest;
 import com.KidQuest.kidquest_app.dto.response.ChildResponse;
+import com.KidQuest.kidquest_app.exception.ResourceNotFoundException;
 import com.KidQuest.kidquest_app.model.Child;
 import com.KidQuest.kidquest_app.repository.ChildRepository;
 import org.springframework.stereotype.Service;
@@ -27,7 +28,7 @@ public class ChildService {
                 .toList();
     }
     public Child findById(UUID id){
-        return childRepository.findById(id).orElseThrow(() -> new RuntimeException("Child Not Found with id:" + id));
+        return childRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Child Not Found with id:" + id));
     }
 
     public ChildResponse create(ChildRequest request, UUID familyId){

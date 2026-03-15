@@ -2,6 +2,7 @@ package com.KidQuest.kidquest_app.service;
 
 import com.KidQuest.kidquest_app.dto.request.PointTransactionRequest;
 import com.KidQuest.kidquest_app.dto.response.PointTransactionResponse;
+import com.KidQuest.kidquest_app.exception.ResourceNotFoundException;
 import com.KidQuest.kidquest_app.model.PointTransaction;
 import com.KidQuest.kidquest_app.repository.PointTransactionRepository;
 import org.springframework.stereotype.Service;
@@ -50,7 +51,7 @@ public class PointTransactionService {
     }
 
     public PointTransaction findById(UUID pointTransactionId) {
-        return pointTransactionRepository.findById(pointTransactionId).orElseThrow(() -> new RuntimeException("PointTransaction with id: " + pointTransactionId + " not found"));
+        return pointTransactionRepository.findById(pointTransactionId).orElseThrow(() -> new ResourceNotFoundException("PointTransaction with id: " + pointTransactionId + " not found"));
     }
     public PointTransactionResponse response(PointTransaction pointTransaction){
         PointTransactionResponse pointTransactionResponse = new PointTransactionResponse();
