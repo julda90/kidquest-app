@@ -2,8 +2,8 @@ package com.KidQuest.kidquest_app.controller;
 
 import com.KidQuest.kidquest_app.dto.request.ChildRequest;
 import com.KidQuest.kidquest_app.dto.response.ChildResponse;
-import com.KidQuest.kidquest_app.model.Child;
 import com.KidQuest.kidquest_app.service.ChildService;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -31,12 +31,12 @@ public class ChildController {
         return ResponseEntity.ok().body(child);
     }
     @PostMapping("/family/{familyId}")
-    public ResponseEntity<ChildResponse> create(@PathVariable UUID familyId, @RequestBody ChildRequest childRequest) {
+    public ResponseEntity<ChildResponse> create(@PathVariable UUID familyId, @RequestBody @Valid ChildRequest childRequest) {
         ChildResponse createdChild = childService.create(childRequest, familyId);
         return ResponseEntity.status(201).body(createdChild);
     }
     @PutMapping("/{id}")
-    public ResponseEntity<ChildResponse> update(@PathVariable UUID id, @RequestBody ChildRequest childRequest) {
+    public ResponseEntity<ChildResponse> update(@PathVariable UUID id, @RequestBody @Valid ChildRequest childRequest) {
         ChildResponse updatedChild =  childService.update(id, childRequest);
         return ResponseEntity.ok(updatedChild);
     }

@@ -3,6 +3,8 @@ package com.KidQuest.kidquest_app.controller;
 import com.KidQuest.kidquest_app.dto.request.PointTransactionRequest;
 import com.KidQuest.kidquest_app.dto.response.PointTransactionResponse;
 import com.KidQuest.kidquest_app.service.PointTransactionService;
+import io.lettuce.core.dynamic.annotation.Value;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -32,7 +34,7 @@ public class PointTransactionController {
     }
 
     @PostMapping("/child/{childId}")
-    public ResponseEntity<PointTransactionResponse> createPointTransaction(@RequestBody PointTransactionRequest pointTransactionRequest, @PathVariable UUID childId){
+    public ResponseEntity<PointTransactionResponse> createPointTransaction(@RequestBody @Valid PointTransactionRequest pointTransactionRequest, @PathVariable UUID childId){
         PointTransactionResponse response = pointTransactionService.createPointTransaction(childId, pointTransactionRequest);
         return ResponseEntity.status(201).body(response);
     }

@@ -4,6 +4,8 @@ import com.KidQuest.kidquest_app.dto.request.FamilyRequest;
 import com.KidQuest.kidquest_app.dto.response.FamilyResponse;
 import com.KidQuest.kidquest_app.model.Family;
 import com.KidQuest.kidquest_app.service.FamilyService;
+import io.lettuce.core.dynamic.annotation.Value;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -32,12 +34,12 @@ public class FamilyController {
         return ResponseEntity.ok(families);
     }
     @PostMapping()
-    public ResponseEntity<FamilyResponse> create(@RequestBody FamilyRequest familyRequest){
+    public ResponseEntity<FamilyResponse> create(@RequestBody @Valid FamilyRequest familyRequest){
         FamilyResponse createdFamily = familyService.create(familyRequest);
         return ResponseEntity.status(201).body(createdFamily);
     }
     @PutMapping("/{id}")
-    public ResponseEntity<FamilyResponse> update(@PathVariable UUID id, @RequestBody FamilyRequest familyRequest){
+    public ResponseEntity<FamilyResponse> update(@PathVariable UUID id, @RequestBody @Valid FamilyRequest familyRequest){
         FamilyResponse updatedFamily = familyService.update(familyRequest,id);
         return ResponseEntity.ok(updatedFamily);
     }

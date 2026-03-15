@@ -5,6 +5,8 @@ import com.KidQuest.kidquest_app.dto.request.CreateUserRequest;
 import com.KidQuest.kidquest_app.dto.request.UpdateUserRequest;
 import com.KidQuest.kidquest_app.dto.response.AppUserResponse;
 import com.KidQuest.kidquest_app.service.AppUserService;
+import io.lettuce.core.dynamic.annotation.Value;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -33,7 +35,7 @@ public class AppUserController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<AppUserResponse> update(@PathVariable UUID id,@RequestBody() UpdateUserRequest updateUserRequest) {
+    public ResponseEntity<AppUserResponse> update(@PathVariable UUID id,@RequestBody @Valid UpdateUserRequest updateUserRequest) {
         AppUserResponse updatedUser = appUserService.update(id, updateUserRequest);
         return ResponseEntity.ok(updatedUser);
     }
@@ -45,12 +47,12 @@ public class AppUserController {
     }
 
     @PatchMapping("/{id}/password")
-    public ResponseEntity<Void> changePassword(@PathVariable UUID id, @RequestBody ChangePasswordRequest changePasswordRequest) {
+    public ResponseEntity<Void> changePassword(@PathVariable UUID id, @RequestBody @Valid ChangePasswordRequest changePasswordRequest) {
         appUserService.changePassword(id, changePasswordRequest);
         return ResponseEntity.noContent().build();
     }
     @PostMapping
-    public ResponseEntity<AppUserResponse> create(@RequestBody CreateUserRequest createUserRequest) {
+    public ResponseEntity<AppUserResponse> create(@RequestBody @Valid CreateUserRequest createUserRequest) {
         AppUserResponse createdUser = appUserService.create(createUserRequest);
         return ResponseEntity.status(201).body(createdUser);
     }

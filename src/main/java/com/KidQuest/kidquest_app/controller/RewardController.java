@@ -3,6 +3,8 @@ package com.KidQuest.kidquest_app.controller;
 import com.KidQuest.kidquest_app.dto.request.RewardRequest;
 import com.KidQuest.kidquest_app.dto.response.RewardResponse;
 import com.KidQuest.kidquest_app.service.RewardService;
+import io.lettuce.core.dynamic.annotation.Value;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -31,12 +33,12 @@ public class RewardController {
     }
 
     @PostMapping("/family/{familyId}")
-    public ResponseEntity<RewardResponse> create(@PathVariable UUID familyId, @RequestBody RewardRequest rewardRequest){
+    public ResponseEntity<RewardResponse> create(@PathVariable UUID familyId, @RequestBody @Valid RewardRequest rewardRequest){
         RewardResponse response = rewardService.create(familyId, rewardRequest);
         return ResponseEntity.status(201).body(response);
     }
     @PutMapping("/{rewardId}")
-    public ResponseEntity<RewardResponse> update(@PathVariable UUID rewardId, @RequestBody RewardRequest rewardRequest){
+    public ResponseEntity<RewardResponse> update(@PathVariable UUID rewardId, @RequestBody @Valid RewardRequest rewardRequest){
         RewardResponse response = rewardService.update(rewardId, rewardRequest);
         return ResponseEntity.ok(response);
     }
