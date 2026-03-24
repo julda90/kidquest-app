@@ -32,9 +32,6 @@ public class AppUserServiceTest {
     private AppUserRepository appUserRepository;
 
     @Mock
-    private FamilyService familyService;
-
-    @Mock
     private PasswordEncoder passwordEncoder;
 
     @InjectMocks
