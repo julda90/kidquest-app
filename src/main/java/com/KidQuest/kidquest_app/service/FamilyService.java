@@ -7,6 +7,7 @@ import com.KidQuest.kidquest_app.model.Family;
 import com.KidQuest.kidquest_app.repository.FamilyRepository;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -22,15 +23,15 @@ public class FamilyService {
 
     public List<FamilyResponse> findAll(){
         return familyRepository
-                .findAll()
+                .findAllByDeletedAtIsNull()
                 .stream()
                 .map(this::response)
                 .toList();
     }
 
     public Family findById(UUID id){
-        Optional<Family> family = familyRepository.findById(id);
-        return family.orElseThrow(() -> new ResourceNotFoundException("Family with this id does not exist:" + id.toString()));
+        return familyRepository.findByIdAndDeletedAtIsNull(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Family with this id does not exist: " + id));
     }
 
     public FamilyResponse create(FamilyRequest request){
@@ -46,8 +47,9 @@ public class FamilyService {
     }
 
     public void deleteById(UUID id){
-        findById(id);
-        familyRepository.deleteById(id);
+        Family family = findById(id);
+        family.setDeletedAt(LocalDateTime.now());
+        familyRepository.save(family);
     }
     public FamilyResponse response(Family family){
         FamilyResponse response = new FamilyResponse();

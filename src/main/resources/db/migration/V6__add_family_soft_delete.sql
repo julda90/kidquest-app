@@ -1,0 +1,1 @@
+ALTER TABLE family ADD COLUMN deleted_at TIMESTAMP;

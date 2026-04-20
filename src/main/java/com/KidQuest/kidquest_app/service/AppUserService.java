@@ -36,6 +36,12 @@ public class AppUserService {
         return response(findById(id));
     }
 
+    public AppUserResponse getByEmail(String email) {
+        AppUser user = appUserRepository.findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("No user with email: " + email));
+        return response(user);
+    }
+
     public List<AppUserResponse> findAll() {
         return appUserRepository.findAll()
                 .stream()

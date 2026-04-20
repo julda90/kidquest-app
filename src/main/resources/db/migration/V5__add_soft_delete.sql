@@ -1,0 +1,2 @@
+ALTER TABLE task  ADD COLUMN deleted_at TIMESTAMP;
+ALTER TABLE child ADD COLUMN deleted_at TIMESTAMP;

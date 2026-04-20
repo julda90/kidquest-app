@@ -5,9 +5,10 @@ import com.KidQuest.kidquest_app.dto.request.CreateUserRequest;
 import com.KidQuest.kidquest_app.dto.request.UpdateUserRequest;
 import com.KidQuest.kidquest_app.dto.response.AppUserResponse;
 import com.KidQuest.kidquest_app.service.AppUserService;
-import io.lettuce.core.dynamic.annotation.Value;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -21,6 +22,11 @@ public class AppUserController {
 
     public AppUserController(AppUserService appUserService) {
         this.appUserService = appUserService;
+    }
+
+    @GetMapping("/me")
+    public ResponseEntity<AppUserResponse> me(@AuthenticationPrincipal UserDetails userDetails) {
+        return ResponseEntity.ok(appUserService.getByEmail(userDetails.getUsername()));
     }
 
     @GetMapping

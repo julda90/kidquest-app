@@ -4,9 +4,11 @@ import com.KidQuest.kidquest_app.dto.request.TaskRequest;
 import com.KidQuest.kidquest_app.dto.response.TaskResponse;
 import com.KidQuest.kidquest_app.exception.ResourceNotFoundException;
 import com.KidQuest.kidquest_app.model.Task;
+import com.KidQuest.kidquest_app.model.TaskStatus;
 import com.KidQuest.kidquest_app.repository.TaskRepository;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -24,21 +26,22 @@ public class TaskService {
     }
 
     public List<TaskResponse> findAllByAssignedToId(UUID childId) {
-        return taskRepository.findAllByAssignedToId(childId)
+        return taskRepository.findAllByAssignedToIdAndDeletedAtIsNull(childId)
                 .stream()
                 .map(this::response)
                 .toList();
     }
 
     public List<TaskResponse> findAllByFamilyId(UUID familyId) {
-        return taskRepository.findAllByFamilyId(familyId)
+        return taskRepository.findAllByFamilyIdAndDeletedAtIsNull(familyId)
                 .stream()
                 .map(this::response)
                 .toList();
     }
 
-    public Task findById(UUID id){
-        return taskRepository.findById(id).orElseThrow(()-> new ResourceNotFoundException("No task with such id:" + id));
+    public Task findById(UUID id) {
+        return taskRepository.findByIdAndDeletedAtIsNull(id)
+                .orElseThrow(() -> new ResourceNotFoundException("No task with such id: " + id));
     }
 
     public TaskResponse create(UUID familyId, TaskRequest taskRequest) {
@@ -47,36 +50,43 @@ public class TaskService {
         task.setDescription(taskRequest.getDescription());
         task.setFamily(familyService.findById(familyId));
         task.setPointValue(taskRequest.getPointValue());
-        task.setStatus(taskRequest.getStatus());
         task.setDueDate(taskRequest.getDueDate());
         if (taskRequest.getAssignedToId() != null) {
             task.setAssignedTo(childService.findById(taskRequest.getAssignedToId()));
+            task.setStatus(TaskStatus.ASSIGNED);
+        } else {
+            task.setStatus(taskRequest.getStatus() != null ? taskRequest.getStatus() : TaskStatus.UNASSIGNED);
         }
         return response(taskRepository.save(task));
     }
 
-    public TaskResponse updateTask(UUID id, TaskRequest updatedTask){
+    public TaskResponse updateTask(UUID id, TaskRequest updatedTask) {
         Task existingTask = findById(id);
         existingTask.setPointValue(updatedTask.getPointValue());
         existingTask.setTitle(updatedTask.getTitle());
         existingTask.setDescription(updatedTask.getDescription());
         existingTask.setDueDate(updatedTask.getDueDate());
-        existingTask.setStatus(updatedTask.getStatus());
         if (updatedTask.getAssignedToId() != null) {
             existingTask.setAssignedTo(childService.findById(updatedTask.getAssignedToId()));
+            existingTask.setStatus(TaskStatus.ASSIGNED);
+        } else {
+            existingTask.setAssignedTo(null);
+            existingTask.setStatus(updatedTask.getStatus() != null ? updatedTask.getStatus() : TaskStatus.UNASSIGNED);
         }
         return response(taskRepository.save(existingTask));
     }
 
     public void delete(UUID id) {
-        findById(id);
-        taskRepository.deleteById(id);
+        Task task = findById(id);
+        task.setDeletedAt(LocalDateTime.now());
+        taskRepository.save(task);
     }
-    public TaskResponse response(Task task){
+
+    public TaskResponse response(Task task) {
         TaskResponse response = new TaskResponse();
         response.setTaskId(task.getId());
         response.setFamilyId(task.getFamily().getId());
-        if (task.getAssignedTo() != null){
+        if (task.getAssignedTo() != null) {
             response.setAssignedTo(task.getAssignedTo().getId());
         }
         response.setPointValue(task.getPointValue());
@@ -87,5 +97,4 @@ public class TaskService {
         response.setCreatedAt(task.getCreatedAt());
         return response;
     }
-
 }
