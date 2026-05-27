@@ -1,0 +1,465 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 864 1821">
+<defs>
+  <!-- Zone backgrounds -->
+  <linearGradient id="g-space" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#02020e"/><stop offset="100%" stop-color="#0c1838"/></linearGradient>
+  <linearGradient id="g-mtn"   x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#1a2840"/><stop offset="100%" stop-color="#4a6070"/></linearGradient>
+  <linearGradient id="g-castle" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#1c0e38"/><stop offset="100%" stop-color="#3c2060"/></linearGradient>
+  <linearGradient id="g-forest" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#081408"/><stop offset="100%" stop-color="#1a4812"/></linearGradient>
+  <linearGradient id="g-sky"    x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#58b0f0"/><stop offset="100%" stop-color="#8dd8ff"/></linearGradient>
+  <linearGradient id="g-ground" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#38a020"/><stop offset="100%" stop-color="#4cb228"/></linearGradient>
+  <!-- Scenery gradients -->
+  <linearGradient id="g-mtn-peak" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#f0f4f8"/><stop offset="40%" stop-color="#b8ccdc"/><stop offset="100%" stop-color="#6888a0"/></linearGradient>
+  <linearGradient id="g-castle-wall" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#9858cc"/><stop offset="100%" stop-color="#6030a0"/></linearGradient>
+  <linearGradient id="g-water" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#70c8f8"/><stop offset="100%" stop-color="#2888d8"/></linearGradient>
+  <linearGradient id="g-crown"  x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#fff176"/><stop offset="100%" stop-color="#ffaa00"/></linearGradient>
+  <linearGradient id="g-xtal-b" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#c0e8ff"/><stop offset="100%" stop-color="#3878e8"/></linearGradient>
+  <linearGradient id="g-xtal-p" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#e0c0ff"/><stop offset="100%" stop-color="#8030c8"/></linearGradient>
+  <linearGradient id="g-aurora1" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#00ff88" stop-opacity="0"/><stop offset="50%" stop-color="#00ff88" stop-opacity="0.38"/><stop offset="100%" stop-color="#00ff88" stop-opacity="0"/></linearGradient>
+  <linearGradient id="g-aurora2" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#8800ff" stop-opacity="0"/><stop offset="50%" stop-color="#8800ff" stop-opacity="0.28"/><stop offset="100%" stop-color="#8800ff" stop-opacity="0"/></linearGradient>
+  <!-- Filters -->
+  <filter id="glow" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="7" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+  <filter id="glow2" x="-100%" y="-100%" width="300%" height="300%"><feGaussianBlur stdDeviation="14" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+  <filter id="dropshadow"><feDropShadow dx="0" dy="8" stdDeviation="10" flood-color="rgba(0,0,0,0.5)"/></filter>
+</defs>
+
+<!-- ══════ ZONE BACKGROUNDS ══════ -->
+<rect x="0" y="0"    width="864" height="290"  fill="url(#g-space)"/>
+<rect x="0" y="268"  width="864" height="400"  fill="url(#g-mtn)"/>
+<rect x="0" y="638"  width="864" height="405"  fill="url(#g-castle)"/>
+<rect x="0" y="1020" width="864" height="430"  fill="url(#g-forest)"/>
+<rect x="0" y="1428" width="864" height="230"  fill="url(#g-sky)"/>
+<rect x="0" y="1638" width="864" height="183"  fill="url(#g-ground)"/>
+
+<!-- ══════ SPACE ZONE (y 0–290) ══════ -->
+<!-- Stars -->
+<g fill="white">
+  <circle cx="38"  cy="12"  r="1.5" opacity=".9"/><circle cx="82"  cy="26"  r="1"   opacity=".75"/>
+  <circle cx="148" cy="8"   r="1.5" opacity=".85"/><circle cx="202" cy="34"  r="1"   opacity=".7"/>
+  <circle cx="264" cy="16"  r="2"   opacity=".9"/> <circle cx="322" cy="44"  r="1"   opacity=".65"/>
+  <circle cx="385" cy="22"  r="1.5" opacity=".8"/> <circle cx="450" cy="10"  r="1"   opacity=".7"/>
+  <circle cx="516" cy="38"  r="2"   opacity=".85"/><circle cx="572" cy="18"  r="1"   opacity=".75"/>
+  <circle cx="634" cy="46"  r="1.5" opacity=".8"/> <circle cx="700" cy="12"  r="1"   opacity=".7"/>
+  <circle cx="756" cy="30"  r="2"   opacity=".9"/> <circle cx="818" cy="8"   r="1.5" opacity=".85"/>
+  <circle cx="852" cy="22"  r="1"   opacity=".7"/> <circle cx="60"  cy="68"  r="1"   opacity=".6"/>
+  <circle cx="122" cy="58"  r="1.5" opacity=".75"/><circle cx="186" cy="80"  r="1"   opacity=".65"/>
+  <circle cx="244" cy="54"  r="1"   opacity=".8"/> <circle cx="306" cy="72"  r="1.5" opacity=".7"/>
+  <circle cx="364" cy="90"  r="1"   opacity=".6"/> <circle cx="428" cy="62"  r="2"   opacity=".85"/>
+  <circle cx="492" cy="78"  r="1"   opacity=".7"/> <circle cx="548" cy="52"  r="1.5" opacity=".75"/>
+  <circle cx="608" cy="88"  r="1"   opacity=".65"/><circle cx="672" cy="64"  r="1"   opacity=".8"/>
+  <circle cx="732" cy="82"  r="1.5" opacity=".7"/> <circle cx="792" cy="58"  r="1"   opacity=".6"/>
+  <circle cx="840" cy="74"  r="2"   opacity=".85"/><circle cx="24"  cy="115" r="1"   opacity=".55"/>
+  <circle cx="90"  cy="102" r="1.5" opacity=".7"/> <circle cx="162" cy="128" r="1"   opacity=".6"/>
+  <circle cx="226" cy="108" r="2"   opacity=".8"/> <circle cx="292" cy="138" r="1"   opacity=".55"/>
+  <circle cx="352" cy="115" r="1.5" opacity=".7"/> <circle cx="416" cy="132" r="1"   opacity=".6"/>
+  <circle cx="480" cy="118" r="1"   opacity=".75"/><circle cx="542" cy="142" r="1.5" opacity=".65"/>
+  <circle cx="602" cy="122" r="1"   opacity=".55"/><circle cx="665" cy="138" r="2"   opacity=".8"/>
+  <circle cx="726" cy="112" r="1"   opacity=".7"/> <circle cx="786" cy="128" r="1.5" opacity=".6"/>
+  <circle cx="836" cy="108" r="1"   opacity=".75"/><circle cx="168" cy="168" r="1"   opacity=".5"/>
+  <circle cx="298" cy="175" r="1.5" opacity=".6"/> <circle cx="458" cy="162" r="1"   opacity=".55"/>
+  <circle cx="614" cy="178" r="1.5" opacity=".65"/><circle cx="778" cy="165" r="1"   opacity=".5"/>
+</g>
+<!-- Nebula wisps -->
+<ellipse cx="175" cy="80"  rx="115" ry="48" fill="rgba(80,40,160,.1)"/>
+<ellipse cx="200" cy="102" rx="85"  ry="36" fill="rgba(40,80,200,.08)"/>
+<!-- Planet (Saturn-style) -->
+<ellipse cx="702" cy="80" rx="68" ry="14" fill="none" stroke="rgba(210,168,80,.48)" stroke-width="9"/>
+<ellipse cx="702" cy="80" rx="68" ry="14" fill="none" stroke="rgba(245,208,110,.25)" stroke-width="5"/>
+<circle  cx="702" cy="80" r="42" fill="#d09060"/>
+<ellipse cx="702" cy="70" rx="40" ry="7"  fill="#e8a870" opacity=".6"/>
+<ellipse cx="702" cy="90" rx="38" ry="5"  fill="#b87040" opacity=".5"/>
+<circle  cx="702" cy="80" r="42" fill="#d09060"/><!-- re-draw to cover back ring -->
+<ellipse cx="702" cy="70" rx="40" ry="7"  fill="#e8a870" opacity=".55"/>
+<path d="M 660,86 Q 702,98 744,86" fill="none" stroke="rgba(210,168,80,.5)" stroke-width="9"/><!-- front ring arc -->
+<ellipse cx="690" cy="65" rx="22" ry="14" fill="rgba(255,220,190,.25)"/><!-- highlight -->
+<!-- Moon -->
+<circle cx="568" cy="42" r="14" fill="#c8c8d8"/>
+<circle cx="563" cy="38" r="4.5" fill="#a8a8b8" opacity=".65"/>
+<circle cx="574" cy="50" r="2.5" fill="#a8a8b8" opacity=".5"/>
+<!-- Crown / FINISH at (430,60) -->
+<g transform="translate(430,60)" filter="url(#glow2)">
+  <circle r="52" fill="rgba(255,215,0,.14)"/>
+  <circle r="38" fill="rgba(255,215,0,.22)"/>
+  <polygon points="-30,20 -30,-10 -18,-24 -4,-8 6,-28 18,-8 30,-24 30,20" fill="url(#g-crown)" stroke="#c89000" stroke-width="2"/>
+  <rect x="-30" y="12" width="60" height="10" rx="4" fill="#ffd700" stroke="#c89000" stroke-width="1.5"/>
+  <circle cx="-18" cy="-24" r="5" fill="#ff3838"/><circle cx="6" cy="-28" r="6" fill="#4488ff"/><circle cx="30" cy="-24" r="5" fill="#30c830"/>
+  <g fill="white" opacity=".85">
+    <polygon points="0,-42 2,-36 0,-30 -2,-36"/>
+    <polygon points="-42,0 -36,2 -30,0 -36,-2"/>
+    <polygon points="42,0 36,2 30,0 36,-2"/>
+  </g>
+</g>
+<text x="430" y="122" text-anchor="middle" font-family="Georgia,serif" font-size="15" font-weight="bold" fill="#ffd700" stroke="rgba(0,0,0,.85)" stroke-width="3.5" paint-order="stroke">FINISH</text>
+
+<!-- ══════ MOUNTAIN / ICE ZONE (y 268–668) ══════ -->
+<!-- Aurora ribbons -->
+<path d="M 0,342 C 200,318 420,358 640,334 C 740,322 800,342 864,332 L 864,368 C 800,374 740,355 640,368 C 420,390 200,348 0,372 Z" fill="url(#g-aurora1)" opacity=".72"/>
+<path d="M 0,360 C 180,338 380,374 568,352 C 700,338 784,360 864,348 L 864,386 C 784,394 700,370 568,384 C 380,406 180,366 0,392 Z" fill="url(#g-aurora2)" opacity=".62"/>
+<!-- Back mountain silhouettes -->
+<polygon points="0,648 72,292 144,648"   fill="#1e2838" opacity=".92"/>
+<polygon points="60,648 158,280 256,648" fill="#242e42" opacity=".88"/>
+<polygon points="200,648 322,272 444,648" fill="#1c2636" opacity=".92"/>
+<polygon points="380,648 492,278 604,648" fill="#222a3e" opacity=".88"/>
+<polygon points="548,648 650,284 752,648" fill="#1e2838" opacity=".92"/>
+<polygon points="700,648 798,280 864,648" fill="#242e42" opacity=".88"/>
+<!-- Front mountain peaks -->
+<polygon points="0,648 122,326 244,648"  fill="url(#g-mtn-peak)"/>
+<polygon points="198,648 364,294 530,648" fill="url(#g-mtn-peak)"/>
+<polygon points="490,648 628,306 766,648" fill="url(#g-mtn-peak)"/>
+<polygon points="710,648 808,318 864,648" fill="url(#g-mtn-peak)"/>
+<!-- Snow caps -->
+<polygon points="72,296 56,342 88,342"   fill="white" opacity=".96"/>
+<polygon points="122,332 104,384 140,384" fill="white" opacity=".98"/>
+<polygon points="364,298 344,352 384,352" fill="white" opacity=".98"/>
+<polygon points="628,310 610,362 646,362" fill="white" opacity=".95"/>
+<polygon points="808,324 790,376 826,376" fill="white" opacity=".95"/>
+<!-- Snow shimmer -->
+<ellipse cx="122" cy="368" rx="24" ry="5" fill="rgba(180,220,255,.35)"/>
+<ellipse cx="364" cy="338" rx="28" ry="5" fill="rgba(180,220,255,.35)"/>
+<ellipse cx="628" cy="346" rx="24" ry="5" fill="rgba(180,220,255,.32)"/>
+<!-- Clouds in mountain zone -->
+<g opacity=".76">
+  <ellipse cx="148" cy="355" rx="42" ry="16" fill="white" opacity=".62"/><ellipse cx="126" cy="360" rx="28" ry="13" fill="white" opacity=".55"/><ellipse cx="170" cy="360" rx="28" ry="13" fill="white" opacity=".55"/>
+  <ellipse cx="348" cy="340" rx="46" ry="17" fill="white" opacity=".62"/><ellipse cx="324" cy="345" rx="30" ry="13" fill="white" opacity=".55"/><ellipse cx="372" cy="345" rx="30" ry="13" fill="white" opacity=".55"/>
+  <ellipse cx="598" cy="348" rx="44" ry="16" fill="white" opacity=".62"/><ellipse cx="576" cy="353" rx="28" ry="12" fill="white" opacity=".55"/><ellipse cx="620" cy="353" rx="28" ry="12" fill="white" opacity=".55"/>
+</g>
+<!-- Pine trees in mountain zone -->
+<g fill="#1a3820">
+  <polygon points="46,572  24,648 68,648"/><polygon points="46,558  28,604 64,604"/>
+  <polygon points="92,566  70,648 114,648"/><polygon points="92,552  74,600 110,600"/>
+  <polygon points="180,560 158,648 202,648"/><polygon points="180,546 162,596 198,596"/>
+  <polygon points="222,568 202,632 242,632"/><polygon points="222,554 204,606 240,606"/>
+  <polygon points="398,558 374,648 422,648"/><polygon points="398,544 376,596 420,596"/>
+  <polygon points="440,566 420,630 460,630"/>
+  <polygon points="694,555 670,648 718,648"/><polygon points="694,542 672,596 716,596"/>
+  <polygon points="736,562 714,628 758,628"/>
+  <polygon points="796,558 774,648 818,648"/><polygon points="796,544 776,598 816,598"/>
+</g>
+<!-- Icicles -->
+<g fill="#c8e8f8" stroke="#a0c4e0" stroke-width=".8">
+  <polygon points="150,448 146,480 154,480"/><polygon points="162,443 158,476 166,476"/>
+  <polygon points="174,450 170,482 178,482"/><polygon points="186,446 182,478 190,478"/>
+  <polygon points="686,442 682,474 690,474"/><polygon points="698,438 694,470 702,470"/>
+  <polygon points="710,446 706,478 714,478"/><polygon points="722,440 718,472 726,472"/>
+</g>
+<!-- Frozen waterfall (right, mountain zone) -->
+<g opacity=".72">
+  <rect x="754" y="380" width="12" height="144" rx="6" fill="url(#g-water)"/>
+  <rect x="770" y="394" width="8"  height="132" rx="4" fill="url(#g-water)" opacity=".7"/>
+  <rect x="782" y="387" width="10" height="140" rx="5" fill="url(#g-water)" opacity=".8"/>
+  <ellipse cx="770" cy="526" rx="20" ry="7" fill="rgba(160,220,255,.5)"/>
+</g>
+
+<!-- ══════ CASTLE ZONE (y 638–1043) ══════ -->
+<!-- Waterfall on left -->
+<g transform="translate(50,662)">
+  <rect x="0"  y="0" width="14" height="282" rx="7" fill="url(#g-water)" opacity=".88"/>
+  <rect x="18" y="14" width="10" height="268" rx="5" fill="url(#g-water)" opacity=".72"/>
+  <rect x="32" y="6"  width="12" height="276" rx="6" fill="url(#g-water)" opacity=".82"/>
+  <rect x="48" y="20" width="8"  height="262" rx="4" fill="url(#g-water)" opacity=".66"/>
+  <ellipse cx="30" cy="290" rx="46" ry="17" fill="rgba(160,220,255,.52)"/>
+  <ellipse cx="30" cy="304" rx="60" ry="13" fill="rgba(160,220,255,.38)"/>
+  <rect x="-22" y="295" width="124" height="18" rx="9" fill="#3888d8" opacity=".62"/>
+</g>
+<!-- River rocks at base of waterfall -->
+<ellipse cx="36" cy="958" rx="30" ry="14" fill="#302820" opacity=".82"/>
+<ellipse cx="82" cy="965" rx="22" ry="11" fill="#302820" opacity=".74"/>
+<ellipse cx="122" cy="960" rx="26" ry="12" fill="#302820" opacity=".78"/>
+<!-- Blue crystal cluster (left, castle zone) -->
+<g transform="translate(160,825)">
+  <polygon points="0,65 -10,0 10,0" fill="url(#g-xtal-b)" opacity=".9"/>
+  <polygon points="14,60 6,4 22,4" fill="url(#g-xtal-b)" opacity=".8"/>
+  <polygon points="-16,62 -24,6 -8,6" fill="url(#g-xtal-b)" opacity=".85"/>
+  <polygon points="28,65 20,12 36,12" fill="url(#g-xtal-b)" opacity=".74"/>
+  <circle cx="0" cy="18" r="9" fill="rgba(80,190,255,.28)" filter="url(#glow)"/>
+</g>
+<!-- Purple crystal cluster (right, castle zone) -->
+<g transform="translate(648,785)">
+  <polygon points="0,74 -12,0 12,0"   fill="url(#g-xtal-p)" opacity=".9"/>
+  <polygon points="16,68 6,4 26,4"    fill="url(#g-xtal-p)" opacity=".8"/>
+  <polygon points="-18,70 -28,6 -8,6" fill="url(#g-xtal-p)" opacity=".86"/>
+  <polygon points="30,74 20,14 40,14" fill="url(#g-xtal-p)" opacity=".75"/>
+  <polygon points="-30,68 -40,10 -20,10" fill="url(#g-xtal-p)" opacity=".7"/>
+  <circle cx="0" cy="20" r="10" fill="rgba(180,80,255,.25)" filter="url(#glow)"/>
+</g>
+<!-- Fantasy Castle (right side) -->
+<g transform="translate(558,682)" filter="url(#dropshadow)">
+  <!-- Foundation hill -->
+  <ellipse cx="108" cy="294" rx="144" ry="36" fill="#140a22" opacity=".72"/>
+  <!-- Main wall -->
+  <rect x="28" y="162" width="182" height="132" rx="4" fill="url(#g-castle-wall)"/>
+  <!-- Left tower -->
+  <rect x="8" y="100" width="54" height="194" rx="4" fill="#9050c8"/>
+  <rect x="8"  y="88" width="12" height="18" rx="2" fill="#9050c8"/>
+  <rect x="24" y="88" width="12" height="18" rx="2" fill="#9050c8"/>
+  <rect x="40" y="88" width="12" height="18" rx="2" fill="#9050c8"/>
+  <ellipse cx="35" cy="152" rx="9" ry="14" fill="#f0d070" opacity=".72"/>
+  <ellipse cx="35" cy="152" rx="6" ry="10" fill="#fff8e0"/>
+  <line x1="35" y1="88" x2="35" y2="50" stroke="#3a1e58" stroke-width="2.5"/>
+  <polygon points="35,50 67,63 35,76" fill="#c830a0"/>
+  <!-- Right tower -->
+  <rect x="180" y="100" width="54" height="194" rx="4" fill="#9050c8"/>
+  <rect x="180" y="88" width="12" height="18" rx="2" fill="#9050c8"/>
+  <rect x="196" y="88" width="12" height="18" rx="2" fill="#9050c8"/>
+  <rect x="212" y="88" width="12" height="18" rx="2" fill="#9050c8"/>
+  <ellipse cx="207" cy="152" rx="9" ry="14" fill="#f0d070" opacity=".72"/>
+  <ellipse cx="207" cy="152" rx="6" ry="10" fill="#fff8e0"/>
+  <line x1="207" y1="88" x2="207" y2="50" stroke="#3a1e58" stroke-width="2.5"/>
+  <polygon points="207,50 175,63 207,76" fill="#30a8c0"/>
+  <!-- Central tall tower -->
+  <rect x="78" y="48" width="66" height="246" rx="4" fill="#a862d8"/>
+  <rect x="78"  y="36" width="14" height="18" rx="2" fill="#a862d8"/>
+  <rect x="96"  y="36" width="14" height="18" rx="2" fill="#a862d8"/>
+  <rect x="114" y="36" width="14" height="18" rx="2" fill="#a862d8"/>
+  <rect x="132" y="36" width="14" height="18" rx="2" fill="#a862d8"/>
+  <polygon points="111,8 78,40 144,40" fill="#c040e0"/>
+  <ellipse cx="111" cy="98"  rx="10" ry="15" fill="#f8e060" opacity=".82"/>
+  <ellipse cx="111" cy="98"  rx="7"  ry="11" fill="#fffac0"/>
+  <ellipse cx="111" cy="160" rx="10" ry="15" fill="#f8e060" opacity=".8"/>
+  <ellipse cx="111" cy="160" rx="7"  ry="11" fill="#fffac0"/>
+  <ellipse cx="111" cy="222" rx="10" ry="15" fill="#f8e060" opacity=".72"/>
+  <ellipse cx="111" cy="222" rx="7"  ry="11" fill="#fffac0"/>
+  <line x1="111" y1="8" x2="111" y2="-30" stroke="#3a1e58" stroke-width="2.5"/>
+  <polygon points="111,-30 149,-16 111,-2" fill="#e040b0"/>
+  <!-- Gate -->
+  <rect x="82"  y="246" width="58" height="48" rx="4" fill="#180c28"/>
+  <ellipse cx="111" cy="246" rx="29" ry="15" fill="#180c28"/>
+  <line x1="94"  y1="252" x2="94"  y2="294" stroke="#2a1840" stroke-width="3.5"/>
+  <line x1="106" y1="252" x2="106" y2="294" stroke="#2a1840" stroke-width="3.5"/>
+  <line x1="118" y1="252" x2="118" y2="294" stroke="#2a1840" stroke-width="3.5"/>
+  <line x1="130" y1="252" x2="130" y2="294" stroke="#2a1840" stroke-width="3.5"/>
+  <!-- Wall windows -->
+  <ellipse cx="58"  cy="212" rx="8" ry="12" fill="#f8e060" opacity=".72"/>
+  <ellipse cx="58"  cy="212" rx="5" ry="8"  fill="#fffac0"/>
+  <ellipse cx="164" cy="212" rx="8" ry="12" fill="#f8e060" opacity=".72"/>
+  <ellipse cx="164" cy="212" rx="5" ry="8"  fill="#fffac0"/>
+  <!-- Torches -->
+  <line x1="48"  y1="176" x2="48"  y2="196" stroke="#5a4020" stroke-width="3"/>
+  <ellipse cx="48" cy="171" rx="5" ry="7" fill="#ff8020" opacity=".92"/>
+  <ellipse cx="48" cy="169" rx="3" ry="4" fill="#ffd040"/>
+  <line x1="174" y1="176" x2="174" y2="196" stroke="#5a4020" stroke-width="3"/>
+  <ellipse cx="174" cy="171" rx="5" ry="7" fill="#ff8020" opacity=".92"/>
+  <ellipse cx="174" cy="169" rx="3" ry="4" fill="#ffd040"/>
+</g>
+
+<!-- ══════ FOREST ZONE (y 1020–1450) ══════ -->
+<!-- Rainbow arc -->
+<g opacity=".68">
+  <path d="M 44,1196 A 346,324 0 0 1 584,1174" fill="none" stroke="#ff3838" stroke-width="7" stroke-linecap="round"/>
+  <path d="M 52,1204 A 332,310 0 0 1 576,1182" fill="none" stroke="#ff8020" stroke-width="7" stroke-linecap="round"/>
+  <path d="M 60,1212 A 318,296 0 0 1 568,1190" fill="none" stroke="#ece020" stroke-width="7" stroke-linecap="round"/>
+  <path d="M 68,1220 A 304,282 0 0 1 560,1198" fill="none" stroke="#30c020" stroke-width="7" stroke-linecap="round"/>
+  <path d="M 76,1228 A 290,268 0 0 1 552,1206" fill="none" stroke="#3878f0" stroke-width="7" stroke-linecap="round"/>
+  <path d="M 84,1236 A 276,254 0 0 1 544,1214" fill="none" stroke="#8030e0" stroke-width="7" stroke-linecap="round"/>
+</g>
+<!-- Background tree row -->
+<g fill="#101e10">
+  <polygon points="282,1440 258,1378 306,1378"/><polygon points="322,1432 300,1376 344,1376"/>
+  <polygon points="362,1440 338,1374 386,1374"/><polygon points="402,1432 380,1372 424,1372"/>
+  <polygon points="442,1440 418,1374 466,1374"/><polygon points="482,1434 460,1372 504,1372"/>
+  <polygon points="522,1440 498,1370 546,1370"/><polygon points="562,1432 538,1368 586,1368"/>
+  <polygon points="602,1440 578,1368 626,1368"/><polygon points="642,1436 618,1368 666,1368"/>
+  <polygon points="682,1440 658,1366 706,1366"/>
+</g>
+<!-- Large oaks (left) -->
+<rect x="36"  y="1290" width="18" height="95" rx="5" fill="#5a3010"/>
+<ellipse cx="45"  cy="1268" rx="56" ry="48" fill="#1a5810"/>
+<ellipse cx="32"  cy="1284" rx="38" ry="34" fill="#206018"/>
+<ellipse cx="58"  cy="1278" rx="44" ry="38" fill="#1e5a14"/>
+<ellipse cx="45"  cy="1256" rx="40" ry="32" fill="#287020"/>
+<rect x="110" y="1310" width="16" height="82" rx="4" fill="#5a3010"/>
+<ellipse cx="118" cy="1292" rx="48" ry="40" fill="#205018"/>
+<ellipse cx="104" cy="1304" rx="34" ry="30" fill="#1e6016"/>
+<ellipse cx="132" cy="1298" rx="38" ry="34" fill="#287020"/>
+<!-- Large oaks (right) -->
+<rect x="726" y="1284" width="20" height="98" rx="5" fill="#5a3010"/>
+<ellipse cx="736" cy="1260" rx="58" ry="50" fill="#1a5810"/>
+<ellipse cx="720" cy="1276" rx="42" ry="37" fill="#206018"/>
+<ellipse cx="752" cy="1270" rx="46" ry="40" fill="#1e5a14"/>
+<ellipse cx="736" cy="1248" rx="44" ry="34" fill="#287020"/>
+<rect x="800" y="1302" width="16" height="84" rx="4" fill="#5a3010"/>
+<ellipse cx="808" cy="1284" rx="48" ry="42" fill="#205018"/>
+<ellipse cx="794" cy="1295" rx="36" ry="32" fill="#287020"/>
+<ellipse cx="822" cy="1291" rx="38" ry="34" fill="#1e6016"/>
+<!-- Cherry blossom tree -->
+<g transform="translate(682,1108)">
+  <rect x="-7" y="38" width="14" height="92" rx="5" fill="#7a4028"/>
+  <path d="M 0,38 C -32,-12 -72,8 -94,-18" stroke="#7a4028" stroke-width="9" fill="none" stroke-linecap="round"/>
+  <path d="M 0,38 C 32,-12 64,-2 84,-22"   stroke="#7a4028" stroke-width="8" fill="none" stroke-linecap="round"/>
+  <path d="M 0,68 C -22,28 -52,38 -64,18"   stroke="#7a4028" stroke-width="7" fill="none" stroke-linecap="round"/>
+  <path d="M 0,68 C 22,28 52,38 68,16"     stroke="#7a4028" stroke-width="7" fill="none" stroke-linecap="round"/>
+  <ellipse cx="0"   cy="18"  rx="50" ry="40" fill="#f06090" opacity=".92"/>
+  <ellipse cx="-94" cy="-20" rx="38" ry="30" fill="#e85888" opacity=".87"/>
+  <ellipse cx="84"  cy="-24" rx="34" ry="28" fill="#f07098" opacity=".92"/>
+  <ellipse cx="-64" cy="16"  rx="32" ry="26" fill="#e85888" opacity=".82"/>
+  <ellipse cx="68"  cy="14"  rx="30" ry="24" fill="#f07098" opacity=".87"/>
+  <ellipse cx="22"  cy="-6"  rx="42" ry="34" fill="#f890b0" opacity=".82"/>
+  <ellipse cx="-22" cy="6"   rx="44" ry="36" fill="#f06090" opacity=".77"/>
+  <!-- Falling petals -->
+  <circle cx="-42" cy="52" r="4.5" fill="#f890b0" opacity=".62"/>
+  <circle cx="30"  cy="64" r="3.5" fill="#f06090" opacity=".52"/>
+  <circle cx="-18" cy="82" r="4"   fill="#f890b0" opacity=".57"/>
+  <circle cx="58"  cy="74" r="3.5" fill="#f06090" opacity=".52"/>
+</g>
+<!-- Crystal cluster (forest, left) -->
+<g transform="translate(82,1318)">
+  <polygon points="0,78 -13,0 13,0"    fill="url(#g-xtal-b)" opacity=".88"/>
+  <polygon points="17,74 8,5 26,5"     fill="url(#g-xtal-b)" opacity=".78"/>
+  <polygon points="-19,76 -28,7 -10,7" fill="url(#g-xtal-b)" opacity=".83"/>
+  <polygon points="34,80 25,13 43,13"  fill="url(#g-xtal-b)" opacity=".72"/>
+  <circle cx="0"  cy="20" r="9"  fill="rgba(80,200,255,.3)"  filter="url(#glow)"/>
+  <circle cx="17" cy="24" r="7"  fill="rgba(80,200,255,.24)" filter="url(#glow)"/>
+</g>
+<!-- Unicorn -->
+<g transform="translate(122,1200)">
+  <ellipse cx="0" cy="0" rx="44" ry="23" fill="white"/>
+  <rect x="-9" y="-32" width="21" height="34" rx="11" fill="white"/>
+  <ellipse cx="2" cy="-42" rx="17" ry="15" fill="white"/>
+  <polygon points="2,-57 -4,-31 8,-31" fill="#ffd700"/>
+  <polygon points="2,-55 0,-35 4,-35"  fill="rgba(255,255,255,.7)"/>
+  <!-- Mane -->
+  <path d="M -9,-32 C -28,-22 -30,-6 -22,9"  stroke="#e060a0" stroke-width="5.5" fill="none" stroke-linecap="round" opacity=".82"/>
+  <path d="M -7,-30 C -24,-20 -26,-4 -18,11" stroke="#a040f0" stroke-width="4"   fill="none" stroke-linecap="round" opacity=".74"/>
+  <path d="M -6,-28 C -20,-16 -22,0 -14,13"  stroke="#60b0ff" stroke-width="3"   fill="none" stroke-linecap="round" opacity=".72"/>
+  <!-- Tail -->
+  <path d="M -42,11 C -68,1 -70,27 -52,37"   stroke="#e060a0" stroke-width="6.5" fill="none" stroke-linecap="round" opacity=".82"/>
+  <path d="M -42,13 C -65,6 -67,30 -50,40"   stroke="#a040f0" stroke-width="4.5" fill="none" stroke-linecap="round" opacity=".72"/>
+  <!-- Eye -->
+  <circle cx="9" cy="-42" r="4.5" fill="#1a1a2e"/>
+  <circle cx="10" cy="-43" r="1.8" fill="white"/>
+  <!-- Legs -->
+  <rect x="-30" y="20" width="11" height="37" rx="5.5" fill="white"/>
+  <rect x="-14" y="20" width="11" height="40" rx="5.5" fill="white"/>
+  <rect x="4"   y="20" width="11" height="38" rx="5.5" fill="white"/>
+  <rect x="20"  y="20" width="11" height="36" rx="5.5" fill="white"/>
+  <rect x="-30" y="52" width="11" height="7" rx="3" fill="#b8b8c8"/>
+  <rect x="-14" y="55" width="11" height="7" rx="3" fill="#b8b8c8"/>
+  <rect x="4"   y="53" width="11" height="7" rx="3" fill="#b8b8c8"/>
+  <rect x="20"  y="51" width="11" height="7" rx="3" fill="#b8b8c8"/>
+  <!-- Sparkles -->
+  <circle cx="-58" cy="-16" r="4.5" fill="#ffd700" opacity=".82" filter="url(#glow)"/>
+  <circle cx="58"  cy="-12" r="3.5" fill="#ff80e0" opacity=".74" filter="url(#glow)"/>
+  <circle cx="32"  cy="58"  r="3.5" fill="#80c0ff" opacity=".74" filter="url(#glow)"/>
+  <circle cx="-54" cy="42"  r="4"   fill="#a0f080" opacity=".74" filter="url(#glow)"/>
+</g>
+<!-- Fireflies -->
+<g filter="url(#glow)">
+  <circle cx="352" cy="1062" r="3.5" fill="#c8ff60" opacity=".82"/>
+  <circle cx="404" cy="1082" r="2.5" fill="#a0f040" opacity=".72"/>
+  <circle cx="444" cy="1052" r="3"   fill="#c8ff60" opacity=".77"/>
+  <circle cx="282" cy="1098" r="2.5" fill="#a0f040" opacity=".67"/>
+  <circle cx="324" cy="1120" r="3"   fill="#c8ff60" opacity=".72"/>
+  <circle cx="508" cy="1074" r="2.5" fill="#a0f040" opacity=".72"/>
+  <circle cx="554" cy="1042" r="3"   fill="#c8ff60" opacity=".77"/>
+  <circle cx="604" cy="1092" r="2.5" fill="#a0f040" opacity=".67"/>
+  <circle cx="654" cy="1062" r="3.5" fill="#c8ff60" opacity=".82"/>
+  <circle cx="704" cy="1038" r="2.5" fill="#a0f040" opacity=".72"/>
+  <circle cx="745" cy="1078" r="3"   fill="#c8ff60" opacity=".72"/>
+  <circle cx="204" cy="1144" r="2.5" fill="#a0f040" opacity=".62"/>
+  <circle cx="252" cy="1162" r="3"   fill="#c8ff60" opacity=".67"/>
+</g>
+
+<!-- ══════ MEADOW / START ZONE (y 1428–1821) ══════ -->
+<!-- Hills -->
+<ellipse cx="195" cy="1632" rx="205" ry="82" fill="#40aa26" opacity=".8"/>
+<ellipse cx="655" cy="1622" rx="245" ry="92" fill="#48b02e" opacity=".76"/>
+<!-- Grass -->
+<rect x="0" y="1702" width="864" height="119" fill="#3a9a20"/>
+<ellipse cx="106" cy="1702" rx="126" ry="22" fill="#44ac24" opacity=".7"/>
+<ellipse cx="356" cy="1700" rx="164" ry="20" fill="#48ae28" opacity=".65"/>
+<ellipse cx="652" cy="1702" rx="185" ry="23" fill="#3ea220" opacity=".7"/>
+<!-- Grass blades -->
+<g stroke="#2a8010" stroke-width="2.2" fill="none" stroke-linecap="round">
+  <path d="M 62,1821 Q 57,1796 54,1783"/><path d="M 67,1821 Q 66,1799 64,1787"/><path d="M 72,1821 Q 75,1797 78,1785"/>
+  <path d="M 132,1821 Q 127,1797 124,1784"/><path d="M 137,1821 Q 136,1800 134,1788"/><path d="M 142,1821 Q 145,1798 148,1786"/>
+  <path d="M 252,1821 Q 247,1797 244,1784"/><path d="M 257,1821 Q 256,1799 254,1787"/><path d="M 262,1821 Q 265,1797 268,1785"/>
+  <path d="M 503,1821 Q 498,1797 495,1784"/><path d="M 508,1821 Q 507,1799 505,1787"/><path d="M 513,1821 Q 516,1797 519,1785"/>
+  <path d="M 702,1821 Q 697,1797 694,1784"/><path d="M 707,1821 Q 706,1799 704,1787"/><path d="M 712,1821 Q 715,1797 718,1785"/>
+  <path d="M 822,1821 Q 817,1797 814,1784"/><path d="M 827,1821 Q 826,1799 824,1787"/><path d="M 832,1821 Q 835,1797 838,1785"/>
+</g>
+<!-- Wildflowers -->
+<g>
+  <line x1="322" y1="1762" x2="322" y2="1740" stroke="#3a8012" stroke-width="2.2"/>
+  <circle cx="322" cy="1736" r="7.5" fill="#f06090"/><circle cx="322" cy="1736" r="3.2" fill="#fff176"/>
+  <line x1="342" y1="1768" x2="342" y2="1748" stroke="#3a8012" stroke-width="2"/>
+  <circle cx="342" cy="1744" r="6.5" fill="#f08040"/><circle cx="342" cy="1744" r="2.8" fill="#fff176"/>
+  <line x1="362" y1="1760" x2="362" y2="1736" stroke="#3a8012" stroke-width="2.2"/>
+  <circle cx="362" cy="1732" r="7.5" fill="#8060f0"/><circle cx="362" cy="1732" r="3.2" fill="#fff176"/>
+  <line x1="524" y1="1756" x2="524" y2="1737" stroke="#3a8012" stroke-width="2"/>
+  <circle cx="524" cy="1733" r="8.5" fill="white"/><circle cx="524" cy="1733" r="3.8" fill="#f0e040"/>
+  <line x1="548" y1="1762" x2="548" y2="1745" stroke="#3a8012" stroke-width="2"/>
+  <circle cx="548" cy="1741" r="7.5" fill="white"/><circle cx="548" cy="1741" r="3.2" fill="#f0e040"/>
+  <line x1="572" y1="1754" x2="572" y2="1736" stroke="#3a8012" stroke-width="2.2"/>
+  <circle cx="572" cy="1732" r="8"   fill="#e060c0"/><circle cx="572" cy="1732" r="3.5" fill="#fff176"/>
+</g>
+<!-- Red race car -->
+<g transform="translate(96,1772)">
+  <ellipse cx="32" cy="52" rx="62" ry="9" fill="rgba(0,0,0,.27)"/>
+  <rect x="0"  y="20" width="124" height="30" rx="6" fill="#cc1020"/>
+  <rect x="22" y="4"  width="68"  height="20" rx="9" fill="#e02030"/>
+  <rect x="26" y="6"  width="44"  height="16" rx="7" fill="#a0d8f8" opacity=".87"/>
+  <rect x="74" y="6"  width="12"  height="14" rx="4" fill="#80c0e8" opacity=".82"/>
+  <rect x="0"  y="30" width="124" height="5" fill="rgba(255,255,255,.52)"/>
+  <circle cx="22" cy="50" r="17" fill="#1a1a1a"/><circle cx="22" cy="50" r="11" fill="#383838"/><circle cx="22" cy="50" r="4.5" fill="#aaaaaa"/>
+  <circle cx="102" cy="50" r="17" fill="#1a1a1a"/><circle cx="102" cy="50" r="11" fill="#383838"/><circle cx="102" cy="50" r="4.5" fill="#aaaaaa"/>
+  <ellipse cx="122" cy="33" rx="7.5" ry="5.5" fill="#fff8c0" opacity=".92"/>
+  <text x="60" y="37" text-anchor="middle" font-family="Arial Black,sans-serif" font-size="11" font-weight="bold" fill="white">01</text>
+</g>
+<!-- START sign -->
+<g transform="translate(38,1685)">
+  <rect x="-3" y="0"   width="6" height="94" rx="3" fill="#7a5020"/>
+  <rect x="-34" y="-10" width="68" height="34" rx="6" fill="#e8c050" stroke="#8a6020" stroke-width="2.5"/>
+  <text x="0" y="13" text-anchor="middle" font-family="Georgia,serif" font-size="15" font-weight="bold" fill="#3a2008">START</text>
+  <polygon points="38,7 52,0 52,14" fill="#c04020"/>
+</g>
+<!-- Fence -->
+<g stroke="#8a6020" stroke-width="2.5">
+  <rect x="242" y="1722" width="9" height="44" rx="2" fill="#b07838"/>
+  <rect x="272" y="1720" width="9" height="46" rx="2" fill="#b07838"/>
+  <rect x="302" y="1724" width="9" height="43" rx="2" fill="#b07838"/>
+  <line x1="242" y1="1732" x2="311" y2="1732"/>
+  <line x1="242" y1="1750" x2="311" y2="1750"/>
+</g>
+<!-- CAR KINGDOM sign (right) -->
+<g transform="translate(762,1715)">
+  <rect x="-3" y="0" width="6" height="82" rx="2" fill="#7a5020"/>
+  <rect x="-54" y="-12" width="108" height="32" rx="6" fill="#e8c050" stroke="#8a6020" stroke-width="2"/>
+  <text x="0" y="5"  text-anchor="middle" font-family="Georgia,serif" font-size="10" font-weight="bold" fill="#3a1808">CAR</text>
+  <text x="0" y="15" text-anchor="middle" font-family="Georgia,serif" font-size="10" font-weight="bold" fill="#3a1808">KINGDOM</text>
+</g>
+<!-- UNICORN MEADOW sign (forest zone, left) -->
+<g transform="translate(55,1360)">
+  <rect x="-3" y="0" width="6" height="40" rx="2" fill="#7a5020"/>
+  <rect x="-3" y="38" width="6" height="26" rx="2" fill="#7a5020"/>
+  <rect x="-50" y="-12" width="100" height="30" rx="5" fill="#c8922a" stroke="#7a5020" stroke-width="2"/>
+  <text x="0" y="4"  text-anchor="middle" font-family="Georgia,serif" font-size="9.5" font-weight="bold" fill="#3a1808">UNICORN</text>
+  <text x="0" y="14" text-anchor="middle" font-family="Georgia,serif" font-size="9.5" font-weight="bold" fill="#3a1808">MEADOW</text>
+</g>
+<!-- ICE KINGDOM sign (mountain zone, left) -->
+<g transform="translate(78,484)">
+  <rect x="-3" y="0" width="6" height="44" rx="2" fill="#7a5020"/>
+  <rect x="-54" y="-12" width="108" height="30" rx="5" fill="#a0c8e2" stroke="#6080a0" stroke-width="2"/>
+  <text x="0" y="4"  text-anchor="middle" font-family="Georgia,serif" font-size="9.5" font-weight="bold" fill="#1a2848">ICE</text>
+  <text x="0" y="14" text-anchor="middle" font-family="Georgia,serif" font-size="9.5" font-weight="bold" fill="#1a2848">KINGDOM</text>
+</g>
+
+<!-- ══════ STONE PATH ══════ -->
+<!-- Same bezier as CLIMB_PATH in React — visually draws the golden road -->
+<path d="M 185,1730 C 400,1720 580,1700 700,1670 C 790,1640 800,1560 780,1490 C 760,1420 400,1360 200,1360 C 100,1330 100,1260 140,1180 C 180,1110 500,1070 680,1060 C 780,1020 800,970 770,890 C 750,830 420,770 230,770 C 100,740 100,670 130,600 C 160,540 480,500 640,490 C 760,450 780,400 750,350 C 720,290 560,220 440,200 C 440,150 435,100 430,60"
+  fill="none" stroke="rgba(0,0,0,.38)" stroke-width="92" stroke-linecap="round" transform="translate(0,9)"/>
+<path d="M 185,1730 C 400,1720 580,1700 700,1670 C 790,1640 800,1560 780,1490 C 760,1420 400,1360 200,1360 C 100,1330 100,1260 140,1180 C 180,1110 500,1070 680,1060 C 780,1020 800,970 770,890 C 750,830 420,770 230,770 C 100,740 100,670 130,600 C 160,540 480,500 640,490 C 760,450 780,400 750,350 C 720,290 560,220 440,200 C 440,150 435,100 430,60"
+  fill="none" stroke="#4e2e08" stroke-width="82" stroke-linecap="round"/>
+<path d="M 185,1730 C 400,1720 580,1700 700,1670 C 790,1640 800,1560 780,1490 C 760,1420 400,1360 200,1360 C 100,1330 100,1260 140,1180 C 180,1110 500,1070 680,1060 C 780,1020 800,970 770,890 C 750,830 420,770 230,770 C 100,740 100,670 130,600 C 160,540 480,500 640,490 C 760,450 780,400 750,350 C 720,290 560,220 440,200 C 440,150 435,100 430,60"
+  fill="none" stroke="#d4a848" stroke-width="70" stroke-linecap="round"/>
+<path d="M 185,1730 C 400,1720 580,1700 700,1670 C 790,1640 800,1560 780,1490 C 760,1420 400,1360 200,1360 C 100,1330 100,1260 140,1180 C 180,1110 500,1070 680,1060 C 780,1020 800,970 770,890 C 750,830 420,770 230,770 C 100,740 100,670 130,600 C 160,540 480,500 640,490 C 760,450 780,400 750,350 C 720,290 560,220 440,200 C 440,150 435,100 430,60"
+  fill="none" stroke="#f0c860" stroke-width="50" stroke-linecap="round" opacity=".65"/>
+<!-- Stone node circles on the path (decorative; React interactive nodes overlay these) -->
+<path d="M 185,1730 C 400,1720 580,1700 700,1670 C 790,1640 800,1560 780,1490 C 760,1420 400,1360 200,1360 C 100,1330 100,1260 140,1180 C 180,1110 500,1070 680,1060 C 780,1020 800,970 770,890 C 750,830 420,770 230,770 C 100,740 100,670 130,600 C 160,540 480,500 640,490 C 760,450 780,400 750,350 C 720,290 560,220 440,200 C 440,150 435,100 430,60"
+  fill="none" stroke="#f5e8b8" stroke-width="52" stroke-linecap="round"
+  stroke-dasharray="0 62" opacity=".72"/>
+
+<!-- ══════ ZONE BLENDING ══════ -->
+<rect x="0" y="266" width="864" height="36" fill="url(#g-mtn)"    opacity=".58"/>
+<ellipse cx="432" cy="650"  rx="432" ry="32" fill="#200c32"        opacity=".48"/>
+<rect x="0" y="1012" width="864" height="28" fill="#0a140a"        opacity=".55"/>
+<rect x="0" y="1430" width="864" height="28" fill="#308018"        opacity=".48"/>
+</svg>
