@@ -7,6 +7,8 @@ import com.KidQuest.kidquest_app.exception.ResourceNotFoundException;
 import com.KidQuest.kidquest_app.model.AppUser;
 import com.KidQuest.kidquest_app.repository.AppUserRepository;
 import com.KidQuest.kidquest_app.security.JwtService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -15,6 +17,9 @@ import org.springframework.stereotype.Service;
 
 @Service
 public class AuthService {
+
+    private static final Logger log = LoggerFactory.getLogger(AuthService.class);
+
     private final AppUserRepository appUserRepository;
 
     private final PasswordEncoder passwordEncoder;
@@ -48,6 +53,9 @@ public class AuthService {
     public AuthResponse login(LoginRequest loginRequest) {
         authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(loginRequest.getEmail(), loginRequest.getPassword()));
         AppUser appUser = appUserRepository.findByEmail(loginRequest.getEmail()).orElseThrow(() -> new ResourceNotFoundException("No User found with email: " + loginRequest.getEmail()));
+        if (appUser.getFamily() == null) {
+            log.warn("Login: user {} ({}) has no family — app will show empty data", appUser.getId(), appUser.getEmail());
+        }
         String token = jwtService.generateToken(appUser);
         return new AuthResponse(token);
     }

@@ -6,6 +6,8 @@ import { getChildren, createChild, updateChild, deleteChild } from '../api/child
 import { getTasksByFamily, createTask, updateTask, deleteTask } from '../api/tasks'
 import { getRewards, createReward, updateReward, deleteReward } from '../api/rewards'
 import { getFamilies, createFamily, updateFamily, deleteFamily } from '../api/families'
+import { createPointTransaction } from '../api/pointTransactions'
+import Sidebar from '../components/Sidebar'
 import Modal from '../components/Modal'
 import ConfirmDialog from '../components/ConfirmDialog'
 import TaskForm from '../components/TaskForm'
@@ -42,6 +44,8 @@ export default function Dashboard() {
   const [modal,         setModal]         = useState(null)
   const [deleteTarget,  setDeleteTarget]  = useState(null) // { type, id, name, familyId }
   const [deleting,      setDeleting]      = useState(false)
+  const [awardTarget,   setAwardTarget]   = useState(null) // { task, child }
+  const [awarding,      setAwarding]      = useState(false)
 
   const familyId = user?.familyId
 
@@ -51,16 +55,19 @@ export default function Dashboard() {
       setUser(me)
       setFamilies(fams)
       const activeFamilyId = me.familyId || localStorage.getItem('activeFamilyId')
-      if (activeFamilyId) {
-        const [ch, tk, rw] = await Promise.all([
-          getChildren(activeFamilyId),
-          getTasksByFamily(activeFamilyId),
-          getRewards(activeFamilyId),
-        ])
-        setChildren(ch)
-        setTasks(tk)
-        setRewards(rw)
+      if (!activeFamilyId) {
+        console.warn('[KidQuest] No familyId on user and no activeFamilyId in localStorage — data will not load. User id:', me.id, 'email:', me.email)
+        setError('Your account is not linked to a family. Please contact support or re-create your family.')
+        return
       }
+      const [ch, tk, rw] = await Promise.all([
+        getChildren(activeFamilyId),
+        getTasksByFamily(activeFamilyId),
+        getRewards(activeFamilyId),
+      ])
+      setChildren(ch)
+      setTasks(tk)
+      setRewards(rw)
     } catch (e) {
       setError(e.message)
     } finally {
@@ -93,14 +100,37 @@ export default function Dashboard() {
     await refetchFamily(selectedFamilyId)
   }
 
-  async function cycleTaskStatus(task) {
-    const nextStatus = STATUS_CYCLE[task.status]
+  async function applyTaskStatus(task, nextStatus) {
     await updateTask(task.taskId, {
       title: task.title, description: task.description,
       pointValue: task.pointValue, dueDate: task.dueDate,
       status: nextStatus, assignedToId: task.assignedTo ?? null,
     })
     await refetchFamily(task.familyId)
+  }
+
+  function cycleTaskStatus(task) {
+    const next = STATUS_CYCLE[task.status]
+    if (next === 'COMPLETED' && task.assignedTo) {
+      const child = children.find(c => c.id === task.assignedTo) ?? null
+      setAwardTarget({ task, child })
+    } else {
+      applyTaskStatus(task, next)
+    }
+  }
+
+  async function handleAwardConfirm() {
+    const { task } = awardTarget
+    setAwarding(true)
+    try {
+      await applyTaskStatus(task, 'COMPLETED')
+      await createPointTransaction(task.assignedTo, {
+        amount: task.pointValue,
+        reason: `Completed task: ${task.title}`,
+      })
+      setAwardTarget(null)
+    } catch { setAwardTarget(null) }
+    finally { setAwarding(false) }
   }
 
   // ── Child handlers ─────────────────────────────────────────────────────────
@@ -116,14 +146,14 @@ export default function Dashboard() {
   }
 
   // ── Reward handlers ────────────────────────────────────────────────────────
-  async function handleSaveReward(data) {
+  async function handleSaveReward({ familyId: selectedFamilyId, ...data }) {
     if (modal.item) {
       await updateReward(modal.item.id, data)
     } else {
-      await createReward(familyId, data)
+      await createReward(selectedFamilyId || familyId, data)
     }
     setModal(null)
-    await refetchFamily(familyId)
+    await refetchFamily(selectedFamilyId || familyId)
   }
 
   async function toggleRewardActive(reward) {
@@ -179,18 +209,7 @@ export default function Dashboard() {
 
   return (
     <div className={styles.layout}>
-      {/* Sidebar */}
-      <aside className={styles.sidebar}>
-        <div className={styles.sidebarLogo}><span>⭐</span><span>KidQuest</span></div>
-        <nav className={styles.nav}>
-          <a className={`${styles.navItem} ${styles.navActive}`} href="#"><span>🏠</span> Dashboard</a>
-          <a className={styles.navItem} href="#"><span>✅</span> Tasks</a>
-          <a className={styles.navItem} href="/progress"><span>🎁</span> Rewards Progress</a>
-          <a className={styles.navItem} href="#"><span>👶</span> Children</a>
-          <a className={styles.navItem} href="#"><span>⚙️</span> Settings</a>
-        </nav>
-        <button className={styles.logoutBtn} onClick={handleLogout}><span>🚪</span> Log out</button>
-      </aside>
+      <Sidebar active="dashboard" onLogout={handleLogout} />
 
       {/* Main */}
       <main className={styles.main}>
@@ -279,6 +298,16 @@ export default function Dashboard() {
                           onClick={() => cycleTaskStatus(task)}>
                           {STATUS_LABEL[task.status]}
                         </button>
+                        {task.status === 'PENDING_APPROVAL' && task.assignedTo && (
+                          <button
+                            className={`${styles.tag} ${styles.tagGreen} ${styles.tagBtn}`}
+                            onClick={() => {
+                              const child = children.find(c => c.id === task.assignedTo) ?? null
+                              setAwardTarget({ task, child })
+                            }}>
+                            ⭐ Award
+                          </button>
+                        )}
                       </div>
                     </li>
                   ))}
@@ -369,7 +398,7 @@ export default function Dashboard() {
 
       {modal?.type === 'reward' && (
         <Modal title={modal.item ? 'Edit Reward' : 'New Reward'} onClose={() => setModal(null)}>
-          <RewardForm initial={modal.item ?? {}}
+          <RewardForm initial={modal.item ?? {}} families={families}
             onSubmit={handleSaveReward} onCancel={() => setModal(null)} />
         </Modal>
       )}
@@ -386,8 +415,28 @@ export default function Dashboard() {
           message={`Delete "${deleteTarget.name}"? This cannot be undone.`}
           onConfirm={handleConfirmDelete}
           onCancel={() => setDeleteTarget(null)}
-
           loading={deleting} />
+      )}
+
+      {awardTarget && (
+        <Modal title="Award Points" onClose={() => !awarding && setAwardTarget(null)}>
+          <div className={styles.awardDialog}>
+            <div className={styles.awardPtsBadge}>⭐ {awardTarget.task.pointValue}</div>
+            <p className={styles.awardMsg}>
+              Mark <strong>"{awardTarget.task.title}"</strong> as completed
+              and award <strong>{awardTarget.task.pointValue} points</strong> to{' '}
+              <strong>{awardTarget.child?.name ?? 'the assignee'}</strong>?
+            </p>
+            <div className={styles.awardActions}>
+              <button className={styles.awardCancel} onClick={() => setAwardTarget(null)} disabled={awarding}>
+                Cancel
+              </button>
+              <button className={styles.awardConfirm} onClick={handleAwardConfirm} disabled={awarding}>
+                {awarding ? 'Awarding…' : '⭐ Award Points'}
+              </button>
+            </div>
+          </div>
+        </Modal>
       )}
     </div>
   )

@@ -1,24 +1,55 @@
 services:
+
   postgres:
-    image: postgres:16
-    container_name: kidquest-postgres
+    image: postgres:16-alpine
+    restart: unless-stopped
     environment:
-      POSTGRES_DB: ${DB_NAME}
-      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_DB:       ${DB_NAME}
+      POSTGRES_USER:     ${DB_USERNAME}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
-    ports:
-      - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME} -d ${DB_NAME}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
 
   redis:
     image: redis:7-alpine
-    container_name: kidquest-redis
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  backend:
+    build: .
+    restart: unless-stopped
+    environment:
+      DB_HOST:        postgres
+      DB_NAME:        ${DB_NAME}
+      DB_USERNAME:    ${DB_USERNAME}
+      DB_PASSWORD:    ${DB_PASSWORD}
+      REDIS_HOST:     redis
+      REDIS_PORT:     6379
+      JWT_SECRET:     ${JWT_SECRET}
+      JWT_EXPIRATION: ${JWT_EXPIRATION}
+      SERVER_PORT:    8080
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  frontend:
+    build: ./frontend
+    restart: unless-stopped
     ports:
-      - "${REDIS_PORT}:6379"
-    volumes:
-      - redis_data:/data
+      - "80:80"
+    depends_on:
+      - backend
 
 volumes:
   postgres_data:
-  redis_data:

@@ -68,7 +68,7 @@ public class TaskService {
         existingTask.setDueDate(updatedTask.getDueDate());
         if (updatedTask.getAssignedToId() != null) {
             existingTask.setAssignedTo(childService.findById(updatedTask.getAssignedToId()));
-            existingTask.setStatus(TaskStatus.ASSIGNED);
+            existingTask.setStatus(updatedTask.getStatus() != null ? updatedTask.getStatus() : TaskStatus.ASSIGNED);
         } else {
             existingTask.setAssignedTo(null);
             existingTask.setStatus(updatedTask.getStatus() != null ? updatedTask.getStatus() : TaskStatus.UNASSIGNED);

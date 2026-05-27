@@ -14,53 +14,41 @@ import java.util.UUID;
 public class PointTransactionService {
 
     private final PointTransactionRepository pointTransactionRepository;
-    private final TaskService taskService;
     private final ChildService childService;
 
-    public PointTransactionService(PointTransactionRepository pointTransactionRepository, TaskService taskService, ChildService childService) {
+    public PointTransactionService(PointTransactionRepository pointTransactionRepository, ChildService childService) {
         this.pointTransactionRepository = pointTransactionRepository;
-        this.taskService = taskService;
         this.childService = childService;
     }
 
-    public PointTransactionResponse createPointTransaction(UUID childId, PointTransactionRequest pointTransactionRequest) {
-        PointTransaction  pointTransaction = new PointTransaction();
-        if (pointTransactionRequest.getTaskId()!=null) {
-            pointTransaction.setTask(taskService.findById(pointTransactionRequest.getTaskId()));
-        }
-        pointTransaction.setReason(pointTransactionRequest.getReason());
-        pointTransaction.setAmount(pointTransactionRequest.getAmount());
-        pointTransaction.setChild(childService.findById(childId));
-        return response(pointTransactionRepository.save(pointTransaction));
-    }
-
-    public List<PointTransactionResponse> findByTaskId(UUID taskId) {
-        return pointTransactionRepository
-                .findByTaskId(taskId)
-                .stream()
-                .map(this::response)
-                .toList();
+    public PointTransactionResponse createPointTransaction(UUID childId, PointTransactionRequest request) {
+        PointTransaction tx = new PointTransaction();
+        tx.setChild(childService.findById(childId));
+        tx.setAmount(request.getAmount());
+        tx.setReason(request.getReason());
+        return toResponse(pointTransactionRepository.save(tx));
     }
 
     public List<PointTransactionResponse> findByChildId(UUID childId) {
         return pointTransactionRepository
                 .findByChildId(childId)
                 .stream()
-                .map(this::response)
+                .map(this::toResponse)
                 .toList();
     }
 
-    public PointTransaction findById(UUID pointTransactionId) {
-        return pointTransactionRepository.findById(pointTransactionId).orElseThrow(() -> new ResourceNotFoundException("PointTransaction with id: " + pointTransactionId + " not found"));
+    public PointTransaction findById(UUID id) {
+        return pointTransactionRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("PointTransaction not found: " + id));
     }
-    public PointTransactionResponse response(PointTransaction pointTransaction){
-        PointTransactionResponse pointTransactionResponse = new PointTransactionResponse();
-        pointTransactionResponse.setId(pointTransaction.getId());
-        pointTransactionResponse.setTaskId(pointTransaction.getTask().getId());
-        pointTransactionResponse.setAmount(pointTransaction.getAmount());
-        pointTransactionResponse.setReason(pointTransaction.getReason());
-        pointTransactionResponse.setCreatedAt(pointTransaction.getCreatedAt());
-        pointTransactionResponse.setChildId(pointTransaction.getChild().getId());
-        return pointTransactionResponse;
+
+    private PointTransactionResponse toResponse(PointTransaction tx) {
+        PointTransactionResponse r = new PointTransactionResponse();
+        r.setId(tx.getId());
+        r.setChildId(tx.getChild().getId());
+        r.setAmount(tx.getAmount());
+        r.setReason(tx.getReason());
+        r.setCreatedAt(tx.getCreatedAt());
+        return r;
     }
 }

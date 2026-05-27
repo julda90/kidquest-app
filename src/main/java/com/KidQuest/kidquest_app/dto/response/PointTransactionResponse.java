@@ -11,9 +11,7 @@ import java.util.UUID;
 public class PointTransactionResponse {
     private UUID id;
     private UUID childId;
-    private UUID taskId;
     private Integer amount;
     private String reason;
     private LocalDateTime createdAt;
 }
-

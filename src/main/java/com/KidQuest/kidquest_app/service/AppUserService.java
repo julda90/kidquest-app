@@ -8,6 +8,8 @@ import com.KidQuest.kidquest_app.exception.BadRequestException;
 import com.KidQuest.kidquest_app.exception.ResourceNotFoundException;
 import com.KidQuest.kidquest_app.model.AppUser;
 import com.KidQuest.kidquest_app.repository.AppUserRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -17,6 +19,8 @@ import java.util.UUID;
 
 @Service
 public class AppUserService {
+
+    private static final Logger log = LoggerFactory.getLogger(AppUserService.class);
 
     private final AppUserRepository appUserRepository;
     private final FamilyService familyService;
@@ -88,6 +92,8 @@ public class AppUserService {
         appUserResponse.setRole(appUser.getRole());
         if (appUser.getFamily() != null) {
             appUserResponse.setFamilyId(appUser.getFamily().getId());
+        } else {
+            log.warn("User {} ({}) has no family association", appUser.getId(), appUser.getEmail());
         }
         appUserResponse.setCreatedAt(appUser.getCreatedAt());
         appUserResponse.setUpdatedAt(appUser.getUpdatedAt());

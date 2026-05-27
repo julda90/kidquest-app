@@ -9,6 +9,4 @@ import java.util.UUID;
 public interface PointTransactionRepository extends JpaRepository<PointTransaction, UUID> {
 
     List<PointTransaction> findByChildId(UUID childId);
-
-    List<PointTransaction> findByTaskId(UUID taskId);
 }
