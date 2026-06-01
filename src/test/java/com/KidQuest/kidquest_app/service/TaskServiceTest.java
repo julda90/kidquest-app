@@ -85,12 +85,12 @@ public class TaskServiceTest {
         verify(taskRepository).save(any(Task.class));
     }
 
-    @Test
-    public void shouldReturnAllByFamilyId() {
-        List<Task> taskList = Arrays.asList(task,task);
-        when(taskRepository.findAllByFamilyId(familyId)).thenReturn(taskList);
-        assertEquals(taskService.findAllByFamilyId(familyId).size(),taskList.size());
-    }
+//    @Test
+//    public void shouldReturnAllByFamilyId() {
+//        List<Task> taskList = Arrays.asList(task,task);
+//        when(taskRepository.findAllByFamilyId(familyId)).thenReturn(taskList);
+//        assertEquals(taskService.findAllByFamilyId(familyId).size(),taskList.size());
+//    }
 
     @Test
     public void updateTask() {

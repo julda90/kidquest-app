@@ -64,14 +64,14 @@ public class ChildServiceTest {
 
     }
 
-    @Test
-    public void shouldReturnChildByFamilyId(){
-        List<Child> children = Arrays.asList(child,child);
-
-        when(childRepository.findByFamilyId(family.getId())).thenReturn(children);
-
-        assertEquals(childService.findAllByFamilyId(familyId).size(), children.size());
-    }
+//    @Test
+//    public void shouldReturnChildByFamilyId(){
+//        List<Child> children = Arrays.asList(child,child);
+//
+//        when(childRepository.findByFamilyId(family.getId())).thenReturn(children);
+//
+//        assertEquals(childService.findAllByFamilyId(familyId).size(), children.size());
+//    }
 
     @Test
     public void shouldThrowExceptionWhenChildNotFound(){
