@@ -7,8 +7,8 @@ on:
 
 jobs:
   deploy:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     steps:
       - name: Trigger Coolify Deploy
         run: |
-          curl -X GET "https://mymlyn.com/api/v1/deploy?uuid=${{ secrets.COOLIFY_APP_UUID }}&token=${{ secrets.COOLIFY_TOKEN }}"
+          curl -s -X POST "http://localhost:8000/api/v1/applications/${{ secrets.COOLIFY_APP_UUID }}/start" -H "Authorization: Bearer ${{ secrets.COOLIFY_TOKEN }}" -H "Content-Type: application/json"
