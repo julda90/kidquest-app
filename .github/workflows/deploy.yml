@@ -11,6 +11,4 @@ jobs:
     steps:
       - name: Trigger Coolify Deploy
         run: |
-          curl -X POST "${{ secrets.COOLIFY_WEBHOOK }}" \
-            -H "Authorization: Bearer ${{ secrets.COOLIFY_TOKEN }}" \
-            -H "Content-Type: application/json"
+          curl -X GET "https://mymlyn.com/api/v1/deploy?uuid=${{ secrets.COOLIFY_APP_UUID }}&token=${{ secrets.COOLIFY_TOKEN }}"
