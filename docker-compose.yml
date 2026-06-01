@@ -14,6 +14,8 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
+    networks:
+      - kidquest-net
 
   redis:
     image: redis:7-alpine
@@ -23,6 +25,8 @@ services:
       interval: 5s
       timeout: 3s
       retries: 10
+    networks:
+      - kidquest-net
 
   backend:
     build: .
@@ -42,6 +46,8 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+    networks:
+      - kidquest-net
 
   frontend:
     build: ./frontend
@@ -50,6 +56,13 @@ services:
       - "8082:80"
     depends_on:
       - backend
+    networks:
+      - kidquest-net
 
 volumes:
   postgres_data:
+
+networks:
+  kidquest-net:
+    name: kidquest-net
+    external: true
