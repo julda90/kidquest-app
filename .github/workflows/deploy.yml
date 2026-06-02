@@ -29,6 +29,8 @@ jobs:
           docker push ghcr.io/julda90/kidquest-frontend:latest
 
       - name: Deploy to k3s
+        env:
+          KUBECONFIG: /home/julda/.kube/config
         run: |
           kubectl rollout restart deployment/kidquest-backend -n kidquest
           kubectl rollout restart deployment/kidquest-frontend -n kidquest
