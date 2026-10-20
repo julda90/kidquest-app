@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { login } from '../api/auth'
+import { getMe } from '../api/users'
 import { useAuth } from '../context/AuthContext'
 import styles from './Login.module.css'
 
@@ -30,7 +31,8 @@ export default function Login() {
     try {
       const data = await login(email, password)
       saveToken(data.token)
-      navigate('/dashboard')
+      const me = await getMe()
+      navigate(me.role === 'CHILD' ? '/kid' : '/dashboard')
     } catch (err) {
       setServerError(err.message)
     } finally {

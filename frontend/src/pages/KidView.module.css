@@ -1,0 +1,421 @@
+/* KidView — tablet/desktop optimised child interface */
+/* Theme colours are injected as CSS variables via inline style on .kidApp */
+
+.kidApp {
+  display: flex;
+  min-height: 100vh;
+  background: var(--kbg);
+  position: relative;
+  overflow: hidden;
+  font-family: 'Nunito', 'Segoe UI', sans-serif;
+}
+
+/* ── Canvas particles (absolute, behind everything) ── */
+.canvas {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ── Sidebar ── */
+.sidebar {
+  width: 64px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 16px 0 12px;
+  background: var(--ksb);
+  border-right: 1px solid var(--ksbdiv);
+  z-index: 2;
+  gap: 2px;
+  position: relative;
+}
+
+.avatar {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  background: var(--kbdg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 26px;
+  margin-bottom: 12px;
+  flex-shrink: 0;
+  box-shadow: 0 3px 14px var(--kglow);
+  transition: box-shadow 0.4s;
+}
+
+.navItem {
+  width: 46px;
+  height: 40px;
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  cursor: pointer;
+  transition: background 0.15s;
+  border: none;
+  background: transparent;
+}
+
+.navItem:hover { background: rgba(255, 255, 255, 0.10); }
+.navItem.navActive { background: rgba(255, 255, 255, 0.15); }
+
+.navEmoji { font-size: 19px; }
+.navLabel {
+  font-size: 7.5px;
+  font-weight: 700;
+  color: var(--kdim);
+  letter-spacing: 0.02em;
+}
+.navItem.navActive .navLabel { color: var(--kpts); }
+
+.navSpacer { flex: 1; }
+
+.pointsBadge {
+  background: var(--kbdg);
+  border-radius: 12px;
+  padding: 7px 0;
+  width: 48px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  box-shadow: 0 3px 12px var(--kglow);
+}
+
+.badgeNum {
+  font-family: 'Fredoka One', 'Segoe UI', sans-serif;
+  font-size: 17px;
+  color: var(--kbdgf);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+.badgeIcon { font-size: 13px; }
+
+/* ── Main area ── */
+.main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  z-index: 2;
+}
+
+.topbar {
+  height: 52px;
+  flex-shrink: 0;
+  padding: 0 20px;
+  display: flex;
+  align-items: center;
+  background: rgba(0, 0, 0, 0.18);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  gap: 12px;
+}
+
+.greeting {
+  font-family: 'Fredoka One', 'Segoe UI', sans-serif;
+  font-size: 19px;
+  color: #fff;
+  flex: 1;
+}
+
+.dateLabel {
+  font-size: 12px;
+  color: var(--kdim);
+}
+
+.logoutBtn {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 5px 11px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: transparent;
+  color: rgba(255, 255, 255, 0.55);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.logoutBtn:hover { background: rgba(255, 255, 255, 0.08); }
+
+.scrollArea {
+  flex: 1;
+  overflow-y: auto;
+  padding: 14px 18px 24px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.14) transparent;
+}
+.scrollArea::-webkit-scrollbar { width: 4px; }
+.scrollArea::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.15); border-radius: 2px; }
+
+/* ── Morning routine band ── */
+.morningBand {
+  background: var(--kcard);
+  border: 1px solid var(--kcardb);
+  border-radius: var(--kr);
+  padding: 13px 14px;
+  margin-bottom: 14px;
+}
+
+.morningHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 11px;
+}
+
+.morningTitle {
+  font-family: 'Fredoka One', 'Segoe UI', sans-serif;
+  font-size: 13px;
+  color: var(--ksh);
+}
+
+.streakBadge {
+  font-size: 11px;
+  font-weight: 800;
+  background: rgba(255, 140, 0, 0.2);
+  color: #ffaa00;
+  padding: 3px 10px;
+  border-radius: 8px;
+}
+
+.morningSteps {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding-bottom: 2px;
+}
+.morningSteps::-webkit-scrollbar { display: none; }
+
+.step { display: flex; flex-direction: column; align-items: center; gap: 5px; flex-shrink: 0; }
+
+.stepIco {
+  width: 50px;
+  height: 46px;
+  border-radius: var(--kr);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  background: var(--kcard);
+  border: 1.5px solid var(--kcardb);
+  position: relative;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+  user-select: none;
+}
+
+.stepIco:hover { opacity: 0.85; }
+
+.stepDone { background: var(--kdone) !important; border-color: transparent !important; }
+.stepDone::after {
+  content: '✓';
+  position: absolute;
+  bottom: -6px;
+  right: -6px;
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  background: #4ade80;
+  color: #fff;
+  font-size: 9px;
+  font-weight: 900;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 15px;
+  text-align: center;
+}
+
+.stepCur { background: var(--kcur) !important; border-color: transparent !important; }
+.stepCurAnim {
+  animation: pulse 1.8s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { box-shadow: 0 0 0 2px var(--kglow); }
+  50% { box-shadow: 0 0 0 7px transparent; }
+}
+
+.stepLabel {
+  font-size: 8.5px;
+  font-weight: 700;
+  color: var(--kdim);
+  text-align: center;
+  max-width: 50px;
+  line-height: 1.2;
+}
+
+.stepArrow { font-size: 11px; color: var(--kdim); opacity: 0.4; margin-top: -18px; flex-shrink: 0; }
+
+/* ── Section heading ── */
+.sectionHead {
+  font-family: 'Fredoka One', 'Segoe UI', sans-serif;
+  font-size: 14px;
+  color: var(--ksh);
+  margin: 12px 0 9px;
+}
+
+/* ── Tasks grid ── */
+.tasksGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.taskCard {
+  background: var(--kcard);
+  border: 1px solid var(--kcardb);
+  border-radius: var(--kr);
+  padding: 12px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.taskIco { font-size: 22px; }
+.taskName {
+  font-family: 'Fredoka One', 'Segoe UI', sans-serif;
+  font-size: 12px;
+  color: #fff;
+  line-height: 1.3;
+}
+
+.taskBot { display: flex; align-items: center; justify-content: space-between; margin-top: auto; padding-top: 4px; }
+.taskPts { font-family: 'Fredoka One', 'Segoe UI', sans-serif; font-size: 11px; color: var(--kpts); }
+
+.taskBtn {
+  font-family: 'Nunito', 'Segoe UI', sans-serif;
+  font-size: 8.5px;
+  font-weight: 800;
+  padding: 4px 9px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  transition: opacity 0.15s;
+}
+.taskBtn:hover { opacity: 0.85; }
+.taskBtn:disabled { cursor: default; opacity: 0.55; }
+
+.btnGo { background: var(--kbtng); color: #fff; }
+.btnWait { background: var(--kbtnw); color: var(--kbtnwf); }
+
+.emptyTasks {
+  font-size: 13px;
+  color: var(--kdim);
+  padding: 8px 0;
+}
+
+/* ── Rewards row ── */
+.rewardsRow {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding-bottom: 4px;
+}
+.rewardsRow::-webkit-scrollbar { display: none; }
+
+.rewardChip {
+  background: var(--kcard);
+  border: 1px solid var(--kcardb);
+  border-radius: var(--kr);
+  padding: 10px 13px;
+  min-width: 86px;
+  flex-shrink: 0;
+  text-align: center;
+}
+
+.rewardChip.rewardLit {
+  border-color: var(--kpts);
+  box-shadow: 0 0 10px var(--kglow);
+}
+
+.rewardIco { font-size: 20px; margin-bottom: 4px; }
+.rewardName { font-family: 'Fredoka One', 'Segoe UI', sans-serif; font-size: 11px; color: #fff; margin-bottom: 3px; }
+.rewardPts { font-size: 10px; color: var(--kdim); }
+.rewardLit .rewardPts { color: var(--kpts); font-weight: 800; }
+
+/* ── Child picker (shown before a child is selected) ── */
+.picker {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  background: linear-gradient(170deg, #1a0640, #3d1280, #7c1fa0);
+  padding: 32px 16px;
+}
+
+.pickerTitle {
+  font-family: 'Fredoka One', 'Segoe UI', sans-serif;
+  font-size: 28px;
+  color: #fff;
+  text-align: center;
+}
+
+.pickerCards {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.pickerCard {
+  background: rgba(255, 255, 255, 0.1);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-radius: 20px;
+  padding: 24px 28px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  transition: transform 0.18s, background 0.18s;
+  min-width: 110px;
+}
+.pickerCard:hover {
+  transform: translateY(-4px);
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.pickerAva { font-size: 40px; }
+.pickerName {
+  font-family: 'Fredoka One', 'Segoe UI', sans-serif;
+  font-size: 18px;
+  color: #fff;
+}
+
+/* ── Loading / error ── */
+.center {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(170deg, #0e0628, #2d0864);
+}
+
+.spinner {
+  width: 36px;
+  height: 36px;
+  border: 3px solid rgba(255, 255, 255, 0.15);
+  border-top-color: #c084fc;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  display: inline-block;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.errorMsg { color: #f87171; font-size: 14px; font-weight: 600; }

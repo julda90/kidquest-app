@@ -7,6 +7,7 @@ import RewardsProgress from './pages/RewardsProgress'
 import Tasks from './pages/Tasks'
 import Children from './pages/Children'
 import Settings from './pages/Settings'
+import KidView from './pages/KidView'
 
 export default function App() {
   return (
@@ -19,6 +20,7 @@ export default function App() {
           <Route path="/tasks"     element={<ProtectedRoute><Tasks /></ProtectedRoute>} />
           <Route path="/children"  element={<ProtectedRoute><Children /></ProtectedRoute>} />
           <Route path="/settings"  element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+          <Route path="/kid"       element={<ProtectedRoute><KidView /></ProtectedRoute>} />
           <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>
       </BrowserRouter>
