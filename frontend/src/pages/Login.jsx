@@ -34,7 +34,7 @@ export default function Login() {
       try {
         const me = await getMe()
         if (me.role === 'CHILD') {
-          // Full reload so AuthProvider re-reads the token from localStorage
+          try { localStorage.removeItem('kid_selectedChildId') } catch { /**/ }
           window.location.replace('/kid')
           return
         }
