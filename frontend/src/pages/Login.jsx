@@ -31,8 +31,15 @@ export default function Login() {
     try {
       const data = await login(email, password)
       saveToken(data.token)
-      const me = await getMe()
-      navigate(me.role === 'CHILD' ? '/kid' : '/dashboard')
+      try {
+        const me = await getMe()
+        if (me.role === 'CHILD') {
+          // Full reload so AuthProvider re-reads the token from localStorage
+          window.location.replace('/kid')
+          return
+        }
+      } catch { /* role check failed — fall through to dashboard */ }
+      navigate('/dashboard')
     } catch (err) {
       setServerError(err.message)
     } finally {
