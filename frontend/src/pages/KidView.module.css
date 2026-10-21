@@ -346,6 +346,191 @@
 .rewardPts { font-size: 10px; color: var(--kdim); }
 .rewardLit .rewardPts { color: var(--kpts); font-weight: 800; }
 
+/* ── Topbar switch button ── */
+.switchTopBtn {
+  font-size: 18px;
+  padding: 4px 8px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  border-radius: 8px;
+  transition: background 0.15s;
+  line-height: 1;
+}
+.switchTopBtn:hover { background: rgba(255,255,255,0.10); }
+
+/* Avatar as button (sidebar) */
+.avatar { cursor: pointer; border: none; }
+.avatar:hover { opacity: 0.8; }
+
+/* ── Mapa section ── */
+.mapHeader {
+  display: flex; align-items: baseline; gap: 12px; margin-bottom: 20px; flex-wrap: wrap;
+}
+.mapPtsLabel {
+  font-family: 'Fredoka One', 'Segoe UI', sans-serif;
+  font-size: 28px; color: #fff;
+}
+.mapNextLabel { font-size: 12px; color: var(--kdim); }
+
+.mapWrap { position: relative; margin: 0 8px 12px; }
+
+.mapMilestoneRow { position: relative; height: 52px; margin-bottom: 8px; }
+.mapMilestone {
+  position: absolute; transform: translateX(-50%);
+  display: flex; flex-direction: column; align-items: center; gap: 3px;
+}
+.mapMilestoneIco { font-size: 20px; }
+.mapUnlocked { filter: drop-shadow(0 0 6px gold); }
+.mapMilestoneName { font-size: 9px; color: var(--kdim); text-align: center; max-width: 60px; line-height: 1.2; }
+
+.mapTrack {
+  position: relative; height: 10px;
+  background: var(--ktrack); border-radius: 5px; overflow: visible;
+}
+.mapFill {
+  position: absolute; left: 0; top: 0; bottom: 0;
+  background: var(--kfill); border-radius: 5px;
+  transition: width 1s ease;
+}
+.mapAvatar {
+  position: absolute; top: 50%; transform: translate(-50%, -50%);
+  font-size: 22px; filter: drop-shadow(0 0 8px var(--kglow));
+  transition: left 1s ease; z-index: 2;
+}
+.mapDot {
+  position: absolute; top: 50%; transform: translate(-50%, -50%);
+  width: 14px; height: 14px; border-radius: 50%;
+  background: rgba(255,255,255,0.25); border: 2px solid rgba(255,255,255,0.35);
+  z-index: 1;
+}
+.mapDotDone { background: #4ade80; border-color: #4ade80; }
+
+.mapPtsRow { position: relative; height: 20px; margin-top: 6px; }
+.mapPt0 { position: absolute; left: 0; font-size: 9px; color: var(--kdim); }
+.mapPtX { position: absolute; transform: translateX(-50%); font-size: 9px; color: var(--kdim); }
+
+.mapRewardList { display: flex; flex-direction: column; gap: 8px; }
+.mapRewardRow {
+  background: var(--kcard); border: 1px solid var(--kcardb); border-radius: var(--kr);
+  padding: 10px 12px; display: flex; align-items: center; gap: 10px;
+}
+.mapRewardDone { border-color: var(--kpts); }
+.mapRIco { font-size: 20px; flex-shrink: 0; }
+.mapRInfo { flex: 1; min-width: 0; }
+.mapRName { font-family: 'Fredoka One', 'Segoe UI', sans-serif; font-size: 13px; color: #fff; margin-bottom: 5px; }
+.mapRBar { height: 5px; background: rgba(255,255,255,0.12); border-radius: 3px; overflow: hidden; }
+.mapRFill { height: 100%; background: var(--kfill); border-radius: 3px; transition: width 0.8s ease; }
+.mapRPts { font-family: 'Fredoka One', 'Segoe UI', sans-serif; font-size: 12px; color: var(--kpts); flex-shrink: 0; }
+
+/* ── Odměny section ── */
+.odmenyHeader {
+  display: flex; flex-direction: column; align-items: center;
+  padding: 16px 0 20px; gap: 4px;
+}
+.odmenyTotal {
+  font-family: 'Fredoka One', 'Segoe UI', sans-serif;
+  font-size: 44px; color: #fff; line-height: 1;
+  filter: drop-shadow(0 0 12px var(--kglow));
+}
+.odmenyTotalLbl { font-size: 13px; color: var(--kdim); }
+
+.odmenyGrid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 10px;
+}
+.odmenyCard {
+  background: var(--kcard); border: 1.5px solid var(--kcardb); border-radius: var(--kr);
+  padding: 14px 12px; display: flex; flex-direction: column; align-items: center;
+  gap: 6px; position: relative; overflow: hidden;
+}
+.odmenyDone { border-color: var(--kpts); box-shadow: 0 0 14px var(--kglow); }
+.odmenyDoneBadge {
+  position: absolute; top: 8px; right: 8px;
+  font-size: 8px; font-weight: 800; letter-spacing: .04em;
+  background: #4ade80; color: #052e16; padding: 2px 6px; border-radius: 6px;
+}
+.odmenyIco { font-size: 30px; }
+.odmenyName { font-family: 'Fredoka One', 'Segoe UI', sans-serif; font-size: 13px; color: #fff; text-align: center; }
+.odmenyDesc { font-size: 10px; color: var(--kdim); text-align: center; line-height: 1.4; }
+.odmenyBar { width: 100%; height: 6px; background: rgba(255,255,255,0.12); border-radius: 3px; overflow: hidden; }
+.odmenyFill { height: 100%; background: var(--kfill); border-radius: 3px; transition: width 0.8s; }
+.odmenyInfo { display: flex; justify-content: space-between; width: 100%; font-size: 10px; color: var(--kdim); }
+.odmenyNeed { color: var(--kpts); font-weight: 700; }
+
+/* ── Trofeje section ── */
+.trophyStats {
+  display: grid; grid-template-columns: repeat(3, 1fr);
+  gap: 8px; margin-bottom: 18px;
+}
+.trophyStat {
+  background: var(--kcard); border: 1px solid var(--kcardb); border-radius: var(--kr);
+  padding: 12px 8px; display: flex; flex-direction: column; align-items: center; gap: 4px;
+}
+.trophyStatN {
+  font-family: 'Fredoka One', 'Segoe UI', sans-serif; font-size: 28px; color: #fff; line-height: 1;
+}
+.trophyStatL { font-size: 10px; color: var(--kdim); text-align: center; }
+
+.trophyList { display: flex; flex-direction: column; gap: 7px; }
+.trophyItem {
+  background: var(--kcard); border: 1px solid var(--kcardb); border-radius: var(--kr);
+  padding: 10px 12px; display: flex; align-items: center; gap: 10px;
+}
+.trophyIco { font-size: 20px; flex-shrink: 0; }
+.trophyInfo { flex: 1; min-width: 0; }
+.trophyName {
+  font-family: 'Fredoka One', 'Segoe UI', sans-serif; font-size: 13px; color: #fff;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.trophyDate { font-size: 10px; color: var(--kdim); margin-top: 2px; }
+.trophyPts {
+  font-family: 'Fredoka One', 'Segoe UI', sans-serif; font-size: 13px;
+  color: var(--kpts); flex-shrink: 0; white-space: nowrap;
+}
+
+/* ── Já section ── */
+.jaSection {
+  display: flex; flex-direction: column; align-items: center;
+  padding: 24px 0 32px; gap: 8px;
+}
+.jaAva {
+  font-size: 64px; margin-bottom: 6px;
+  filter: drop-shadow(0 0 20px var(--kglow));
+}
+.jaName {
+  font-family: 'Fredoka One', 'Segoe UI', sans-serif; font-size: 28px; color: #fff;
+}
+.jaAge { font-size: 13px; color: var(--kdim); margin-bottom: 4px; }
+
+.jaStats {
+  display: flex; gap: 12px; margin: 14px 0;
+}
+.jaStat {
+  background: var(--kcard); border: 1px solid var(--kcardb); border-radius: var(--kr);
+  padding: 12px 18px; display: flex; flex-direction: column; align-items: center; gap: 4px; min-width: 80px;
+}
+.jaStatN {
+  font-family: 'Fredoka One', 'Segoe UI', sans-serif; font-size: 26px; color: #fff; line-height: 1;
+}
+.jaStatL { font-size: 10px; color: var(--kdim); text-align: center; }
+
+.switchBtn {
+  font-family: 'Fredoka One', 'Segoe UI', sans-serif;
+  font-size: 18px; padding: 14px 32px; border-radius: var(--kr);
+  border: none; background: var(--kbdg); color: var(--kbdgf);
+  cursor: pointer; transition: opacity 0.15s, transform 0.15s;
+  box-shadow: 0 4px 18px var(--kglow); margin-top: 8px;
+}
+.switchBtn:hover { opacity: 0.90; transform: translateY(-2px); }
+
+.logoutLink {
+  font-size: 12px; color: var(--kdim); background: transparent; border: none;
+  cursor: pointer; padding: 8px; margin-top: 8px;
+  text-decoration: underline; transition: color 0.15s;
+}
+.logoutLink:hover { color: rgba(255,255,255,0.65); }
+
 /* ── Child picker (shown before a child is selected) ── */
 .picker {
   min-height: 100vh;
