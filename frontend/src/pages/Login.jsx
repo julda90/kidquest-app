@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { login } from '../api/auth'
-import { getMe } from '../api/users'
 import { useAuth } from '../context/AuthContext'
 import styles from './Login.module.css'
 
@@ -31,14 +30,11 @@ export default function Login() {
     try {
       const data = await login(email, password)
       saveToken(data.token)
-      try {
-        const me = await getMe()
-        if (me.role === 'CHILD') {
-          try { localStorage.removeItem('kid_selectedChildId') } catch { /**/ }
-          window.location.replace('/kid')
-          return
-        }
-      } catch { /* role check failed — fall through to dashboard */ }
+      if (data.role === 'CHILD') {
+        try { localStorage.removeItem('kid_selectedChildId') } catch { /**/ }
+        window.location.replace('/kid')
+        return
+      }
       navigate('/dashboard')
     } catch (err) {
       setServerError(err.message)

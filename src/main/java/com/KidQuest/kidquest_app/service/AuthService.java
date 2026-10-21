@@ -47,7 +47,7 @@ public class AuthService {
             appUser.setFamily(familyService.findById(registerRequest.getFamilyId()));
         }
         appUserRepository.save(appUser);
-        return new AuthResponse(jwtService.generateToken(appUser));
+        return new AuthResponse(jwtService.generateToken(appUser), appUser.getRole());
     }
 
     public AuthResponse login(LoginRequest loginRequest) {
@@ -57,6 +57,6 @@ public class AuthService {
             log.warn("Login: user {} ({}) has no family — app will show empty data", appUser.getId(), appUser.getEmail());
         }
         String token = jwtService.generateToken(appUser);
-        return new AuthResponse(token);
+        return new AuthResponse(token, appUser.getRole());
     }
 }
