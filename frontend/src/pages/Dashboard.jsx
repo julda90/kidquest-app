@@ -401,51 +401,52 @@ export default function Dashboard() {
           </section>
 
           {/* Pending Redemptions */}
-          {redemptions.filter(r => r.status === 'REQUESTED' || r.status === 'APPROVED').length > 0 && (
-            <section className={`${styles.panel} ${styles.panelFull}`}>
-              <div className={styles.panelHeader}>
-                <h2>🎁 Žádosti o odměny</h2>
-              </div>
-              <div className={styles.redemptionList}>
-                {redemptions
-                  .filter(r => r.status === 'REQUESTED' || r.status === 'APPROVED')
-                  .map(r => (
-                    <div key={r.id} className={styles.redemptionCard}>
-                      <div className={styles.redemptionInfo}>
-                        <span className={styles.redemptionIcon}>{r.rewardIcon || '🎁'}</span>
-                        <div>
-                          <div className={styles.redemptionName}>{r.rewardName}</div>
-                          <div className={styles.redemptionMeta}>
-                            {r.childName} · ⭐ {r.pointCost} bodů ·{' '}
-                            <span className={r.status === 'APPROVED' ? styles.tagGreen : styles.tagOrange}>
-                              {r.status === 'APPROVED' ? 'Schváleno' : 'Čeká'}
-                            </span>
+          <section className={`${styles.panel} ${styles.panelFull}`}>
+            <div className={styles.panelHeader}>
+              <h2>🎁 Žádosti o odměny</h2>
+            </div>
+            {redemptions.filter(r => r.status === 'REQUESTED' || r.status === 'APPROVED').length === 0
+              ? <p className={styles.emptyState}>Žádné čekající žádosti o odměny.</p>
+              : <div className={styles.redemptionList}>
+                  {redemptions
+                    .filter(r => r.status === 'REQUESTED' || r.status === 'APPROVED')
+                    .map(r => (
+                      <div key={r.id} className={styles.redemptionCard}>
+                        <div className={styles.redemptionInfo}>
+                          <span className={styles.redemptionIcon}>{r.rewardIcon || '🎁'}</span>
+                          <div>
+                            <div className={styles.redemptionName}>{r.rewardName}</div>
+                            <div className={styles.redemptionMeta}>
+                              {r.childName} · ⭐ {r.pointCost} bodů ·{' '}
+                              <span className={r.status === 'APPROVED' ? styles.tagGreen : styles.tagOrange}>
+                                {r.status === 'APPROVED' ? 'Schváleno' : 'Čeká'}
+                              </span>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                      <div className={styles.rowActions}>
-                        {r.status === 'REQUESTED' && (
-                          <button className={`${styles.tag} ${styles.tagGreen} ${styles.tagBtn}`}
-                            onClick={() => handleApproveRedemption(r.id)}>
-                            ✓ Schválit
+                        <div className={styles.rowActions}>
+                          {r.status === 'REQUESTED' && (
+                            <button className={`${styles.tag} ${styles.tagGreen} ${styles.tagBtn}`}
+                              onClick={() => handleApproveRedemption(r.id)}>
+                              ✓ Schválit
+                            </button>
+                          )}
+                          {r.status === 'APPROVED' && (
+                            <button className={`${styles.tag} ${styles.tagBlue} ${styles.tagBtn}`}
+                              onClick={() => handleDeliverRedemption(r.id)}>
+                              📦 Předat
+                            </button>
+                          )}
+                          <button className={`${styles.tag} ${styles.tagRed} ${styles.tagBtn}`}
+                            onClick={() => handleCancelRedemption(r.id)}>
+                            ✗ Zrušit
                           </button>
-                        )}
-                        {r.status === 'APPROVED' && (
-                          <button className={`${styles.tag} ${styles.tagBlue} ${styles.tagBtn}`}
-                            onClick={() => handleDeliverRedemption(r.id)}>
-                            📦 Předat
-                          </button>
-                        )}
-                        <button className={`${styles.tag} ${styles.tagRed} ${styles.tagBtn}`}
-                          onClick={() => handleCancelRedemption(r.id)}>
-                          ✗ Zrušit
-                        </button>
+                        </div>
                       </div>
-                    </div>
-                  ))}
-              </div>
-            </section>
-          )}
+                    ))}
+                </div>
+            }
+          </section>
 
           {/* Family Goal */}
           <section className={`${styles.panel} ${styles.panelFull}`}>

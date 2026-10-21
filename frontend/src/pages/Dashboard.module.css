@@ -160,6 +160,13 @@
 
 .panelFull { grid-column: 1 / -1; }
 
+.emptyState {
+  text-align: center;
+  padding: 20px 16px;
+  color: #9ca3af;
+  font-size: 14px;
+}
+
 .panelHeader {
   display: flex;
   justify-content: space-between;

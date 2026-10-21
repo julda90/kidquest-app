@@ -181,6 +181,45 @@ function ChildPicker({ children, onPick }) {
 
 const TAB_SEGS = ['today', 'map', 'shop', 'trophies', 'me']
 
+const MAP_STAGES = {
+  frozen:    ['Vesnice', 'Ledové jezero', 'Ledový les', 'Horský průsmyk', 'Ledový palác', 'Trůnní sál'],
+  unicorn:   ['Louka', 'Duhový most', 'Oblaka', 'Hvězdné pole', 'Měsíc', 'Duhový hrad'],
+  minecraft: ['Les', 'Jeskyně', 'Železný důl', 'Zlatý důl', 'Diamantová hloubka', 'Nether'],
+}
+const MAP_STAGE_ICO = {
+  frozen:    ['🏘️', '🧊', '🌲', '🏔️', '🏰', '👑'],
+  unicorn:   ['🌸', '🌈', '☁️', '⭐', '🌙', '🏰'],
+  minecraft: ['🌲', '🕳️', '⛏️', '💰', '💎', '🔥'],
+}
+
+const BADGE_META = {
+  LUMBERJACK:  { i: '🪵', n: 'Dřevorubec' },
+  SHERLOCK:    { i: '🔍', n: 'Detektiv' },
+  HEAD_WAITER: { i: '🍽️', n: 'Vrchní číšník' },
+  TIDY:        { i: '🧹', n: 'Uklízeč' },
+  LAUNDRY_PRO: { i: '🧺', n: 'Prací mistr' },
+  STREAK_7:    { i: '🔥', n: '7 dní v řadě' },
+  STREAK_30:   { i: '💥', n: '30 dní v řadě' },
+  EARLY_BIRD:  { i: '🐦', n: 'Pilný včelek (10 úkolů)' },
+  FIRST_REWARD:{ i: '🎁', n: 'První odměna' },
+  TEAM_PLAYER: { i: '👥', n: 'Týmový hráč (50 úkolů)' },
+}
+
+const SKINS = [
+  { id: 'elsa',      emoji: '❄️',  name: 'Elsa',       minLevel: 1 },
+  { id: 'unicorn',   emoji: '🦄',  name: 'Jednorožec', minLevel: 1 },
+  { id: 'hotwheels', emoji: '🏎️', name: 'Hot Wheels', minLevel: 2 },
+  { id: 'minecraft', emoji: '⛏️', name: 'Minecraft',  minLevel: 2 },
+  { id: 'dragon',    emoji: '🐉',  name: 'Drak',       minLevel: 3 },
+  { id: 'robot',     emoji: '🤖',  name: 'Robot',      minLevel: 3 },
+  { id: 'wizard',    emoji: '🧙',  name: 'Kouzelník',  minLevel: 4 },
+  { id: 'ninja',     emoji: '🥷',  name: 'Ninja',      minLevel: 4 },
+  { id: 'astronaut', emoji: '🧑‍🚀', name: 'Astronaut', minLevel: 5 },
+  { id: 'fairy',     emoji: '🧚',  name: 'Víla',       minLevel: 5 },
+]
+
+const TX_ICONS = { TASK: '📝', BONUS: '🔍', STREAK: '🔥', CHEST: '🧰', REDEEM: '🎁', MANUAL: '✋' }
+
 // ── Main KidView page ─────────────────────────────────────────────────────────
 export default function KidView() {
   const { logout }  = useAuth()
@@ -439,17 +478,6 @@ export default function KidView() {
     )
   }
 
-  const MAP_STAGES = {
-    frozen:    ['Vesnice', 'Ledové jezero', 'Ledový les', 'Horský průsmyk', 'Ledový palác', 'Trůnní sál'],
-    unicorn:   ['Louka', 'Duhový most', 'Oblaka', 'Hvězdné pole', 'Měsíc', 'Duhový hrad'],
-    minecraft: ['Les', 'Jeskyně', 'Železný důl', 'Zlatý důl', 'Diamantová hloubka', 'Nether'],
-  }
-  const MAP_STAGE_ICO = {
-    frozen:    ['🏘️', '🧊', '🌲', '🏔️', '🏰', '👑'],
-    unicorn:   ['🌸', '🌈', '☁️', '⭐', '🌙', '🏰'],
-    minecraft: ['🌲', '🕳️', '⛏️', '💰', '💎', '🔥'],
-  }
-
   // ── Section: Mapa ────────────────────────────────────────────────────────
   function renderMapa() {
     const level    = progress?.level ?? 1
@@ -644,19 +672,6 @@ export default function KidView() {
     )
   }
 
-  const BADGE_META = {
-    LUMBERJACK:  { i: '🪵', n: 'Dřevorubec' },
-    SHERLOCK:    { i: '🔍', n: 'Detektiv' },
-    HEAD_WAITER: { i: '🍽️', n: 'Vrchní číšník' },
-    TIDY:        { i: '🧹', n: 'Uklízeč' },
-    LAUNDRY_PRO: { i: '🧺', n: 'Prací mistr' },
-    STREAK_7:    { i: '🔥', n: '7 dní v řadě' },
-    STREAK_30:   { i: '💥', n: '30 dní v řadě' },
-    EARLY_BIRD:  { i: '🐦', n: 'Pilný včelek (10 úkolů)' },
-    FIRST_REWARD:{ i: '🎁', n: 'První odměna' },
-    TEAM_PLAYER: { i: '👥', n: 'Týmový hráč (50 úkolů)' },
-  }
-
   // ── Section: Trofeje ─────────────────────────────────────────────────────
   function renderTrofeje() {
     const badgeInfo = progress?.badgeInfo ?? []
@@ -721,21 +736,6 @@ export default function KidView() {
   }
 
   // ── Section: Já ──────────────────────────────────────────────────────────
-  const SKINS = [
-    { id: 'elsa',       emoji: '❄️',  name: 'Elsa',       minLevel: 1 },
-    { id: 'unicorn',    emoji: '🦄',  name: 'Jednorožec', minLevel: 1 },
-    { id: 'hotwheels',  emoji: '🏎️', name: 'Hot Wheels', minLevel: 2 },
-    { id: 'minecraft',  emoji: '⛏️', name: 'Minecraft',  minLevel: 2 },
-    { id: 'dragon',     emoji: '🐉',  name: 'Drak',       minLevel: 3 },
-    { id: 'robot',      emoji: '🤖',  name: 'Robot',      minLevel: 3 },
-    { id: 'wizard',     emoji: '🧙',  name: 'Kouzelník',  minLevel: 4 },
-    { id: 'ninja',      emoji: '🥷',  name: 'Ninja',      minLevel: 4 },
-    { id: 'astronaut',  emoji: '🧑‍🚀', name: 'Astronaut', minLevel: 5 },
-    { id: 'fairy',      emoji: '🧚',  name: 'Víla',       minLevel: 5 },
-  ]
-
-  const TX_ICONS = { TASK: '📝', BONUS: '🔍', STREAK: '🔥', CHEST: '🧰', REDEEM: '🎁', MANUAL: '✋' }
-
   function renderJa() {
     const level   = progress?.level ?? 1
     const xp      = progress?.xp ?? 0
