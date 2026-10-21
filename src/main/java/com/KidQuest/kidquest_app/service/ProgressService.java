@@ -100,7 +100,8 @@ public class ProgressService {
         // Fetch active days in the last 90 days
         LocalDateTime since = today.minusDays(90).atStartOfDay();
         List<LocalDate> activeDays = pointTransactionRepository
-                .findActiveDaysSince(childId, since);
+                .findActiveDaysSince(childId, since)
+                .stream().map(java.sql.Date::toLocalDate).collect(Collectors.toList());
 
         Set<LocalDate> activeSet = new HashSet<>(activeDays);
 
@@ -242,7 +243,8 @@ public class ProgressService {
     }
 
     private int longestStreak(UUID childId) {
-        List<LocalDate> activeDays = pointTransactionRepository.findAllActiveDays(childId);
+        List<LocalDate> activeDays = pointTransactionRepository.findAllActiveDays(childId)
+                .stream().map(java.sql.Date::toLocalDate).collect(Collectors.toList());
         if (activeDays.isEmpty()) return 0;
         List<LocalDate> sorted = activeDays.stream().sorted().toList();
         int longest = 1, current = 1;

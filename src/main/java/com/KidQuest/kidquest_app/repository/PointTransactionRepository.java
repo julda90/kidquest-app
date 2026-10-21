@@ -28,7 +28,7 @@ public interface PointTransactionRepository extends JpaRepository<PointTransacti
     @Query(value = "SELECT DISTINCT CAST(created_at AS DATE) FROM point_transaction " +
                    "WHERE child_id = :childId AND type = 'TASK' AND created_at >= :since",
            nativeQuery = true)
-    List<java.time.LocalDate> findActiveDaysSince(UUID childId, LocalDateTime since);
+    List<java.sql.Date> findActiveDaysSince(UUID childId, LocalDateTime since);
 
     /** Count TASK transactions on a specific day for chest availability */
     @Query("SELECT COUNT(t) FROM PointTransaction t WHERE t.child.id = :childId AND t.type = 'TASK' " +
@@ -52,7 +52,7 @@ public interface PointTransactionRepository extends JpaRepository<PointTransacti
     @Query(value = "SELECT DISTINCT CAST(created_at AS DATE) FROM point_transaction " +
                    "WHERE child_id = :childId AND type = 'TASK'",
            nativeQuery = true)
-    List<java.time.LocalDate> findAllActiveDays(UUID childId);
+    List<java.sql.Date> findAllActiveDays(UUID childId);
 
     /** Max TASK transactions completed in any single day */
     @Query(value = "SELECT COALESCE(MAX(daily_count),0) FROM " +
