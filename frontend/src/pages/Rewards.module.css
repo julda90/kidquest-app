@@ -1,0 +1,146 @@
+.layout { display: flex; min-height: 100vh; background: #f4f5fb; }
+.main   { flex: 1; padding: 32px; overflow-y: auto; max-width: 1100px; }
+
+.center { display: flex; justify-content: center; align-items: center; height: 100vh; }
+.spinner { width: 36px; height: 36px; border: 4px solid #e0e0f0; border-top-color: #667eea; border-radius: 50%; animation: spin 0.8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.errorMsg { color: #e53e3e; font-weight: 600; }
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.title    { font-size: 24px; font-weight: 800; color: #1a1a2e; margin: 0 0 4px; }
+.subtitle { font-size: 14px; color: #888; margin: 0; }
+
+.headerActions { display: flex; gap: 10px; flex-shrink: 0; }
+
+.btnAdd {
+  padding: 9px 18px;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+.btnAdd:hover { opacity: 0.85; }
+
+.btnSecondary {
+  padding: 9px 18px;
+  background: #f0f0fa;
+  color: #667eea;
+  border: 1.5px solid #667eea;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.btnSecondary:hover { background: #e8e8f8; }
+
+.banner {
+  background: #fff8e1;
+  border: 1.5px solid #f6c000;
+  border-radius: 12px;
+  padding: 12px 18px;
+  font-size: 13px;
+  color: #7a5a00;
+  margin-bottom: 16px;
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+.toggleLabel { display: flex; align-items: center; gap: 6px; font-size: 13px; color: #555; cursor: pointer; }
+.toggleLabel input { width: 16px; height: 16px; }
+
+.tierSection { margin-bottom: 32px; }
+
+.tierTitle {
+  font-size: 15px;
+  font-weight: 700;
+  color: #1a1a2e;
+  margin: 0 0 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.tierHint { font-size: 12px; color: #aaa; font-weight: 400; }
+
+.rewardGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 16px;
+}
+
+.rewardCard {
+  background: #fff;
+  border-radius: 16px;
+  padding: 16px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  position: relative;
+  transition: opacity 0.2s;
+}
+.rewardCard.archived { opacity: 0.55; background: #f8f8f8; }
+.rewardCard.mispriced { border: 2px solid #f6c000; }
+
+.cardTop { display: flex; justify-content: space-between; align-items: flex-start; }
+
+.rewardIcon { font-size: 28px; }
+
+.cardActions { display: flex; gap: 2px; }
+.iconBtn { background: none; border: none; font-size: 14px; cursor: pointer; padding: 3px 5px; border-radius: 6px; opacity: 0.5; transition: opacity 0.15s; }
+.iconBtn:hover { opacity: 1; background: #f0f0fa; }
+
+.rewardName { font-size: 14px; font-weight: 700; color: #1a1a2e; }
+
+.childBadge { font-size: 11px; color: #667eea; font-weight: 600; }
+
+.priceRow { display: flex; align-items: center; gap: 6px; }
+.rewardCost { font-size: 13px; color: #444; font-weight: 600; }
+.warnCost { color: #d97706; }
+.editPriceBtn { background: none; border: none; font-size: 12px; cursor: pointer; opacity: 0.5; padding: 2px 4px; border-radius: 4px; }
+.editPriceBtn:hover { opacity: 1; background: #f0f0fa; }
+
+.priceEdit { display: flex; align-items: center; gap: 4px; }
+.priceInput { width: 70px; border: 1.5px solid #667eea; border-radius: 6px; padding: 4px 8px; font-size: 13px; outline: none; }
+.priceSave   { background: #667eea; color: #fff; border: none; border-radius: 6px; padding: 4px 8px; cursor: pointer; font-size: 13px; }
+.priceCancel { background: #f0f0fa; border: none; border-radius: 6px; padding: 4px 8px; cursor: pointer; font-size: 13px; }
+
+.daysHint { font-size: 11px; color: #888; }
+.statRow  { font-size: 11px; color: #aaa; }
+
+.archivedBadge {
+  font-size: 10px;
+  background: #f0f0f0;
+  color: #999;
+  border-radius: 6px;
+  padding: 2px 8px;
+  text-align: center;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  align-self: flex-start;
+}
+
+.empty {
+  background: #fff;
+  border-radius: 16px;
+  padding: 40px;
+  text-align: center;
+  color: #aaa;
+  font-size: 14px;
+}

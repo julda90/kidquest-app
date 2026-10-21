@@ -25,4 +25,11 @@ public interface RewardRedemptionRepository extends JpaRepository<RewardRedempti
 
     @Query("SELECT COALESCE(SUM(r.pointCost), 0) FROM RewardRedemption r WHERE r.child.id = :childId AND r.status = 'REQUESTED'")
     int sumPendingCostByChildId(UUID childId);
+
+    boolean existsByRewardId(UUID rewardId);
+
+    @Query("SELECT r.reward.id, COUNT(r), MAX(r.createdAt) FROM RewardRedemption r " +
+           "WHERE r.reward.family.id = :familyId AND r.status IN ('APPROVED', 'DELIVERED') " +
+           "GROUP BY r.reward.id")
+    List<Object[]> findStatsByFamilyId(UUID familyId);
 }

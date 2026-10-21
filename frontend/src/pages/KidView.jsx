@@ -307,7 +307,9 @@ export default function KidView() {
       ])
       setChild(c)
       setTasks(tkArr.filter(tk => tk.status === 'ASSIGNED' || tk.status === 'PENDING_APPROVAL'))
-      setRewards(rwArr.filter(r => r.active).sort((a, b) => a.pointCost - b.pointCost))
+      setRewards(rwArr
+        .filter(r => r.active && !r.archivedAt && (!r.childId || r.childId === c.id))
+        .sort((a, b) => a.pointCost - b.pointCost))
       setTransactions([...txArr].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)))
       setProgress(prog)
       setRedemptions(redArr)

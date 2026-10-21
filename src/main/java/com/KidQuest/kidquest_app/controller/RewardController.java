@@ -2,8 +2,8 @@ package com.KidQuest.kidquest_app.controller;
 
 import com.KidQuest.kidquest_app.dto.request.RewardRequest;
 import com.KidQuest.kidquest_app.dto.response.RewardResponse;
+import com.KidQuest.kidquest_app.dto.response.RewardStatResponse;
 import com.KidQuest.kidquest_app.service.RewardService;
-import io.lettuce.core.dynamic.annotation.Value;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -22,29 +22,47 @@ public class RewardController {
     }
 
     @GetMapping("/family/{familyId}")
-    public ResponseEntity<List<RewardResponse>> findAllByFamilyId(@PathVariable UUID familyId){
-        List<RewardResponse> response = rewardService.findByFamilyId(familyId);
-        return ResponseEntity.ok(response);
+    public ResponseEntity<List<RewardResponse>> findAllByFamilyId(
+            @PathVariable UUID familyId,
+            @RequestParam(defaultValue = "false") boolean includeArchived) {
+        return ResponseEntity.ok(rewardService.findByFamilyId(familyId, includeArchived));
     }
+
     @GetMapping("/{rewardId}")
-    public ResponseEntity<RewardResponse> findById(@PathVariable UUID rewardId){
-        RewardResponse response = rewardService.findById(rewardId);
-        return ResponseEntity.ok(response);
+    public ResponseEntity<RewardResponse> findById(@PathVariable UUID rewardId) {
+        return ResponseEntity.ok(rewardService.findById(rewardId));
     }
 
     @PostMapping("/family/{familyId}")
-    public ResponseEntity<RewardResponse> create(@PathVariable UUID familyId, @RequestBody @Valid RewardRequest rewardRequest){
-        RewardResponse response = rewardService.create(familyId, rewardRequest);
-        return ResponseEntity.status(201).body(response);
+    public ResponseEntity<RewardResponse> create(@PathVariable UUID familyId,
+            @RequestBody @Valid RewardRequest rewardRequest) {
+        return ResponseEntity.status(201).body(rewardService.create(familyId, rewardRequest));
     }
+
     @PutMapping("/{rewardId}")
-    public ResponseEntity<RewardResponse> update(@PathVariable UUID rewardId, @RequestBody @Valid RewardRequest rewardRequest){
-        RewardResponse response = rewardService.update(rewardId, rewardRequest);
-        return ResponseEntity.ok(response);
+    public ResponseEntity<RewardResponse> update(@PathVariable UUID rewardId,
+            @RequestBody @Valid RewardRequest rewardRequest) {
+        return ResponseEntity.ok(rewardService.update(rewardId, rewardRequest));
     }
+
     @DeleteMapping("/{rewardId}")
-    public ResponseEntity<Void> delete(@PathVariable UUID rewardId){
+    public ResponseEntity<Void> delete(@PathVariable UUID rewardId) {
         rewardService.delete(rewardId);
         return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/{rewardId}/archive")
+    public ResponseEntity<RewardResponse> archive(@PathVariable UUID rewardId) {
+        return ResponseEntity.ok(rewardService.archive(rewardId));
+    }
+
+    @PostMapping("/{rewardId}/restore")
+    public ResponseEntity<RewardResponse> restore(@PathVariable UUID rewardId) {
+        return ResponseEntity.ok(rewardService.restore(rewardId));
+    }
+
+    @GetMapping("/family/{familyId}/stats")
+    public ResponseEntity<List<RewardStatResponse>> getStats(@PathVariable UUID familyId) {
+        return ResponseEntity.ok(rewardService.getStats(familyId));
     }
 }

@@ -72,4 +72,7 @@ public class Task {
 
     @Column(name = "daily_limit", nullable = false)
     private int dailyLimit = 1;
+
+    @Column(name = "catalog_key", length = 50)
+    private String catalogKey;
 }

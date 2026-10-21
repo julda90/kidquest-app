@@ -2,10 +2,11 @@ import styles from './Sidebar.module.css'
 
 const NAV = [
   { href: '/dashboard', icon: '🏠', label: 'Dashboard',        key: 'dashboard' },
-  { href: '/tasks',     icon: '✅', label: 'Tasks',            key: 'tasks'     },
-  { href: '/progress',  icon: '🎁', label: 'Rewards Progress', key: 'progress'  },
-  { href: '/children',  icon: '👶', label: 'Children',         key: 'children'  },
-  { href: '/settings',  icon: '⚙️', label: 'Settings',         key: 'settings'  },
+  { href: '/tasks',     icon: '✅', label: 'Úkoly',            key: 'tasks'     },
+  { href: '/rewards',   icon: '🎁', label: 'Odměny',           key: 'rewards'   },
+  { href: '/progress',  icon: '🗺️', label: 'Pokrok',           key: 'progress'  },
+  { href: '/children',  icon: '👶', label: 'Děti',             key: 'children'  },
+  { href: '/settings',  icon: '⚙️', label: 'Nastavení',        key: 'settings'  },
 ]
 
 export default function Sidebar({ active, onLogout }) {

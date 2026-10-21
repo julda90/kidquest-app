@@ -46,6 +46,12 @@ public class Reward {
     @JoinColumn(name = "child_id")
     private Child child;
 
+    @Column(name = "catalog_key", length = 50)
+    private String catalogKey;
+
+    @Column(name = "archived_at")
+    private LocalDateTime archivedAt;
+
     @CreatedDate
     @Column(name="created_at",updatable = false)
     private LocalDateTime createdAt;

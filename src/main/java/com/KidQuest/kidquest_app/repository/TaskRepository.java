@@ -23,4 +23,6 @@ public interface TaskRepository extends JpaRepository<Task, UUID> {
     long countByAssignedToIdAndStatus(UUID childId, com.KidQuest.kidquest_app.model.TaskStatus status);
 
     long countByTemplateIdAndAssignedToIdAndCreatedAtAfter(UUID templateId, UUID assignedToId, LocalDateTime after);
+
+    boolean existsByFamilyIdAndCatalogKeyAndDeletedAtIsNull(UUID familyId, String catalogKey);
 }

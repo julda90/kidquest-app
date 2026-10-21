@@ -8,6 +8,7 @@ import Tasks from './pages/Tasks'
 import Children from './pages/Children'
 import Settings from './pages/Settings'
 import KidView from './pages/KidView'
+import Rewards from './pages/Rewards'
 
 export default function App() {
   return (
@@ -16,6 +17,7 @@ export default function App() {
         <Routes>
           <Route path="/login"    element={<Login />} />
           <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+          <Route path="/rewards"   element={<ProtectedRoute><Rewards /></ProtectedRoute>} />
           <Route path="/progress"  element={<ProtectedRoute><RewardsProgress /></ProtectedRoute>} />
           <Route path="/tasks"     element={<ProtectedRoute><Tasks /></ProtectedRoute>} />
           <Route path="/children"  element={<ProtectedRoute><Children /></ProtectedRoute>} />

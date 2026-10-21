@@ -2,6 +2,7 @@ package com.KidQuest.kidquest_app.controller;
 
 import com.KidQuest.kidquest_app.dto.request.ChildRequest;
 import com.KidQuest.kidquest_app.dto.response.ChildResponse;
+import com.KidQuest.kidquest_app.dto.response.EarningRateResponse;
 import com.KidQuest.kidquest_app.dto.response.ProgressResponse;
 import com.KidQuest.kidquest_app.exception.BadRequestException;
 import com.KidQuest.kidquest_app.model.Child;
@@ -73,6 +74,21 @@ public class ChildController {
     @GetMapping("/{id}/progress")
     public ResponseEntity<ProgressResponse> getProgress(@PathVariable UUID id) {
         return ResponseEntity.ok(progressService.buildResponse(childService.findById(id)));
+    }
+
+    @GetMapping("/family/{familyId}/earning-rate")
+    public ResponseEntity<List<EarningRateResponse>> getEarningRate(
+            @PathVariable UUID familyId,
+            @RequestParam(defaultValue = "14") int days) {
+        LocalDate since = LocalDate.now(clock).minusDays(days);
+        java.time.LocalDateTime sinceDateTime = since.atStartOfDay();
+        List<EarningRateResponse> rates = childService.findAllByFamilyId(familyId).stream()
+                .map(child -> {
+                    int total = pointTransactionRepository.sumTaskBonusSince(child.getId(), sinceDateTime);
+                    double avg = days > 0 ? (double) total / days : 0;
+                    return new EarningRateResponse(child.getId(), avg);
+                }).toList();
+        return ResponseEntity.ok(rates);
     }
 
     @PostMapping("/{id}/chest/open")

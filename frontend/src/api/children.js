@@ -7,3 +7,4 @@ export const deleteChild    = (childId)          => apiFetch(`/api/children/${ch
 export const getProgress    = (childId)          => apiFetch(`/api/children/${childId}/progress`)
 export const openChest      = (childId)          => apiFetch(`/api/children/${childId}/chest/open`, { method: 'POST' })
 export const updateSkin     = (childId, skin)    => apiFetch(`/api/children/${childId}/skin`,       { method: 'PUT',  body: JSON.stringify({ skin }) })
+export const getEarningRate = (familyId, days = 14) => apiFetch(`/api/children/family/${familyId}/earning-rate?days=${days}`)

@@ -65,4 +65,10 @@ public interface PointTransactionRepository extends JpaRepository<PointTransacti
     /** Total count of TASK transactions for a child */
     @Query("SELECT COUNT(t) FROM PointTransaction t WHERE t.child.id = :childId AND t.type = 'TASK'")
     long countTasksByChildId(UUID childId);
+
+    /** Average daily TASK+BONUS points for a child over a period */
+    @Query(value = "SELECT COALESCE(SUM(amount), 0) FROM point_transaction " +
+                   "WHERE child_id = :childId AND type IN ('TASK', 'BONUS') AND created_at >= :since",
+           nativeQuery = true)
+    int sumTaskBonusSince(UUID childId, LocalDateTime since);
 }

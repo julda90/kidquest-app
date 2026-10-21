@@ -29,4 +29,5 @@ public class RewardRequest {
     private String icon;
 
     private UUID childId;
+    private String catalogKey;
 }

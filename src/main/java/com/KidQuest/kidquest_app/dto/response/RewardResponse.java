@@ -21,4 +21,7 @@ public class RewardResponse {
     private RewardTier tier;
     private String icon;
     private UUID childId;
+    private String childName;
+    private LocalDateTime archivedAt;
+    private String catalogKey;
 }
