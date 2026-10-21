@@ -35,4 +35,10 @@ public class TaskResponse {
     private Integer bonusValue;
 
     private LocalDateTime approvedAt;
+
+    private boolean openQuest;
+
+    private UUID templateId;
+
+    private Integer dailyLimit;
 }

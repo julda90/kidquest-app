@@ -45,10 +45,12 @@ public class RedemptionController {
         return ResponseEntity.ok(redemptionService.cancel(id));
     }
 
-    /** List all redemptions for a child. */
+    /** List all redemptions for a child. Optional ?days=30 limits to last N days. */
     @GetMapping("/child/{childId}")
-    public ResponseEntity<List<RedemptionResponse>> listByChild(@PathVariable UUID childId) {
-        return ResponseEntity.ok(redemptionService.findByChild(childId));
+    public ResponseEntity<List<RedemptionResponse>> listByChild(
+            @PathVariable UUID childId,
+            @RequestParam(required = false, defaultValue = "0") int days) {
+        return ResponseEntity.ok(redemptionService.findByChild(childId, days));
     }
 
     /** List all redemptions for a family. Optional ?status= filter. */

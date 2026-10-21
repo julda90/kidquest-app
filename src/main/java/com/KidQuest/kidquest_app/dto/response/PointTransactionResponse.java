@@ -17,4 +17,5 @@ public class PointTransactionResponse {
     private LocalDateTime createdAt;
     private TransactionType type;
     private UUID taskId;
+    private String taskTitle;
 }

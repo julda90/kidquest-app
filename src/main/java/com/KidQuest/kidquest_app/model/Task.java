@@ -63,4 +63,13 @@ public class Task {
 
     @Column(name="deleted_at")
     private LocalDateTime deletedAt;
+
+    @Column(name = "is_open_quest", nullable = false)
+    private boolean openQuest = false;
+
+    @Column(name = "template_id")
+    private UUID templateId;
+
+    @Column(name = "daily_limit", nullable = false)
+    private int dailyLimit = 1;
 }

@@ -1,8 +1,10 @@
 package com.KidQuest.kidquest_app.service;
 
+import com.KidQuest.kidquest_app.dto.response.BadgeInfoResponse;
 import com.KidQuest.kidquest_app.dto.response.ProgressResponse;
 import com.KidQuest.kidquest_app.model.Badge;
 import com.KidQuest.kidquest_app.model.Child;
+import com.KidQuest.kidquest_app.model.ChildBadge;
 import com.KidQuest.kidquest_app.model.TransactionType;
 import com.KidQuest.kidquest_app.repository.ChildBadgeRepository;
 import com.KidQuest.kidquest_app.repository.PointTransactionRepository;
@@ -79,11 +81,12 @@ public class ProgressService {
     }
 
     private static final Map<String, String[]> LEVEL_NAMES_MAP = Map.of(
-        "elsa",      new String[]{"Sněhulák", "Princezna sněhu", "Ledová kouzelnice", "Strážkyně zimy", "Královna ledu", "Elsa Mocná"},
-        "unicorn",   new String[]{"Hříbě", "Jednorožec", "Kouzelný jednorožec", "Duhový jednorožec", "Světelný jednorožec", "Jednorožec hvězd"},
-        "hotwheels", new String[]{"Nováček", "Řemeslník", "Stavitel", "Průzkumník", "Dobrodružec", "Mistr Craft"}
+        "elsa",      new String[]{"Sněhová vločka", "Ledový krystal", "Ledová princezna", "Strážkyně severu", "Mistryně ledu", "Ledová královna"},
+        "unicorn",   new String[]{"Hvězdička", "Duhová jiskra", "Malý jednorožec", "Duhový jednorožec", "Kouzelný jednorožec", "Královna duhy"},
+        "hotwheels", new String[]{"Dřevěný", "Kamenný", "Železný", "Zlatý", "Diamantový", "Netheritový krumpáč"},
+        "minecraft", new String[]{"Dřevěný", "Kamenný", "Železný", "Zlatý", "Diamantový", "Netheritový krumpáč"}
     );
-    private static final String[] DEFAULT_LEVEL_NAMES = {"Začátečník", "Pomocník", "Šikovný", "Zkušený", "Expertní", "Mistr"};
+    private static final String[] DEFAULT_LEVEL_NAMES = {"Nováček", "Pomocník", "Šikovný", "Zkušený", "Expertní", "Mistr"};
 
     public static String levelName(String avatar, int level) {
         String[] names = LEVEL_NAMES_MAP.getOrDefault(avatar, DEFAULT_LEVEL_NAMES);
@@ -152,19 +155,60 @@ public class ProgressService {
         return chestsThisWeek == 0;
     }
 
+    // ── Badge targets ─────────────────────────────────────────────────────────
+    private static final Map<Badge, Integer> BADGE_TARGETS = Map.of(
+        Badge.STREAK_7,     7,
+        Badge.STREAK_30,    30,
+        Badge.FIRST_REWARD, 1,
+        Badge.EARLY_BIRD,   10,
+        Badge.TEAM_PLAYER,  50
+    );
+
     public ProgressResponse buildResponse(Child child) {
         UUID childId = child.getId();
         LocalDate today = LocalDate.now(clock);
 
-        int balance  = balance(childId);
-        LevelInfo li = level(child);
-        StreakInfo si = streak(childId, today);
+        int balance     = balance(childId);
+        LevelInfo li    = level(child);
+        StreakInfo si   = streak(childId, today);
+        int totalTasks  = (int) pointTransactionRepository.countTasksByChildId(childId);
+        int bestDay     = pointTransactionRepository.maxTasksInAnyDay(childId);
+        int longestStr  = longestStreak(childId);
+        int totalRed    = (int) redemptionRepository.findByChildId(childId).size();
 
-        List<Badge> badges = childBadgeRepository.findByChildId(childId)
-                .stream()
-                .map(cb -> cb.getBadge())
-                .collect(Collectors.toList());
+        // Load earned badges into a map for quick lookup
+        Map<Badge, ChildBadge> earnedMap = childBadgeRepository.findByChildId(childId)
+                .stream().collect(Collectors.toMap(cb -> cb.getBadge(), cb -> cb));
 
+        // Auto-award milestone badges
+        awardIfMet(child, earnedMap, Badge.STREAK_7,     si.days() >= 7);
+        awardIfMet(child, earnedMap, Badge.STREAK_30,    si.days() >= 30);
+        awardIfMet(child, earnedMap, Badge.FIRST_REWARD, totalRed >= 1);
+        awardIfMet(child, earnedMap, Badge.EARLY_BIRD,   totalTasks >= 10);
+        awardIfMet(child, earnedMap, Badge.TEAM_PLAYER,  totalTasks >= 50);
+
+        // Build rich badge info for all badges
+        List<BadgeInfoResponse> badgeInfo = Arrays.stream(Badge.values()).map(b -> {
+            BadgeInfoResponse bi = new BadgeInfoResponse();
+            bi.setBadge(b.name());
+            ChildBadge cb = earnedMap.get(b);
+            bi.setEarned(cb != null);
+            if (cb != null) bi.setEarnedAt(cb.getEarnedAt());
+            Integer target = BADGE_TARGETS.get(b);
+            if (target != null) {
+                bi.setTarget(target);
+                int cur = switch (b) {
+                    case STREAK_7, STREAK_30 -> si.days();
+                    case FIRST_REWARD        -> totalRed;
+                    case EARLY_BIRD, TEAM_PLAYER -> totalTasks;
+                    default -> 0;
+                };
+                bi.setCurrent(Math.min(cur, target));
+            }
+            return bi;
+        }).collect(Collectors.toList());
+
+        List<Badge> badges = earnedMap.keySet().stream().collect(Collectors.toList());
         int pendingPts = redemptionRepository.sumPendingCostByChildId(childId);
 
         ProgressResponse r = new ProgressResponse();
@@ -178,8 +222,37 @@ public class ProgressService {
         r.setStreakDays(si.days());
         r.setJokerUsedThisWeek(si.jokerUsedThisWeek());
         r.setBadges(badges);
+        r.setBadgeInfo(badgeInfo);
         r.setChestAvailable(chestAvailable(childId, today));
         r.setPendingRedemptionPoints(pendingPts);
+        r.setRecordTotalTasks(totalTasks);
+        r.setRecordLongestStreak(longestStr);
+        r.setRecordBestDayTasks(bestDay);
         return r;
+    }
+
+    private void awardIfMet(Child child, Map<Badge, ChildBadge> earnedMap, Badge badge, boolean condition) {
+        if (condition && !earnedMap.containsKey(badge)) {
+            ChildBadge cb = new ChildBadge();
+            cb.setChild(child);
+            cb.setBadge(badge);
+            ChildBadge saved = childBadgeRepository.save(cb);
+            earnedMap.put(badge, saved);
+        }
+    }
+
+    private int longestStreak(UUID childId) {
+        List<LocalDate> activeDays = pointTransactionRepository.findAllActiveDays(childId);
+        if (activeDays.isEmpty()) return 0;
+        List<LocalDate> sorted = activeDays.stream().sorted().toList();
+        int longest = 1, current = 1;
+        for (int i = 1; i < sorted.size(); i++) {
+            if (sorted.get(i).minusDays(1).equals(sorted.get(i - 1))) {
+                longest = Math.max(longest, ++current);
+            } else {
+                current = 1;
+            }
+        }
+        return longest;
     }
 }

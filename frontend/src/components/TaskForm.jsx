@@ -12,6 +12,8 @@ export default function TaskForm({ initial = {}, children = [], families = [], o
   const [status,     setStatus]     = useState(initial.status      ?? 'UNASSIGNED')
   const [assignedTo, setAssignedTo] = useState(initial.assignedTo  ?? '')
   const [familyId,   setFamilyId]   = useState(initial.familyId   ?? (families[0]?.id ?? ''))
+  const [openQuest,  setOpenQuest]  = useState(initial.openQuest  ?? false)
+  const [dailyLimit, setDailyLimit] = useState(initial.dailyLimit ?? 1)
   const [errors,      setErrors]      = useState({})
   const [serverError, setServerError] = useState('')
   const [loading,     setLoading]     = useState(false)
@@ -39,6 +41,8 @@ export default function TaskForm({ initial = {}, children = [], families = [], o
         dueDate: dueDate || null,
         status,
         assignedToId: assignedTo || null,
+        openQuest,
+        dailyLimit: openQuest ? Number(dailyLimit) : 1,
       })
     } catch (err) {
       setServerError(err.message || 'Failed to save task.')
@@ -102,6 +106,21 @@ export default function TaskForm({ initial = {}, children = [], families = [], o
           </select>
         </div>
       </div>
+
+      <div className={f.group}>
+        <label className={f.checkRow}>
+          <input type="checkbox" checked={openQuest} onChange={e => setOpenQuest(e.target.checked)} />
+          Vedlejší quest (může si vzít sám/a kdokoliv z rodiny)
+        </label>
+      </div>
+
+      {openQuest && (
+        <div className={f.group}>
+          <label>Max. vzít za den</label>
+          <input type="number" min="1" max="10" value={dailyLimit}
+            onChange={e => setDailyLimit(e.target.value)} style={{ width: '80px' }} />
+        </div>
+      )}
 
       <div className={f.actions}>
         <button type="button" className={f.btnCancel} onClick={onCancel}>Cancel</button>

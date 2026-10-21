@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { getMe } from '../api/users'
-import { getChildren, getProgress, openChest } from '../api/children'
-import { getTasksByChild, submitTask } from '../api/tasks'
+import { getChildren, getProgress, openChest, updateSkin } from '../api/children'
+import { getTasksByChild, submitTask, getOpenQuests, claimQuest } from '../api/tasks'
 import { getRewards } from '../api/rewards'
 import { getTransactionsByChild } from '../api/pointTransactions'
 import { redeemReward, getRedemptionsByChild, cancelRedemption } from '../api/redemptions'
@@ -44,6 +44,7 @@ const THEME_VARS = {
     '--kbtnw': 'linear-gradient(135deg,#c8ecff,#80d0f8)', '--kbtnwf': '#04213a',
     '--kdone': 'rgba(100,200,255,0.18)', '--kcur': 'linear-gradient(135deg,#c8ecff,#80d0f8)', '--kcurf': '#04213a',
     '--ktrack': 'rgba(100,200,255,0.20)', '--kfill': 'linear-gradient(90deg,#4eb8e8,#c8ecff)',
+    '--kacc': '#4eb8e8',
   },
   unicorn: {
     '--kbg': 'linear-gradient(170deg,#1a052e 0%,#5b1280 45%,#b5198f 80%,#f472b6 100%)',
@@ -55,6 +56,7 @@ const THEME_VARS = {
     '--kbtnw': 'linear-gradient(135deg,#f9a8d4,#e879f9)', '--kbtnwf': '#2d0050',
     '--kdone': 'rgba(200,50,200,0.18)', '--kcur': 'linear-gradient(135deg,#f9a8d4,#e879f9)', '--kcurf': '#2d0050',
     '--ktrack': 'rgba(240,100,200,0.20)', '--kfill': 'linear-gradient(90deg,#e879f9,#f9a8d4)',
+    '--kacc': '#e879f9',
   },
   minecraft: {
     '--kbg': 'linear-gradient(180deg,#71b5d4 0%,#71b5d4 55%,#5a8c3c 55%,#5a8c3c 67%,#7a4f1e 67%,#7a4f1e 100%)',
@@ -66,6 +68,7 @@ const THEME_VARS = {
     '--kbtnw': 'linear-gradient(135deg,#00e5ff,#0098c4)', '--kbtnwf': '#001820',
     '--kdone': 'rgba(0,180,0,0.20)', '--kcur': 'linear-gradient(135deg,#00e5ff,#0098c4)', '--kcurf': '#001820',
     '--ktrack': 'rgba(0,200,255,0.20)', '--kfill': 'linear-gradient(90deg,#5ac05a,#00e5ff)',
+    '--kacc': '#5ac05a',
   },
 }
 
@@ -137,10 +140,17 @@ function loadMorning(childId, count) {
 function saveMorning(childId, state) {
   try { localStorage.setItem(`morning_${childId}_${todayKey()}`, JSON.stringify(state)) } catch { /**/ }
 }
-function parseTaskName(reason) {
-  if (!reason) return '—'
-  const m = reason.match(/^Completed task:\s*(.+)$/i)
-  return m ? m[1] : reason
+const LEGACY_REASON_MAP = {
+  'Points added manually':    'Body od rodičů',
+  'Points deducted manually': 'Oprava bodů',
+}
+
+function txLabel(tx) {
+  if ((tx.type === 'TASK' || tx.type === 'BONUS') && tx.taskTitle) return tx.taskTitle
+  if (tx.reason && LEGACY_REASON_MAP[tx.reason]) return LEGACY_REASON_MAP[tx.reason]
+  if (!tx.reason) return '—'
+  const m = tx.reason.match(/^Completed task:\s*(.+)$/i)
+  return m ? m[1] : tx.reason
 }
 function czShortDate(isoStr) {
   try {
@@ -169,6 +179,8 @@ function ChildPicker({ children, onPick }) {
   )
 }
 
+const TAB_SEGS = ['today', 'map', 'shop', 'trophies', 'me']
+
 // ── Main KidView page ─────────────────────────────────────────────────────────
 export default function KidView() {
   const { logout }  = useAuth()
@@ -177,6 +189,7 @@ export default function KidView() {
   const rafRef      = useRef(null)
   const partsRef    = useRef([])
   const t0Ref       = useRef(performance.now())
+  const prevLevelRef = useRef(null)
 
   const [loading,      setLoading]      = useState(true)
   const [error,        setError]        = useState('')
@@ -188,11 +201,17 @@ export default function KidView() {
   const [transactions, setTransactions] = useState([])
   const [progress,     setProgress]     = useState(null)
   const [redemptions,  setRedemptions]  = useState([])
+  const [openQuestTemplates, setOpenQuestTemplates] = useState([])
+  const [claiming,     setClaiming]     = useState(null)
   const [morningDone,  setMorningDone]  = useState([])
-  const [activeNav,    setActiveNav]    = useState(0)
-  const [submitting,   setSubmitting]   = useState(null)
+  const [submitting,      setSubmitting]      = useState(null)
+  const [confirmRedeemId, setConfirmRedeemId] = useState(null)
+
+  const { tab }   = useParams()
+  const activeNav = TAB_SEGS.includes(tab) ? TAB_SEGS.indexOf(tab) : 0
   const [redeeming,    setRedeeming]    = useState(null)
   const [chestToast,   setChestToast]   = useState(null)
+  const [levelUpAnim,  setLevelUpAnim]  = useState(false)
 
   const totalPts = progress?.balance ?? 0
   const streak   = progress?.streakDays ?? 0
@@ -228,12 +247,13 @@ export default function KidView() {
       localStorage.setItem('kid_selectedChildId', c.id)
       const t = THEME_MAP[c.avatar] || 'frozen'
       const stepCount = MORNING_STEPS[t].length
-      const [tkArr, rwArr, txArr, prog, redArr] = await Promise.all([
+      const [tkArr, rwArr, txArr, prog, redArr, oqArr] = await Promise.all([
         getTasksByChild(c.id),
         getRewards(fIdToUse),
         getTransactionsByChild(c.id),
         getProgress(c.id),
         getRedemptionsByChild(c.id),
+        getOpenQuests(fIdToUse),
       ])
       setChild(c)
       setTasks(tkArr.filter(tk => tk.status === 'ASSIGNED' || tk.status === 'PENDING_APPROVAL'))
@@ -241,8 +261,8 @@ export default function KidView() {
       setTransactions([...txArr].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)))
       setProgress(prog)
       setRedemptions(redArr)
+      setOpenQuestTemplates(oqArr)
       setMorningDone(loadMorning(c.id, stepCount))
-      setActiveNav(0)
     } catch (e) { setError(e.message) }
   }
 
@@ -250,7 +270,8 @@ export default function KidView() {
   function backToPicker() {
     try { localStorage.removeItem('kid_selectedChildId') } catch { /**/ }
     setChild(null); setTasks([]); setRewards([]); setTransactions([])
-    setProgress(null); setRedemptions([]); setMorningDone([]); setActiveNav(0)
+    setProgress(null); setRedemptions([]); setOpenQuestTemplates([]); setMorningDone([])
+    navigate('/kid', { replace: true })
   }
 
   // ── Submit task ───────────────────────────────────────────────────────────
@@ -261,6 +282,16 @@ export default function KidView() {
       await submitTask(task.taskId)
       setTasks(prev => prev.map(t => t.taskId === task.taskId ? { ...t, status: 'PENDING_APPROVAL' } : t))
     } catch { /**/ } finally { setSubmitting(null) }
+  }
+
+  // ── Claim open quest ──────────────────────────────────────────────────────
+  async function handleClaimQuest(template) {
+    if (!child) return
+    setClaiming(template.taskId)
+    try {
+      const claimed = await claimQuest(template.taskId, child.id)
+      setTasks(prev => [...prev, claimed])
+    } catch { /**/ } finally { setClaiming(null) }
   }
 
   // ── Toggle morning step ───────────────────────────────────────────────────
@@ -291,6 +322,11 @@ export default function KidView() {
     rafRef.current = requestAnimationFrame(loop)
     return () => { window.removeEventListener('resize', resize); cancelAnimationFrame(rafRef.current) }
   }, [particleType])
+
+  // Redirect bare /kid → /kid/today when a child is active
+  useEffect(() => {
+    if (child && !tab) navigate('/kid/today', { replace: true })
+  }, [child, tab]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Section: Výzvy ───────────────────────────────────────────────────────
   function renderVyzvy() {
@@ -362,86 +398,131 @@ export default function KidView() {
               <div className={styles.rewardIco}>🎁</div>
               <div className={styles.rewardName}>{r.name}</div>
               <div className={styles.rewardPts}>
-                {totalPts >= r.pointCost ? `${ptIcon} SPLNĚNO!` : `${ptIcon} ${r.pointCost}`}
+                {totalPts >= r.pointCost ? `${ptIcon} Můžeš si ji vzít!` : `${ptIcon} ${r.pointCost}`}
               </div>
             </div>
           ))}
         </div>
+
+        {/* Open quests */}
+        {openQuestTemplates.length > 0 && (
+          <>
+            <div className={styles.sectionHead}>
+              {theme === 'frozen' ? '🌟 Vedlejší výzvy' : theme === 'unicorn' ? '🌟 Speciální kouzla' : '🌟 Vedlejší questy'}
+            </div>
+            <div className={styles.tasksGrid}>
+              {openQuestTemplates.map(qt => {
+                const alreadyClaimed = tasks.some(t => t.templateId === qt.taskId)
+                const isClaiming = claiming === qt.taskId
+                return (
+                  <div key={qt.taskId} className={styles.taskCard}>
+                    <span className={styles.taskIco}>🌟</span>
+                    <span className={styles.taskName}>{qt.title}</span>
+                    {qt.description && <span style={{ fontSize: '10px', color: 'var(--kdim)', lineHeight: 1.3 }}>{qt.description}</span>}
+                    <div className={styles.taskBot}>
+                      <span className={styles.taskPts}>{ptIcon} {qt.pointValue}</span>
+                      <button
+                        className={`${styles.taskBtn} ${alreadyClaimed ? styles.btnWait : styles.btnGo}`}
+                        onClick={() => !alreadyClaimed && handleClaimQuest(qt)}
+                        disabled={alreadyClaimed || isClaiming}
+                      >
+                        {isClaiming ? '…' : alreadyClaimed ? 'Vzato ✓' : 'Vzít quest!'}
+                      </button>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </>
+        )}
       </>
     )
   }
 
+  const MAP_STAGES = {
+    frozen:    ['Vesnice', 'Ledové jezero', 'Ledový les', 'Horský průsmyk', 'Ledový palác', 'Trůnní sál'],
+    unicorn:   ['Louka', 'Duhový most', 'Oblaka', 'Hvězdné pole', 'Měsíc', 'Duhový hrad'],
+    minecraft: ['Les', 'Jeskyně', 'Železný důl', 'Zlatý důl', 'Diamantová hloubka', 'Nether'],
+  }
+  const MAP_STAGE_ICO = {
+    frozen:    ['🏘️', '🧊', '🌲', '🏔️', '🏰', '👑'],
+    unicorn:   ['🌸', '🌈', '☁️', '⭐', '🌙', '🏰'],
+    minecraft: ['🌲', '🕳️', '⛏️', '💰', '💎', '🔥'],
+  }
+
   // ── Section: Mapa ────────────────────────────────────────────────────────
   function renderMapa() {
-    const maxPts = rewards.length > 0 ? rewards[rewards.length - 1].pointCost : 1000
-    const pct    = Math.min(totalPts / maxPts * 100, 98)
+    const level    = progress?.level ?? 1
+    const xpPct    = progress?.progressPct ?? 0
+    const xp       = progress?.xp ?? 0
+    const maxLevel = 6
+    const stages   = MAP_STAGES[theme] ?? MAP_STAGES.frozen
+    const stageIco = MAP_STAGE_ICO[theme] ?? MAP_STAGE_ICO.frozen
+    const lvlWidth = 100 / maxLevel
+
+    // Avatar position on the full track (0–100%)
+    const avatarPct = Math.min(((level - 1) + (xpPct / 100)) * lvlWidth, 98)
+    const isMaxLevel = level >= maxLevel
+
+    // Fire level-up confetti when level increases
+    if (prevLevelRef.current !== null && prevLevelRef.current < level) {
+      setLevelUpAnim(true)
+      setTimeout(() => setLevelUpAnim(false), 3000)
+    }
+    prevLevelRef.current = level
+
     return (
       <>
-        <div className={styles.mapHeader}>
-          <span className={styles.mapPtsLabel}>{ptIcon} {totalPts} bodů</span>
-          {rewards.find(r => totalPts < r.pointCost) && (
-            <span className={styles.mapNextLabel}>
-              Další odměna: {rewards.find(r => totalPts < r.pointCost).name} za {ptIcon} {rewards.find(r => totalPts < r.pointCost).pointCost}
-            </span>
-          )}
+        {levelUpAnim && <div className={styles.levelUpBanner}>🎉 Nová úroveň: {progress?.levelName}! 🎉</div>}
+
+        {/* Level title */}
+        <div className={styles.xpMapHeader}>
+          <span className={styles.xpMapLvl}>Úroveň {level}: {progress?.levelName ?? ''}</span>
+          <span className={styles.xpMapXp}>{ptIcon} {xp} XP</span>
         </div>
 
-        <div className={styles.mapWrap}>
-          {/* Reward labels above track */}
-          <div className={styles.mapMilestoneRow}>
-            {rewards.map(r => (
-              <div key={r.id} className={styles.mapMilestone} style={{ left: `${Math.min(r.pointCost / maxPts * 100, 97)}%` }}>
-                <span className={`${styles.mapMilestoneIco} ${totalPts >= r.pointCost ? styles.mapUnlocked : ''}`}>
-                  {totalPts >= r.pointCost ? '🎉' : '🎁'}
-                </span>
-                <span className={styles.mapMilestoneName}>{r.name}</span>
-              </div>
-            ))}
-          </div>
+        {/* Scrollable stage track */}
+        <div className={styles.xpMapScroll}>
+          <div className={styles.xpMapTrack} style={{ width: `${maxLevel * 120}px` }}>
+            {/* Filled portion */}
+            <div className={styles.xpMapFill} style={{ width: `${avatarPct}%` }} />
 
-          {/* Track */}
-          <div className={styles.mapTrack}>
-            <div className={styles.mapFill} style={{ width: `${pct}%` }} />
-            <div className={styles.mapAvatar} style={{ left: `${pct}%` }}>
+            {/* Level boundary dots + labels */}
+            {stages.map((name, i) => {
+              const posX = (i / maxLevel * 100).toFixed(1)
+              const done = i < level - 1 || (i === level - 1 && xpPct >= 100)
+              return (
+                <div key={i} className={styles.xpMapNode} style={{ left: `${posX}%` }}>
+                  <div className={`${styles.xpMapNodeDot} ${done ? styles.xpMapNodeDone : i === level - 1 ? styles.xpMapNodeCur : ''}`}>
+                    {stageIco[i]}
+                  </div>
+                  <div className={styles.xpMapNodeLabel}>{name}</div>
+                </div>
+              )
+            })}
+
+            {/* Avatar */}
+            <div className={styles.xpMapAvatar} style={{ left: `${avatarPct}%` }}>
               {THEME_AVATAR[theme]}
             </div>
-            {rewards.map(r => (
-              <div key={r.id} className={`${styles.mapDot} ${totalPts >= r.pointCost ? styles.mapDotDone : ''}`}
-                style={{ left: `${Math.min(r.pointCost / maxPts * 100, 97)}%` }} />
-            ))}
-          </div>
-
-          {/* Pts labels below track */}
-          <div className={styles.mapPtsRow}>
-            <span className={styles.mapPt0}>0</span>
-            {rewards.map(r => (
-              <span key={r.id} className={styles.mapPtX} style={{ left: `${Math.min(r.pointCost / maxPts * 100, 97)}%` }}>
-                {r.pointCost}
-              </span>
-            ))}
           </div>
         </div>
 
-        {/* All rewards mini-list */}
-        <div className={styles.sectionHead} style={{ marginTop: 28 }}>Všechny odměny</div>
-        <div className={styles.mapRewardList}>
-          {rewards.map(r => {
-            const done = totalPts >= r.pointCost
-            const barPct = Math.min(totalPts / r.pointCost * 100, 100)
-            return (
-              <div key={r.id} className={`${styles.mapRewardRow} ${done ? styles.mapRewardDone : ''}`}>
-                <span className={styles.mapRIco}>{done ? '🎉' : '🎁'}</span>
-                <div className={styles.mapRInfo}>
-                  <div className={styles.mapRName}>{r.name}</div>
-                  <div className={styles.mapRBar}>
-                    <div className={styles.mapRFill} style={{ width: `${barPct}%` }} />
-                  </div>
-                </div>
-                <span className={styles.mapRPts}>{done ? '✓' : `${ptIcon} ${r.pointCost}`}</span>
-              </div>
-            )
-          })}
-        </div>
+        {/* XP progress within current level */}
+        {!isMaxLevel && (
+          <div className={styles.xpProgressRow}>
+            <div className={styles.xpProgressBar}>
+              <div className={styles.xpProgressFill} style={{ width: `${xpPct}%` }} />
+            </div>
+            <span className={styles.xpProgressLabel}>
+              {progress?.currentThreshold} → {progress?.nextThreshold} XP
+              &nbsp;({Math.round(xpPct)}%)
+            </span>
+          </div>
+        )}
+        {isMaxLevel && (
+          <div className={styles.xpMaxLabel}>⚡ Maximální úroveň! Jsi legendou!</div>
+        )}
       </>
     )
   }
@@ -463,12 +544,24 @@ export default function KidView() {
   }
 
   // ── Section: Odměny ───────────────────────────────────────────────────────
+  const REDEMPTION_STATUS_CZ = {
+    REQUESTED: 'Čeká na schválení',
+    APPROVED:  'Schváleno ✓',
+    DELIVERED: 'Hotovo! 🎉',
+    CANCELLED: 'Zrušeno',
+  }
+
   function renderOdmeny() {
-    const activeRedemptionsByRewardId = Object.fromEntries(
+    const activeByRewardId = Object.fromEntries(
       redemptions
         .filter(r => r.status === 'REQUESTED' || r.status === 'APPROVED')
         .map(r => [r.rewardId, r])
     )
+    const thirtyDaysAgo = new Date(); thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
+    const recentRedemptions = [...redemptions]
+      .filter(r => new Date(r.createdAt) > thirtyDaysAgo)
+      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+
     return (
       <>
         <div className={styles.odmenyHeader}>
@@ -477,11 +570,12 @@ export default function KidView() {
         </div>
         <div className={styles.odmenyGrid}>
           {rewards.map(r => {
-            const canAfford = totalPts >= r.pointCost
-            const barPct    = Math.min(totalPts / r.pointCost * 100, 100)
-            const need      = Math.max(r.pointCost - totalPts, 0)
-            const existing  = activeRedemptionsByRewardId[r.id]
-            const isLoading = redeeming === r.id
+            const canAfford  = totalPts >= r.pointCost
+            const barPct     = Math.min(totalPts / r.pointCost * 100, 100)
+            const need       = Math.max(r.pointCost - totalPts, 0)
+            const existing   = activeByRewardId[r.id]
+            const isLoading  = redeeming === r.id
+            const confirming = confirmRedeemId === r.id
             return (
               <div key={r.id} className={`${styles.odmenyCard} ${canAfford ? styles.odmenyDone : ''}`}>
                 {existing?.status === 'APPROVED' && <div className={styles.odmenyDoneBadge}>SCHVÁLENO!</div>}
@@ -496,11 +590,24 @@ export default function KidView() {
                   <span>{ptIcon} {Math.min(totalPts, r.pointCost)} / {r.pointCost}</span>
                   {!canAfford && <span className={styles.odmenyNeed}>ještě {need} {ptIcon}</span>}
                 </div>
-                {canAfford && !existing && (
-                  <button className={styles.redeemBtn} disabled={isLoading}
-                    onClick={() => handleRedeem(r)}>
-                    {isLoading ? '…' : '🎁 Chci tuhle odměnu!'}
+                {canAfford && !existing && !confirming && (
+                  <button className={styles.redeemBtn}
+                    onClick={() => setConfirmRedeemId(r.id)}>
+                    🎁 Chci tuhle odměnu!
                   </button>
+                )}
+                {canAfford && !existing && confirming && (
+                  <div className={styles.confirmRow}>
+                    <span className={styles.confirmText}>Opravdu chceš?</span>
+                    <button className={styles.confirmYes} disabled={isLoading}
+                      onClick={() => { handleRedeem(r); setConfirmRedeemId(null) }}>
+                      {isLoading ? '…' : 'Ano! 🎁'}
+                    </button>
+                    <button className={styles.confirmNo}
+                      onClick={() => setConfirmRedeemId(null)}>
+                      Ne
+                    </button>
+                  </div>
                 )}
                 {existing?.status === 'REQUESTED' && (
                   <button className={styles.cancelRedeemBtn}
@@ -513,44 +620,100 @@ export default function KidView() {
           })}
           {rewards.length === 0 && <p className={styles.emptyTasks}>Žádné odměny zatím nevytvořil rodič.</p>}
         </div>
+
+        {recentRedemptions.length > 0 && (
+          <>
+            <div className={styles.sectionHead} style={{ marginTop: 24 }}>📋 Moje žádosti (30 dní)</div>
+            <div className={styles.zadostiList}>
+              {recentRedemptions.map(red => (
+                <div key={red.id} className={styles.zadostiItem}>
+                  <span className={styles.zadostiIco}>{red.rewardIcon || '🎁'}</span>
+                  <div className={styles.zadostiInfo}>
+                    <div className={styles.zadostiName}>{red.rewardName}</div>
+                    <div className={styles.zadostiDate}>{czShortDate(red.createdAt)}</div>
+                  </div>
+                  <span className={`${styles.zadostiStatus} ${styles['zadosti_' + red.status]}`}>
+                    {REDEMPTION_STATUS_CZ[red.status] ?? red.status}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
       </>
     )
   }
 
+  const BADGE_META = {
+    LUMBERJACK:  { i: '🪵', n: 'Dřevorubec' },
+    SHERLOCK:    { i: '🔍', n: 'Detektiv' },
+    HEAD_WAITER: { i: '🍽️', n: 'Vrchní číšník' },
+    TIDY:        { i: '🧹', n: 'Uklízeč' },
+    LAUNDRY_PRO: { i: '🧺', n: 'Prací mistr' },
+    STREAK_7:    { i: '🔥', n: '7 dní v řadě' },
+    STREAK_30:   { i: '💥', n: '30 dní v řadě' },
+    EARLY_BIRD:  { i: '🐦', n: 'Pilný včelek (10 úkolů)' },
+    FIRST_REWARD:{ i: '🎁', n: 'První odměna' },
+    TEAM_PLAYER: { i: '👥', n: 'Týmový hráč (50 úkolů)' },
+  }
+
   // ── Section: Trofeje ─────────────────────────────────────────────────────
   function renderTrofeje() {
+    const badgeInfo = progress?.badgeInfo ?? []
+    const sortedBadges = [...badgeInfo].sort((a, b) => {
+      if (a.earned && !b.earned) return -1
+      if (!a.earned && b.earned) return 1
+      if (a.target && b.target) {
+        const pctA = (a.current ?? 0) / a.target
+        const pctB = (b.current ?? 0) / b.target
+        return pctB - pctA
+      }
+      return 0
+    })
     return (
       <>
+        {/* 3 record cards */}
         <div className={styles.trophyStats}>
           <div className={styles.trophyStat}>
-            <span className={styles.trophyStatN}>{totalPts}</span>
-            <span className={styles.trophyStatL}>{ptIcon} celkem</span>
+            <span className={styles.trophyStatN}>{progress?.recordTotalTasks ?? 0}</span>
+            <span className={styles.trophyStatL}>📋 úkolů celkem</span>
           </div>
           <div className={styles.trophyStat}>
-            <span className={styles.trophyStatN}>{transactions.length}</span>
-            <span className={styles.trophyStatL}>splněno</span>
+            <span className={styles.trophyStatN}>{progress?.recordLongestStreak ?? 0}</span>
+            <span className={styles.trophyStatL}>🔥 nejdelší série</span>
           </div>
           <div className={styles.trophyStat}>
-            <span className={styles.trophyStatN}>{streak}</span>
-            <span className={styles.trophyStatL}>🔥 série</span>
+            <span className={styles.trophyStatN}>{progress?.recordBestDayTasks ?? 0}</span>
+            <span className={styles.trophyStatL}>⭐ nejlepší den</span>
           </div>
         </div>
 
         <div className={styles.sectionHead}>{TROPHY_HEADING[theme]}</div>
 
-        {transactions.length === 0
-          ? <p className={styles.emptyTasks}>Zatím žádné splněné úkoly. Pusť se do toho! 💪</p>
-          : <div className={styles.trophyList}>
-              {transactions.map((tx, i) => (
-                <div key={i} className={styles.trophyItem}>
-                  <span className={styles.trophyIco}>⭐</span>
-                  <div className={styles.trophyInfo}>
-                    <div className={styles.trophyName}>{parseTaskName(tx.reason)}</div>
-                    <div className={styles.trophyDate}>{czShortDate(tx.createdAt)}</div>
+        {sortedBadges.length === 0
+          ? <p className={styles.emptyTasks}>Zatím žádné odznaky. Splň úkoly a získej je! 💪</p>
+          : <div className={styles.badgeGrid}>
+              {sortedBadges.map(b => {
+                const meta = BADGE_META[b.badge] ?? { i: '🏅', n: b.badge }
+                const pct  = b.target ? Math.min((b.current ?? 0) / b.target * 100, 100) : 0
+                return (
+                  <div key={b.badge} className={`${styles.badgeCard} ${b.earned ? styles.badgeEarned : ''}`}>
+                    <div className={styles.badgeIco}>{meta.i}</div>
+                    <div className={styles.badgeName}>{meta.n}</div>
+                    {b.earned
+                      ? <div className={styles.badgeDone}>Získáno ✓</div>
+                      : b.target && (
+                          <div className={styles.badgeProgress}>
+                            <div className={styles.badgeBar}>
+                              <div className={styles.badgeFill} style={{ width: `${pct}%` }} />
+                            </div>
+                            <span className={styles.badgeCount}>{b.current ?? 0}/{b.target}</span>
+                          </div>
+                        )
+                    }
                   </div>
-                  <span className={styles.trophyPts}>+{tx.amount} {ptIcon}</span>
-                </div>
-              ))}
+                )
+              })}
             </div>
         }
       </>
@@ -558,77 +721,142 @@ export default function KidView() {
   }
 
   // ── Section: Já ──────────────────────────────────────────────────────────
+  const SKINS = [
+    { id: 'elsa',       emoji: '❄️',  name: 'Elsa',       minLevel: 1 },
+    { id: 'unicorn',    emoji: '🦄',  name: 'Jednorožec', minLevel: 1 },
+    { id: 'hotwheels',  emoji: '🏎️', name: 'Hot Wheels', minLevel: 2 },
+    { id: 'minecraft',  emoji: '⛏️', name: 'Minecraft',  minLevel: 2 },
+    { id: 'dragon',     emoji: '🐉',  name: 'Drak',       minLevel: 3 },
+    { id: 'robot',      emoji: '🤖',  name: 'Robot',      minLevel: 3 },
+    { id: 'wizard',     emoji: '🧙',  name: 'Kouzelník',  minLevel: 4 },
+    { id: 'ninja',      emoji: '🥷',  name: 'Ninja',      minLevel: 4 },
+    { id: 'astronaut',  emoji: '🧑‍🚀', name: 'Astronaut', minLevel: 5 },
+    { id: 'fairy',      emoji: '🧚',  name: 'Víla',       minLevel: 5 },
+  ]
+
+  const TX_ICONS = { TASK: '📝', BONUS: '🔍', STREAK: '🔥', CHEST: '🧰', REDEEM: '🎁', MANUAL: '✋' }
+
   function renderJa() {
-    const level     = progress?.level ?? 1
-    const levelName = getLevelName(child.avatar, level)
-    const xp        = progress?.xp ?? 0
-    const xpCur     = progress?.currentThreshold ?? 0
-    const xpNext    = progress?.nextThreshold ?? null
-    const xpPct     = progress?.progressPct ?? 0
-    const badges    = progress?.badges ?? []
-    const BADGE_ICONS = { LUMBERJACK: '🪵', SHERLOCK: '🔍', HEAD_WAITER: '🍽️', TIDY: '🧹', LAUNDRY_PRO: '🧺' }
+    const level   = progress?.level ?? 1
+    const xp      = progress?.xp ?? 0
+    const xpPct   = progress?.progressPct ?? 0
+    const xpNext  = progress?.nextThreshold ?? null
+
+    const activeSkin  = child.selectedSkin ?? child.avatar ?? 'elsa'
+    const skinEmoji   = SKINS.find(s => s.id === activeSkin)?.emoji ?? THEME_AVATAR[theme]
+
+    // Diary: last 50 transactions grouped by day
+    const diary = transactions.slice(0, 50)
+    const byDay = []
+    diary.forEach(tx => {
+      const day = tx.createdAt ? tx.createdAt.slice(0, 10) : 'unknown'
+      const last = byDay[byDay.length - 1]
+      if (!last || last.day !== day) byDay.push({ day, items: [tx] })
+      else last.items.push(tx)
+    })
+
     return (
-      <div className={styles.jaSection}>
-        <div className={styles.jaAva}>{THEME_AVATAR[theme]}</div>
-        <div className={styles.jaName}>{child.name}</div>
-        {child.age && <div className={styles.jaAge}>{child.age} let</div>}
-
-        <div className={styles.jaLevelRow}>
-          <span className={styles.jaLevelNum}>Úroveň {level}</span>
-          <span className={styles.jaLevelName}>{levelName}</span>
-        </div>
-        <div className={styles.jaXpBarWrap}>
-          <div className={styles.jaXpBar} style={{ width: `${xpPct}%` }} />
-        </div>
-        <div className={styles.jaXpLabel}>
-          {xp} XP {xpNext ? `/ ${xpNext}` : '(max)'}
-        </div>
-
-        <div className={styles.jaStats}>
-          <div className={styles.jaStat}>
-            <span className={styles.jaStatN}>{totalPts}</span>
-            <span className={styles.jaStatL}>{ptIcon} body</span>
+      <div className={styles.meLayout}>
+        {/* Left column */}
+        <div className={styles.meLeft}>
+          <div className={styles.meAvaBlock}>
+            <div className={styles.meAvaEmoji}>{skinEmoji}</div>
+            <div className={styles.meName}>{child.name}</div>
+            {child.age && <div className={styles.meAge}>{child.age} let</div>}
           </div>
-          <div className={styles.jaStat}>
-            <span className={styles.jaStatN}>{transactions.length}</span>
-            <span className={styles.jaStatL}>úkolů</span>
-          </div>
-          <div className={styles.jaStat}>
-            <span className={styles.jaStatN}>{streak}</span>
-            <span className={styles.jaStatL}>🔥 série</span>
-          </div>
-        </div>
 
-        {badges.length > 0 && (
-          <div className={styles.jaBadges}>
-            {badges.map(b => (
-              <span key={b} className={styles.jaBadge} title={b}>
-                {BADGE_ICONS[b] ?? '🏅'}
-              </span>
-            ))}
+          <div className={styles.meLevelCard}>
+            <div className={styles.meLvlRow}>
+              <span className={styles.meLvlNum}>Úroveň {level}</span>
+              <span className={styles.meLvlName}>{getLevelName(child.avatar, level)}</span>
+            </div>
+            <div className={styles.meXpTrack}>
+              <div className={styles.meXpFill} style={{ width: `${xpPct}%` }} />
+            </div>
+            <div className={styles.meXpLabel}>{xp} XP {xpNext ? `→ ${xpNext}` : '(max)'}</div>
           </div>
-        )}
 
-        {progress?.chestAvailable && (
-          <button className={styles.chestBtn} onClick={async () => {
-            try {
-              const res = await openChest(child.id)
-              const prog = await getProgress(child.id)
-              setProgress(prog)
-              setChestToast(`🎁 Pokladnice! +${res.awardedPoints} bodů`)
-              setTimeout(() => setChestToast(null), 4000)
-            } catch { /**/ }
-          }}>
-            🎁 Otevřít pokladnici!
+          <div className={styles.meStatsRow}>
+            <div className={styles.meStat}>
+              <span className={styles.meStatN}>{totalPts}</span>
+              <span className={styles.meStatL}>{ptIcon} Mince</span>
+            </div>
+            <div className={styles.meStat}>
+              <span className={styles.meStatN}>{progress?.recordTotalTasks ?? 0}</span>
+              <span className={styles.meStatL}>📝 Úkoly</span>
+            </div>
+            <div className={styles.meStat}>
+              <span className={styles.meStatN}>{streak}</span>
+              <span className={styles.meStatL}>🔥 Série</span>
+            </div>
+          </div>
+
+          {/* Skin selector */}
+          <div className={styles.sectionHead}>🎨 Moje postavička</div>
+          <div className={styles.skinGrid}>
+            {SKINS.map(sk => {
+              const unlocked = level >= sk.minLevel
+              const active   = activeSkin === sk.id
+              return (
+                <button
+                  key={sk.id}
+                  className={`${styles.skinCard} ${active ? styles.skinActive : ''} ${!unlocked ? styles.skinLocked : ''}`}
+                  disabled={!unlocked}
+                  onClick={async () => {
+                    if (!unlocked) return
+                    try {
+                      const updated = await updateSkin(child.id, sk.id)
+                      setChild(updated)
+                    } catch { /**/ }
+                  }}
+                >
+                  <span className={styles.skinEmoji}>{sk.emoji}</span>
+                  <span className={styles.skinName}>{sk.name}</span>
+                  {!unlocked && <span className={styles.skinLock}>🔒 Lv{sk.minLevel}</span>}
+                </button>
+              )
+            })}
+          </div>
+
+          {progress?.chestAvailable && (
+            <button className={styles.chestBtn} onClick={async () => {
+              try {
+                const res = await openChest(child.id)
+                const prog = await getProgress(child.id)
+                setProgress(prog)
+                setChestToast(`🎁 Pokladnice! +${res.awardedPoints} bodů`)
+                setTimeout(() => setChestToast(null), 4000)
+              } catch { /**/ }
+            }}>
+              🎁 Otevřít pokladnici!
+            </button>
+          )}
+
+          <button className={styles.switchBtn} onClick={backToPicker}>👥 Změnit hráče</button>
+          <button className={styles.logoutLink} onClick={() => { logout(); navigate('/login') }}>
+            Odhlásit se
           </button>
-        )}
+        </div>
 
-        <button className={styles.switchBtn} onClick={backToPicker}>
-          👥 Změnit hráče
-        </button>
-        <button className={styles.logoutLink} onClick={() => { logout(); navigate('/login') }}>
-          Odhlásit se ze všech účtů
-        </button>
+        {/* Right column — Diary */}
+        <div className={styles.meRight}>
+          <div className={styles.sectionHead}>📓 Deník</div>
+          {byDay.length === 0 && <div className={styles.emptyState}>Zatím žádné záznamy.</div>}
+          {byDay.map(group => (
+            <div key={group.day} className={styles.diaryDay}>
+              <div className={styles.diaryDayLabel}>{formatDate(group.day + 'T00:00:00')}</div>
+              {group.items.map(tx => (
+                <div key={tx.id} className={styles.diaryEntry}>
+                  <span className={styles.diaryIco}>{TX_ICONS[tx.type] ?? '📋'}</span>
+                  <span className={styles.diaryText}>{tx.reason ?? tx.type}</span>
+                  <span className={`${styles.diaryPts} ${tx.amount < 0 ? styles.diaryNeg : ''}`}>
+                    {tx.amount > 0 ? '+' : ''}{tx.amount} {ptIcon}
+                  </span>
+                </div>
+              ))}
+            </div>
+          ))}
+        </div>
       </div>
     )
   }
@@ -663,7 +891,7 @@ export default function KidView() {
         {nav.map((n, i) => (
           <button key={i}
             className={`${styles.navItem} ${activeNav === i ? styles.navActive : ''}`}
-            onClick={() => setActiveNav(i)}
+            onClick={() => navigate(`/kid/${TAB_SEGS[i]}`)}
           >
             <span className={styles.navEmoji}>{n.i}</span>
             <span className={styles.navLabel}>{n.l}</span>
@@ -680,7 +908,13 @@ export default function KidView() {
       <main className={styles.main}>
         <div className={styles.topbar}>
           <span className={styles.greeting}>Ahoj, {child.name}! 👋</span>
-          <span className={styles.dateLabel}>{czDate()}</span>
+          <button className={styles.topXpBtn} onClick={() => navigate('/kid/map')} title="Mapa úrovní">
+            <span className={styles.topXpPts}>{ptIcon} {totalPts}</span>
+            <div className={styles.topXpTrack}>
+              <div className={styles.topXpFill} style={{ width: `${progress?.progressPct ?? 0}%` }} />
+            </div>
+            <span className={styles.topXpLvl}>Lv{progress?.level ?? 1}</span>
+          </button>
           <button className={styles.switchTopBtn} onClick={backToPicker} title="Změnit hráče">
             👥
           </button>

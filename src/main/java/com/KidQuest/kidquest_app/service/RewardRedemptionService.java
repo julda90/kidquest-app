@@ -125,6 +125,13 @@ public class RewardRedemptionService {
                 .stream().map(this::toResponse).toList();
     }
 
+    public List<RedemptionResponse> findByChild(UUID childId, int days) {
+        if (days <= 0) return findByChild(childId);
+        LocalDateTime cutoff = LocalDateTime.now(clock).minusDays(days);
+        return redemptionRepository.findByChildIdAndCreatedAtAfter(childId, cutoff)
+                .stream().map(this::toResponse).toList();
+    }
+
     public List<RedemptionResponse> findByFamily(UUID familyId) {
         return redemptionRepository.findByFamilyId(familyId)
                 .stream().map(this::toResponse).toList();

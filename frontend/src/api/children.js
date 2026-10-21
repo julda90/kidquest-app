@@ -6,3 +6,4 @@ export const updateChild    = (childId,  data)   => apiFetch(`/api/children/${ch
 export const deleteChild    = (childId)          => apiFetch(`/api/children/${childId}`,         { method: 'DELETE' })
 export const getProgress    = (childId)          => apiFetch(`/api/children/${childId}/progress`)
 export const openChest      = (childId)          => apiFetch(`/api/children/${childId}/chest/open`, { method: 'POST' })
+export const updateSkin     = (childId, skin)    => apiFetch(`/api/children/${childId}/skin`,       { method: 'PUT',  body: JSON.stringify({ skin }) })

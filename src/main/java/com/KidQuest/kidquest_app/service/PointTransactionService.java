@@ -52,7 +52,10 @@ public class PointTransactionService {
         r.setReason(tx.getReason());
         r.setCreatedAt(tx.getCreatedAt());
         r.setType(tx.getType());
-        if (tx.getTask() != null) r.setTaskId(tx.getTask().getId());
+        if (tx.getTask() != null) {
+            r.setTaskId(tx.getTask().getId());
+            r.setTaskTitle(tx.getTask().getTitle());
+        }
         return r;
     }
 }

@@ -76,6 +76,17 @@ public class TaskController {
         return ResponseEntity.noContent().build();
     }
 
+    @GetMapping("/family/{familyId}/open-quests")
+    public ResponseEntity<List<TaskResponse>> getOpenQuests(@PathVariable UUID familyId) {
+        return ResponseEntity.ok(taskService.findOpenQuestsByFamilyId(familyId));
+    }
+
+    @PostMapping("/{taskId}/claim")
+    public ResponseEntity<TaskResponse> claimQuest(@PathVariable UUID taskId,
+                                                   @RequestParam UUID childId) {
+        return ResponseEntity.ok(taskService.claimQuest(taskId, childId));
+    }
+
     @GetMapping("/kinds")
     public ResponseEntity<List<Map<String, Object>>> getTaskKinds() {
         List<Map<String, Object>> kinds = Arrays.stream(TaskKind.values())

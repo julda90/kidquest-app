@@ -47,4 +47,22 @@ public interface PointTransactionRepository extends JpaRepository<PointTransacti
     @Query("SELECT COALESCE(SUM(t.amount), 0) FROM PointTransaction t " +
            "WHERE t.child.family.id = :familyId AND t.type IN ('TASK', 'BONUS') AND t.createdAt >= :since")
     int sumFamilyGoalProgressSince(UUID familyId, LocalDateTime since);
+
+    /** All days on which a child completed at least one TASK (for longest-streak computation) */
+    @Query(value = "SELECT DISTINCT CAST(created_at AS DATE) FROM point_transaction " +
+                   "WHERE child_id = :childId AND type = 'TASK'",
+           nativeQuery = true)
+    List<java.time.LocalDate> findAllActiveDays(UUID childId);
+
+    /** Max TASK transactions completed in any single day */
+    @Query(value = "SELECT COALESCE(MAX(daily_count),0) FROM " +
+                   "(SELECT COUNT(*) AS daily_count FROM point_transaction " +
+                   " WHERE child_id = :childId AND type = 'TASK' " +
+                   " GROUP BY CAST(created_at AS DATE)) t",
+           nativeQuery = true)
+    int maxTasksInAnyDay(UUID childId);
+
+    /** Total count of TASK transactions for a child */
+    @Query("SELECT COUNT(t) FROM PointTransaction t WHERE t.child.id = :childId AND t.type = 'TASK'")
+    long countTasksByChildId(UUID childId);
 }

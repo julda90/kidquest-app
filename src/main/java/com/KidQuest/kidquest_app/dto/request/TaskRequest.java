@@ -33,5 +33,9 @@ public class TaskRequest {
     private TaskKind kind;
 
     private Integer bonusValue;
+
+    private Boolean openQuest;
+
+    private Integer dailyLimit;
 }
 

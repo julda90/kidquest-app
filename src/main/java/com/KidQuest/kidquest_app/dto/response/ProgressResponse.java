@@ -19,6 +19,12 @@ public class ProgressResponse {
     private int streakDays;
     private boolean jokerUsedThisWeek;
     private List<Badge> badges;
+    private List<BadgeInfoResponse> badgeInfo;
     private boolean chestAvailable;
     private int pendingRedemptionPoints;
+
+    // Records
+    private int recordTotalTasks;
+    private int recordLongestStreak;
+    private int recordBestDayTasks;
 }

@@ -4,6 +4,8 @@ import f from './Form.module.css'
 const TIER_OPTIONS = ['SMALL', 'MEDIUM', 'BIG', 'MEGA']
 const TIER_LABELS  = { SMALL: 'Malá', MEDIUM: 'Střední', BIG: 'Velká', MEGA: 'Mega' }
 
+const ICON_OPTIONS = ['🍦','🍫','🍕','🎬','🎮','🧗','🎳','🧩','🧱','📚','🎨','🚲','🏊','🎡','🐴','🍰','🧸','⚽','🎟️','🌙']
+
 export default function RewardForm({ initial = {}, families = [], onSubmit, onCancel }) {
   const [name,     setName]     = useState(initial.name        ?? '')
   const [desc,     setDesc]     = useState(initial.description ?? '')
@@ -82,8 +84,18 @@ export default function RewardForm({ initial = {}, families = [], onSubmit, onCa
           </select>
         </div>
         <div className={f.group}>
-          <label>Icon (emoji)</label>
-          <input value={icon} onChange={e => setIcon(e.target.value)} placeholder="🎮" maxLength={16} />
+          <label>Ikona</label>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '6px' }}>
+            {ICON_OPTIONS.map(e => (
+              <button key={e} type="button"
+                onClick={() => setIcon(icon === e ? '' : e)}
+                style={{ fontSize: '20px', padding: '4px 6px', borderRadius: '6px', border: icon === e ? '2px solid #667eea' : '2px solid #e0e0f0', background: icon === e ? '#f0f0ff' : '#fff', cursor: 'pointer' }}>
+                {e}
+              </button>
+            ))}
+          </div>
+          <input value={icon} onChange={e => setIcon(e.target.value)} placeholder="nebo vlastní emoji…" maxLength={8}
+            style={{ width: '100%', fontSize: '18px' }} />
         </div>
       </div>
 

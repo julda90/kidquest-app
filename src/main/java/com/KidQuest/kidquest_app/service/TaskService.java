@@ -4,12 +4,14 @@ import com.KidQuest.kidquest_app.dto.request.TaskRequest;
 import com.KidQuest.kidquest_app.dto.response.TaskResponse;
 import com.KidQuest.kidquest_app.exception.BadRequestException;
 import com.KidQuest.kidquest_app.exception.ResourceNotFoundException;
+import com.KidQuest.kidquest_app.model.Child;
 import com.KidQuest.kidquest_app.model.Task;
 import com.KidQuest.kidquest_app.model.TaskKind;
 import com.KidQuest.kidquest_app.model.TaskStatus;
 import com.KidQuest.kidquest_app.repository.TaskRepository;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -55,6 +57,8 @@ public class TaskService {
         task.setDueDate(taskRequest.getDueDate());
         task.setKind(taskRequest.getKind() != null ? taskRequest.getKind() : TaskKind.OTHER);
         task.setBonusValue(taskRequest.getBonusValue() != null ? taskRequest.getBonusValue() : 0);
+        task.setOpenQuest(Boolean.TRUE.equals(taskRequest.getOpenQuest()));
+        task.setDailyLimit(taskRequest.getDailyLimit() != null ? taskRequest.getDailyLimit() : 1);
         if (taskRequest.getAssignedToId() != null) {
             task.setAssignedTo(childService.findById(taskRequest.getAssignedToId()));
             task.setStatus(TaskStatus.ASSIGNED);
@@ -75,6 +79,8 @@ public class TaskService {
         existingTask.setDueDate(updatedTask.getDueDate());
         existingTask.setKind(updatedTask.getKind() != null ? updatedTask.getKind() : TaskKind.OTHER);
         existingTask.setBonusValue(updatedTask.getBonusValue() != null ? updatedTask.getBonusValue() : 0);
+        existingTask.setOpenQuest(Boolean.TRUE.equals(updatedTask.getOpenQuest()));
+        existingTask.setDailyLimit(updatedTask.getDailyLimit() != null ? updatedTask.getDailyLimit() : 1);
         if (updatedTask.getAssignedToId() != null) {
             existingTask.setAssignedTo(childService.findById(updatedTask.getAssignedToId()));
             existingTask.setStatus(updatedTask.getStatus() != null ? updatedTask.getStatus() : TaskStatus.ASSIGNED);
@@ -107,6 +113,41 @@ public class TaskService {
         response.setKind(task.getKind());
         response.setBonusValue(task.getBonusValue());
         response.setApprovedAt(task.getApprovedAt());
+        response.setOpenQuest(task.isOpenQuest());
+        response.setTemplateId(task.getTemplateId());
+        response.setDailyLimit(task.getDailyLimit());
         return response;
+    }
+
+    public List<TaskResponse> findOpenQuestsByFamilyId(UUID familyId) {
+        return taskRepository.findAllByFamilyIdAndOpenQuestTrueAndDeletedAtIsNull(familyId)
+                .stream()
+                .map(this::response)
+                .toList();
+    }
+
+    public TaskResponse claimQuest(UUID templateId, UUID childId) {
+        Task template = findById(templateId);
+        if (!template.isOpenQuest()) {
+            throw new BadRequestException("Task " + templateId + " is not an open quest.");
+        }
+        LocalDateTime startOfDay = LocalDate.now().atStartOfDay();
+        long alreadyClaimed = taskRepository.countByTemplateIdAndAssignedToIdAndCreatedAtAfter(
+                templateId, childId, startOfDay);
+        if (alreadyClaimed >= template.getDailyLimit()) {
+            throw new BadRequestException("Daily claim limit reached for this quest.");
+        }
+        Child child = childService.findById(childId);
+        Task claim = new Task();
+        claim.setTitle(template.getTitle());
+        claim.setDescription(template.getDescription());
+        claim.setFamily(template.getFamily());
+        claim.setPointValue(template.getPointValue());
+        claim.setBonusValue(template.getBonusValue());
+        claim.setKind(template.getKind());
+        claim.setAssignedTo(child);
+        claim.setStatus(TaskStatus.ASSIGNED);
+        claim.setTemplateId(templateId);
+        return response(taskRepository.save(claim));
     }
 }

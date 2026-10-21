@@ -5,6 +5,7 @@ import com.KidQuest.kidquest_app.model.RewardRedemption;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -13,6 +14,8 @@ public interface RewardRedemptionRepository extends JpaRepository<RewardRedempti
     List<RewardRedemption> findByChildIdAndStatus(UUID childId, RedemptionStatus status);
 
     List<RewardRedemption> findByChildId(UUID childId);
+
+    List<RewardRedemption> findByChildIdAndCreatedAtAfter(UUID childId, LocalDateTime after);
 
     @Query("SELECT r FROM RewardRedemption r WHERE r.child.family.id = :familyId AND r.status = :status")
     List<RewardRedemption> findByFamilyIdAndStatus(UUID familyId, RedemptionStatus status);

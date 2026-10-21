@@ -21,6 +21,7 @@ export default function App() {
           <Route path="/children"  element={<ProtectedRoute><Children /></ProtectedRoute>} />
           <Route path="/settings"  element={<ProtectedRoute><Settings /></ProtectedRoute>} />
           <Route path="/kid"       element={<ProtectedRoute><KidView /></ProtectedRoute>} />
+          <Route path="/kid/:tab"  element={<ProtectedRoute><KidView /></ProtectedRoute>} />
           <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>
       </BrowserRouter>

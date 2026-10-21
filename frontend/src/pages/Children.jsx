@@ -111,7 +111,7 @@ export default function Children() {
     try {
       await createPointTransaction(adjustTarget.id, {
         amount: amt,
-        reason: adjustReason.trim() || (amt > 0 ? 'Points added manually' : 'Points deducted manually'),
+        reason: adjustReason.trim() || (amt > 0 ? 'Body od rodičů' : 'Oprava bodů'),
       })
       setAdjustTarget(null)
       await refetch(familyId)

@@ -63,6 +63,13 @@ public class ChildController {
         return ResponseEntity.noContent().build();
     }
 
+    @PutMapping("/{id}/skin")
+    public ResponseEntity<ChildResponse> updateSkin(@PathVariable UUID id, @RequestBody Map<String, String> body) {
+        String skin = body.get("skin");
+        if (skin == null || skin.isBlank()) throw new BadRequestException("skin is required");
+        return ResponseEntity.ok(childService.updateSkin(id, skin));
+    }
+
     @GetMapping("/{id}/progress")
     public ResponseEntity<ProgressResponse> getProgress(@PathVariable UUID id) {
         return ResponseEntity.ok(progressService.buildResponse(childService.findById(id)));

@@ -55,12 +55,19 @@ public class ChildService {
         child.setDeletedAt(LocalDateTime.now());
         childRepository.save(child);
     }
+    public ChildResponse updateSkin(UUID childId, String skin) {
+        Child child = findById(childId);
+        child.setSelectedSkin(skin);
+        return response(childRepository.save(child));
+    }
+
     public ChildResponse response(Child child){
         ChildResponse response = new ChildResponse();
         response.setId(child.getId());
         response.setName(child.getName());
         response.setAvatar(child.getAvatar());
         response.setAge(child.getAge());
+        response.setSelectedSkin(child.getSelectedSkin());
         response.setCreatedAt(child.getCreatedAt());
         response.setUpdatedAt(child.getUpdatedAt());
         response.setFamilyId(child.getFamily().getId());

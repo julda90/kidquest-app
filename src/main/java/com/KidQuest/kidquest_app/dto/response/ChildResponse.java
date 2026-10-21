@@ -19,6 +19,8 @@ public class ChildResponse {
 
     private String avatar;
 
+    private String selectedSkin;
+
     private LocalDateTime createdAt;
 
     private LocalDateTime updatedAt;
