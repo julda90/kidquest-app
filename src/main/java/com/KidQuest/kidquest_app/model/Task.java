@@ -75,4 +75,10 @@ public class Task {
 
     @Column(name = "catalog_key", length = 50)
     private String catalogKey;
+
+    @Column(name = "late_point_value")
+    private Integer latePointValue;
+
+    @Column(name = "no_reminder_bonus", nullable = false)
+    private int noReminderBonus = 0;
 }

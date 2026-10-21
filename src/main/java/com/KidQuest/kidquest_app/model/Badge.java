@@ -3,6 +3,7 @@ package com.KidQuest.kidquest_app.model;
 public enum Badge {
     LUMBERJACK,
     SHERLOCK,
+    SELF_STARTER,
     HEAD_WAITER,
     TIDY,
     LAUNDRY_PRO,

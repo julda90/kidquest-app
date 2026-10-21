@@ -5,18 +5,24 @@ const STATUSES = ['UNASSIGNED', 'ASSIGNED', 'PENDING_APPROVAL', 'COMPLETED', 'RE
 const STATUS_LABEL = { UNASSIGNED: 'Unassigned', ASSIGNED: 'Assigned', PENDING_APPROVAL: 'Pending Approval', COMPLETED: 'Completed', REJECTED: 'Rejected' }
 
 export default function TaskForm({ initial = {}, children = [], families = [], onSubmit, onCancel }) {
-  const [title,      setTitle]      = useState(initial.title      ?? '')
-  const [desc,       setDesc]       = useState(initial.description ?? '')
-  const [points,     setPoints]     = useState(initial.pointValue  ?? '')
-  const [dueDate,    setDueDate]    = useState(initial.dueDate     ?? '')
-  const [status,     setStatus]     = useState(initial.status      ?? 'UNASSIGNED')
-  const [assignedTo, setAssignedTo] = useState(initial.assignedTo  ?? '')
-  const [familyId,   setFamilyId]   = useState(initial.familyId   ?? (families[0]?.id ?? ''))
-  const [openQuest,  setOpenQuest]  = useState(initial.openQuest  ?? false)
-  const [dailyLimit, setDailyLimit] = useState(initial.dailyLimit ?? 1)
-  const [errors,      setErrors]      = useState({})
-  const [serverError, setServerError] = useState('')
-  const [loading,     setLoading]     = useState(false)
+  const [title,           setTitle]           = useState(initial.title          ?? '')
+  const [desc,            setDesc]            = useState(initial.description    ?? '')
+  const [points,          setPoints]          = useState(initial.pointValue     ?? '')
+  const [dueDate,         setDueDate]         = useState(initial.dueDate        ?? '')
+  const [status,          setStatus]          = useState(initial.status         ?? 'UNASSIGNED')
+  const [assignedTo,      setAssignedTo]      = useState(initial.assignedTo     ?? '')
+  const [familyId,        setFamilyId]        = useState(initial.familyId       ?? (families[0]?.id ?? ''))
+  const [kind,            setKind]            = useState(initial.kind           ?? '')
+  const [bonusValue,      setBonusValue]      = useState(initial.bonusValue     ?? '')
+  const [latePointValue,  setLatePointValue]  = useState(initial.latePointValue ?? '')
+  const [noReminderBonus, setNoReminderBonus] = useState(initial.noReminderBonus ?? '')
+  const [openQuest,       setOpenQuest]       = useState(initial.openQuest      ?? false)
+  const [dailyLimit,      setDailyLimit]      = useState(initial.dailyLimit     ?? 1)
+  const [errors,          setErrors]          = useState({})
+  const [serverError,     setServerError]     = useState('')
+  const [loading,         setLoading]         = useState(false)
+
+  const isHomework = kind === 'HOMEWORK'
 
   function validate() {
     const e = {}
@@ -41,6 +47,10 @@ export default function TaskForm({ initial = {}, children = [], families = [], o
         dueDate: dueDate || null,
         status,
         assignedToId: assignedTo || null,
+        kind: kind || null,
+        bonusValue: bonusValue !== '' ? Number(bonusValue) : null,
+        latePointValue: latePointValue !== '' ? Number(latePointValue) : null,
+        noReminderBonus: noReminderBonus !== '' ? Number(noReminderBonus) : null,
         openQuest,
         dailyLimit: openQuest ? Number(dailyLimit) : 1,
       })
@@ -78,9 +88,24 @@ export default function TaskForm({ initial = {}, children = [], families = [], o
         {errors.familyId && <span className={f.fieldError}>{errors.familyId}</span>}
       </div>
 
+      <div className={f.group}>
+        <label>Typ úkolu</label>
+        <select value={kind} onChange={e => setKind(e.target.value)}>
+          <option value="">— Výchozí —</option>
+          <option value="TABLE">Prostírání (TABLE)</option>
+          <option value="LAUNDRY">Prádlo (LAUNDRY)</option>
+          <option value="ROOM">Pokoj (ROOM)</option>
+          <option value="HOMEWORK">Domácí úkol (HOMEWORK)</option>
+          <option value="WOOD">Dřevo (WOOD)</option>
+          <option value="KINDLING">Třísky (KINDLING)</option>
+          <option value="BIG_OTHER">Velký úkol (BIG_OTHER)</option>
+          <option value="OTHER">Ostatní (OTHER)</option>
+        </select>
+      </div>
+
       <div className={f.row}>
         <div className={f.group}>
-          <label>Points *</label>
+          <label>Body včas *</label>
           <input type="number" min="1" value={points} onChange={e => setPoints(e.target.value)}
             className={errors.points ? f.inputError : ''} placeholder="10" />
           {errors.points && <span className={f.fieldError}>{errors.points}</span>}
@@ -90,6 +115,26 @@ export default function TaskForm({ initial = {}, children = [], families = [], o
           <input type="date" value={dueDate} onChange={e => setDueDate(e.target.value)} />
         </div>
       </div>
+
+      {isHomework && (
+        <div className={f.row}>
+          <div className={f.group}>
+            <label>Body později</label>
+            <input type="number" min="1" value={latePointValue} onChange={e => setLatePointValue(e.target.value)} placeholder="10" />
+          </div>
+          <div className={f.group}>
+            <label>Bonus Detektiv chyb</label>
+            <input type="number" min="0" value={bonusValue} onChange={e => setBonusValue(e.target.value)} placeholder="15" />
+          </div>
+        </div>
+      )}
+
+      {isHomework && (
+        <div className={f.group}>
+          <label>Bonus bez připomínání</label>
+          <input type="number" min="0" value={noReminderBonus} onChange={e => setNoReminderBonus(e.target.value)} placeholder="5" />
+        </div>
+      )}
 
       <div className={f.row}>
         <div className={f.group}>

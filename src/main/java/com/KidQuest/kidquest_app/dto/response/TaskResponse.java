@@ -34,6 +34,10 @@ public class TaskResponse {
 
     private Integer bonusValue;
 
+    private Integer latePointValue;
+
+    private Integer noReminderBonus;
+
     private LocalDateTime approvedAt;
 
     private boolean openQuest;

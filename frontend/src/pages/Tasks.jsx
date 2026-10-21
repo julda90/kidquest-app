@@ -48,7 +48,9 @@ export default function Tasks() {
   const [deleting,     setDeleting]     = useState(false)
   const [awardTarget,  setAwardTarget]  = useState(null) // { task, child }
   const [awarding,     setAwarding]     = useState(false)
-  const [bonusChecked, setBonusChecked] = useState(false)
+  const [hwOnTime,     setHwOnTime]     = useState(true)
+  const [hwSelfChecked,setHwSelfChecked]= useState(false)
+  const [hwNoReminder, setHwNoReminder] = useState(false)
   const [awardToast,   setAwardToast]   = useState(null)
 
   const load = useCallback(async () => {
@@ -108,10 +110,15 @@ export default function Tasks() {
   async function handleAwardConfirm() {
     const { task } = awardTarget
     setAwarding(true)
+    const isHw = task.kind === 'HOMEWORK'
     try {
-      const result = await approveTask(task.taskId, bonusChecked)
+      const result = await approveTask(task.taskId, {
+        onTime:      isHw ? hwOnTime      : true,
+        selfChecked: isHw ? hwSelfChecked : false,
+        noReminder:  isHw ? hwNoReminder  : false,
+      })
       setAwardTarget(null)
-      setBonusChecked(false)
+      setHwOnTime(true); setHwSelfChecked(false); setHwNoReminder(false)
       const parts = [`⭐ +${result.awardedPoints} bodů`]
       if (result.levelUp) parts.push(`🆙 Nová úroveň ${result.newLevel}!`)
       if (result.streakDays > 1) parts.push(`🔥 Série ${result.streakDays} dní`)
@@ -257,36 +264,56 @@ export default function Tasks() {
         <div className={styles.toast}>{awardToast}</div>
       )}
 
-      {awardTarget && (
-        <Modal title="Schválit úkol" onClose={() => !awarding && setAwardTarget(null)}>
-          <div className={styles.awardDialog}>
-            <div className={styles.awardPtsBadge}>⭐ {awardTarget.task.pointValue}{bonusChecked && awardTarget.task.bonusValue ? ` + ${awardTarget.task.bonusValue}` : ''}</div>
-            <p className={styles.awardMsg}>
-              Označit <strong>„{awardTarget.task.title}"</strong> jako splněný
-              a přidat <strong>{awardTarget.task.pointValue} bodů</strong> pro{' '}
-              <strong>{awardTarget.child?.name ?? 'dítě'}</strong>?
-            </p>
-            {awardTarget.task.kind === 'HOMEWORK' && (
-              <label className={styles.bonusCheck}>
-                <input type="checkbox" checked={bonusChecked}
-                  onChange={e => setBonusChecked(e.target.checked)} />
-                {' '}🔍 Sám/sama našel(a) a opravil(a) chybu (+{awardTarget.task.bonusValue ?? 15})
-              </label>
-            )}
-            <div className={styles.awardActions}>
-              <button className={styles.awardCancel} onClick={() => { setAwardTarget(null); setBonusChecked(false) }} disabled={awarding}>
-                Zrušit
-              </button>
-              <button className={styles.awardCancel} onClick={() => { handleRejectTask(awardTarget.task); setAwardTarget(null) }} disabled={awarding}>
-                ✗ Zamítnout
-              </button>
-              <button className={styles.awardConfirm} onClick={handleAwardConfirm} disabled={awarding}>
-                {awarding ? 'Schvaluji…' : '✓ Schválit'}
-              </button>
+      {awardTarget && (() => {
+        const t = awardTarget.task
+        const isHw = t.kind === 'HOMEWORK'
+        const base = isHw ? (hwOnTime ? (t.pointValue ?? 20) : (t.latePointValue ?? t.pointValue ?? 10)) : (t.pointValue ?? 0)
+        const bonus1 = isHw && hwSelfChecked && t.bonusValue > 0 ? t.bonusValue : 0
+        const bonus2 = isHw && hwNoReminder && t.noReminderBonus > 0 ? t.noReminderBonus : 0
+        const hwTotal = base + bonus1 + bonus2
+        return (
+          <Modal title="Schválit úkol" onClose={() => !awarding && setAwardTarget(null)}>
+            <div className={styles.awardDialog}>
+              <div className={styles.awardPtsBadge}>⭐ {isHw ? hwTotal : t.pointValue}</div>
+              <p className={styles.awardMsg}>
+                Označit <strong>„{t.title}"</strong> jako splněný pro{' '}
+                <strong>{awardTarget.child?.name ?? 'dítě'}</strong>?
+              </p>
+              {isHw && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8, margin: '8px 0' }}>
+                  <label className={styles.bonusCheck}>
+                    <input type="checkbox" checked={hwOnTime} onChange={e => setHwOnTime(e.target.checked)} />
+                    {' '}⏰ Včas ({hwOnTime ? t.pointValue : (t.latePointValue ?? t.pointValue)} bodů)
+                  </label>
+                  {t.bonusValue > 0 && (
+                    <label className={styles.bonusCheck}>
+                      <input type="checkbox" checked={hwSelfChecked} onChange={e => setHwSelfChecked(e.target.checked)} />
+                      {' '}🔍 Sám/sama zkontroloval(a) (+{t.bonusValue})
+                    </label>
+                  )}
+                  {t.noReminderBonus > 0 && (
+                    <label className={styles.bonusCheck}>
+                      <input type="checkbox" checked={hwNoReminder} onChange={e => setHwNoReminder(e.target.checked)} />
+                      {' '}🏆 Bez připomínání (+{t.noReminderBonus})
+                    </label>
+                  )}
+                </div>
+              )}
+              <div className={styles.awardActions}>
+                <button className={styles.awardCancel} onClick={() => { setAwardTarget(null); setHwOnTime(true); setHwSelfChecked(false); setHwNoReminder(false) }} disabled={awarding}>
+                  Zrušit
+                </button>
+                <button className={styles.awardCancel} onClick={() => { handleRejectTask(awardTarget.task); setAwardTarget(null) }} disabled={awarding}>
+                  ✗ Zamítnout
+                </button>
+                <button className={styles.awardConfirm} onClick={handleAwardConfirm} disabled={awarding}>
+                  {awarding ? 'Schvaluji…' : '✓ Schválit'}
+                </button>
+              </div>
             </div>
-          </div>
-        </Modal>
-      )}
+          </Modal>
+        )
+      })()}
     </div>
   )
 }

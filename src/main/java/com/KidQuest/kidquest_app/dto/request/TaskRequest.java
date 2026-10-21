@@ -34,6 +34,10 @@ public class TaskRequest {
 
     private Integer bonusValue;
 
+    private Integer latePointValue;
+
+    private Integer noReminderBonus;
+
     private Boolean openQuest;
 
     private Integer dailyLimit;

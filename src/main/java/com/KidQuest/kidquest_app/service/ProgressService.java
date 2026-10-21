@@ -158,11 +158,13 @@ public class ProgressService {
 
     // ── Badge targets ─────────────────────────────────────────────────────────
     private static final Map<Badge, Integer> BADGE_TARGETS = Map.of(
-        Badge.STREAK_7,     7,
+        Badge.STREAK_7,      7,
         Badge.STREAK_30,    30,
-        Badge.FIRST_REWARD, 1,
+        Badge.FIRST_REWARD,  1,
         Badge.EARLY_BIRD,   10,
-        Badge.TEAM_PLAYER,  50
+        Badge.TEAM_PLAYER,  50,
+        Badge.SHERLOCK,     10,
+        Badge.SELF_STARTER, 10
     );
 
     public ProgressResponse buildResponse(Child child) {
@@ -176,17 +178,20 @@ public class ProgressService {
         int bestDay     = pointTransactionRepository.maxTasksInAnyDay(childId);
         int longestStr  = longestStreak(childId);
         int totalRed    = (int) redemptionRepository.findByChildId(childId).size();
+        long selfCheckCount  = pointTransactionRepository.countBonusByChildIdAndBonusKind(childId, "SELF_CHECK");
+        long noReminderCount = pointTransactionRepository.countBonusByChildIdAndBonusKind(childId, "NO_REMINDER");
 
         // Load earned badges into a map for quick lookup
         Map<Badge, ChildBadge> earnedMap = childBadgeRepository.findByChildId(childId)
                 .stream().collect(Collectors.toMap(cb -> cb.getBadge(), cb -> cb));
 
         // Auto-award milestone badges
-        awardIfMet(child, earnedMap, Badge.STREAK_7,     si.days() >= 7);
+        awardIfMet(child, earnedMap, Badge.STREAK_7,      si.days() >= 7);
         awardIfMet(child, earnedMap, Badge.STREAK_30,    si.days() >= 30);
         awardIfMet(child, earnedMap, Badge.FIRST_REWARD, totalRed >= 1);
         awardIfMet(child, earnedMap, Badge.EARLY_BIRD,   totalTasks >= 10);
         awardIfMet(child, earnedMap, Badge.TEAM_PLAYER,  totalTasks >= 50);
+        awardIfMet(child, earnedMap, Badge.SELF_STARTER, noReminderCount >= 10);
 
         // Build rich badge info for all badges
         List<BadgeInfoResponse> badgeInfo = Arrays.stream(Badge.values()).map(b -> {
@@ -199,9 +204,11 @@ public class ProgressService {
             if (target != null) {
                 bi.setTarget(target);
                 int cur = switch (b) {
-                    case STREAK_7, STREAK_30 -> si.days();
-                    case FIRST_REWARD        -> totalRed;
+                    case STREAK_7, STREAK_30     -> si.days();
+                    case FIRST_REWARD            -> totalRed;
                     case EARLY_BIRD, TEAM_PLAYER -> totalTasks;
+                    case SHERLOCK                -> (int) selfCheckCount;
+                    case SELF_STARTER            -> (int) noReminderCount;
                     default -> 0;
                 };
                 bi.setCurrent(Math.min(cur, target));

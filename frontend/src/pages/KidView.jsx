@@ -202,9 +202,10 @@ const MAP_STAGE_ICO = {
 }
 
 const BADGE_META = {
-  LUMBERJACK:  { i: '🪵', n: 'Dřevorubec' },
-  SHERLOCK:    { i: '🔍', n: 'Detektiv' },
-  HEAD_WAITER: { i: '🍽️', n: 'Vrchní číšník' },
+  LUMBERJACK:   { i: '🪵', n: 'Dřevorubec' },
+  SHERLOCK:     { i: '🔍', n: 'Detektiv chyb' },
+  SELF_STARTER: { i: '🚀', n: 'Samostatný' },
+  HEAD_WAITER:  { i: '🍽️', n: 'Vrchní číšník' },
   TIDY:        { i: '🧹', n: 'Uklízeč' },
   LAUNDRY_PRO: { i: '🧺', n: 'Prací mistr' },
   STREAK_7:    { i: '🔥', n: '7 dní v řadě' },
@@ -254,6 +255,7 @@ export default function KidView() {
   const [morningDone,  setMorningDone]  = useState([])
   const [submitting,      setSubmitting]      = useState(null)
   const [confirmRedeemId, setConfirmRedeemId] = useState(null)
+  const [showFreshStart,  setShowFreshStart]  = useState(false)
 
   const { tab }   = useParams()
   const activeNav = TAB_SEGS.includes(tab) ? TAB_SEGS.indexOf(tab) : 0
@@ -315,6 +317,27 @@ export default function KidView() {
       setRedemptions(redArr)
       setOpenQuestTemplates(oqArr)
       setMorningDone(loadMorning(c.id, stepCount))
+
+      // Level-up fix: seed prevLevelRef from localStorage to avoid false animation after reset
+      try {
+        const saved = JSON.parse(localStorage.getItem('kq.prevLevel') || 'null')
+        if (saved && saved.childId === c.id) {
+          if (saved.level > prog.level) {
+            prevLevelRef.current = prog.level
+          }
+          // if saved.level <= prog.level, leave prevLevelRef as-is so renderMapa can detect a real level-up
+        } else {
+          prevLevelRef.current = prog.level
+        }
+      } catch { prevLevelRef.current = prog.level }
+
+      // Fresh-start welcome screen
+      try {
+        const seenKey = `kq.freshStartSeen.${c.id}`
+        if (!localStorage.getItem(seenKey) && prog.xp === 0 && prog.balance === 0) {
+          setShowFreshStart(true)
+        }
+      } catch { /**/ }
     } catch (e) { setError(e.message) }
   }
 
@@ -380,6 +403,15 @@ export default function KidView() {
     if (child && !tab) navigate('/kid/today', { replace: true })
   }, [child, tab]) // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Persist current level to localStorage so next session can detect resets
+  useEffect(() => {
+    if (child && progress) {
+      try {
+        localStorage.setItem('kq.prevLevel', JSON.stringify({ childId: child.id, level: progress.level }))
+      } catch { /**/ }
+    }
+  }, [child?.id, progress?.level]) // eslint-disable-line react-hooks/exhaustive-deps
+
   // ── Section: Výzvy ───────────────────────────────────────────────────────
   function renderVyzvy() {
     const doneCnt = morningDone.filter(Boolean).length
@@ -426,8 +458,15 @@ export default function KidView() {
                   <div key={task.taskId} className={styles.taskCard}>
                     <span className={styles.taskIco}>📋</span>
                     <span className={styles.taskName}>{task.title}</span>
+                    {task.kind === 'HOMEWORK' && (
+                      <span className={styles.taskHint}>Udělej ho včas, zkontroluj a oprav sám.</span>
+                    )}
                     <div className={styles.taskBot}>
-                      <span className={styles.taskPts}>{ptIcon} {task.pointValue}</span>
+                      <span className={styles.taskPts}>
+                        {task.kind === 'HOMEWORK'
+                          ? `${ptIcon} ${task.pointValue}${task.bonusValue > 0 ? ` + 🔍${task.bonusValue}` : ''}${task.noReminderBonus > 0 ? ` + ${task.noReminderBonus}` : ''}`
+                          : `${ptIcon} ${task.pointValue}`}
+                      </span>
                       <button
                         className={`${styles.taskBtn} ${isPending ? styles.btnWait : styles.btnGo}`}
                         onClick={() => handleSubmitTask(task)}
@@ -956,6 +995,26 @@ export default function KidView() {
         </div>
       </main>
       {chestToast && <div className={styles.chestToast}>{chestToast}</div>}
+
+      {showFreshStart && (
+        <div className={styles.freshStartOverlay}>
+          <div className={styles.freshStartCard}>
+            <div className={styles.freshStartIcon}>🌅</div>
+            <h2 className={styles.freshStartTitle}>Nový začátek!</h2>
+            <p className={styles.freshStartText}>
+              Všichni začínáme od nuly.<br />
+              Nové úkoly, nové odměny, nové odznaky.<br />
+              Kdo získá první odznak?
+            </p>
+            <button className={styles.freshStartBtn} onClick={() => {
+              try { localStorage.setItem(`kq.freshStartSeen.${child.id}`, '1') } catch { /**/ }
+              setShowFreshStart(false)
+            }}>
+              Jdu na to! 🚀
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

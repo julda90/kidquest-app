@@ -1109,3 +1109,44 @@
 }
 
 .errorMsg { color: #f87171; font-size: 14px; font-weight: 600; }
+
+/* Homework task hint */
+.taskHint {
+  font-size: 11px;
+  color: var(--kdim);
+  line-height: 1.3;
+  margin: 2px 0 4px;
+}
+
+/* Fresh-start overlay */
+.freshStartOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.75);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+.freshStartCard {
+  background: var(--kcard, rgba(255,255,255,0.12));
+  border: 1px solid var(--kcardb, rgba(255,255,255,0.2));
+  border-radius: 20px;
+  padding: 36px 32px;
+  max-width: 340px;
+  text-align: center;
+  backdrop-filter: blur(12px);
+}
+.freshStartIcon { font-size: 52px; margin-bottom: 12px; }
+.freshStartTitle { font-size: 26px; font-weight: 800; color: var(--ksh); margin: 0 0 12px; }
+.freshStartText  { font-size: 15px; color: rgba(255,255,255,0.85); line-height: 1.6; margin: 0 0 24px; }
+.freshStartBtn {
+  background: var(--kbtng);
+  border: none;
+  border-radius: 12px;
+  padding: 12px 28px;
+  font-size: 16px;
+  font-weight: 700;
+  color: #fff;
+  cursor: pointer;
+}

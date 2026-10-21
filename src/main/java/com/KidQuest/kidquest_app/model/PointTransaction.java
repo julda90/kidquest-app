@@ -41,6 +41,9 @@ public class PointTransaction {
     @JoinColumn(name = "redemption_id")
     private RewardRedemption redemption;
 
+    @Column(name = "bonus_kind", length = 20)
+    private String bonusKind;
+
     @Column(name="created_at")
     @CreatedDate
     private LocalDateTime createdAt;

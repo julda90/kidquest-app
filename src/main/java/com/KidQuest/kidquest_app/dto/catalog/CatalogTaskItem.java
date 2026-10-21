@@ -13,6 +13,8 @@ public class CatalogTaskItem {
     private String kind;
     private int points;
     private int bonusValue;
+    private Integer latePointValue;
+    private int noReminderBonus;
     private boolean openQuest;
     private Integer dailyLimit;
     private String audience;

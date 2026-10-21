@@ -109,6 +109,8 @@ public class CatalogService {
                     task.setKind(TaskKind.valueOf(tpl.getKind()));
                     task.setPointValue(tpl.getPoints());
                     task.setBonusValue(tpl.getBonusValue());
+                    task.setLatePointValue(tpl.getLatePointValue());
+                    task.setNoReminderBonus(tpl.getNoReminderBonus());
                     task.setOpenQuest(tpl.isOpenQuest());
                     task.setDailyLimit(tpl.getDailyLimit() != null ? tpl.getDailyLimit() : 1);
                     task.setCatalogKey(key);
@@ -160,7 +162,9 @@ public class CatalogService {
     private CatalogTaskItem copyTask(CatalogTaskItem src) {
         CatalogTaskItem c = new CatalogTaskItem();
         c.setCatalogKey(src.getCatalogKey()); c.setTitle(src.getTitle()); c.setKind(src.getKind());
-        c.setPoints(src.getPoints()); c.setBonusValue(src.getBonusValue()); c.setOpenQuest(src.isOpenQuest());
+        c.setPoints(src.getPoints()); c.setBonusValue(src.getBonusValue());
+        c.setLatePointValue(src.getLatePointValue()); c.setNoReminderBonus(src.getNoReminderBonus());
+        c.setOpenQuest(src.isOpenQuest());
         c.setDailyLimit(src.getDailyLimit()); c.setAudience(src.getAudience()); c.setDescription(src.getDescription());
         return c;
     }

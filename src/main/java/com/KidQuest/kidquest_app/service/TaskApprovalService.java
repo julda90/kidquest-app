@@ -74,25 +74,43 @@ public class TaskApprovalService {
         task.setApprovedAt(now);
         taskRepository.save(task);
 
-        int awarded = task.getPointValue() != null ? task.getPointValue() : 0;
+        boolean onTime = request.isOnTime();
+        int basePoints = task.getPointValue() != null ? task.getPointValue() : 0;
+        if (!onTime && task.getLatePointValue() != null) {
+            basePoints = task.getLatePointValue();
+        }
+        int awarded = basePoints;
 
         PointTransaction taskTx = new PointTransaction();
         taskTx.setChild(child);
-        taskTx.setAmount(awarded);
-        taskTx.setReason(task.getTitle());
+        taskTx.setAmount(basePoints);
+        taskTx.setReason(task.getTitle() + (onTime ? "" : " (později)"));
         taskTx.setType(TransactionType.TASK);
         taskTx.setTask(task);
         pointTransactionRepository.save(taskTx);
 
-        if (request.isBonus() && task.getBonusValue() != null && task.getBonusValue() > 0) {
-            PointTransaction bonusTx = new PointTransaction();
-            bonusTx.setChild(child);
-            bonusTx.setAmount(task.getBonusValue());
-            bonusTx.setReason("Detektiv chyb: " + task.getTitle());
-            bonusTx.setType(TransactionType.BONUS);
-            bonusTx.setTask(task);
-            pointTransactionRepository.save(bonusTx);
+        if (request.isSelfChecked() && task.getBonusValue() != null && task.getBonusValue() > 0) {
+            PointTransaction selfCheckTx = new PointTransaction();
+            selfCheckTx.setChild(child);
+            selfCheckTx.setAmount(task.getBonusValue());
+            selfCheckTx.setReason("Detektiv chyb: " + task.getTitle());
+            selfCheckTx.setType(TransactionType.BONUS);
+            selfCheckTx.setBonusKind("SELF_CHECK");
+            selfCheckTx.setTask(task);
+            pointTransactionRepository.save(selfCheckTx);
             awarded += task.getBonusValue();
+        }
+
+        if (request.isNoReminder() && task.getNoReminderBonus() > 0) {
+            PointTransaction noReminderTx = new PointTransaction();
+            noReminderTx.setChild(child);
+            noReminderTx.setAmount(task.getNoReminderBonus());
+            noReminderTx.setReason("Bez připomínání: " + task.getTitle());
+            noReminderTx.setType(TransactionType.BONUS);
+            noReminderTx.setBonusKind("NO_REMINDER");
+            noReminderTx.setTask(task);
+            pointTransactionRepository.save(noReminderTx);
+            awarded += task.getNoReminderBonus();
         }
 
         // Streak bonus — awarded on the first task of each new active day
@@ -163,11 +181,11 @@ public class TaskApprovalService {
         checkAndAwardBadge(child, Badge.LAUNDRY_PRO,
                 countCompleted(childId, List.of(TaskKind.LAUNDRY)), 20, earned);
 
-        long bonusCount = pointTransactionRepository.findByChildId(childId).stream()
-                .filter(t -> t.getType() == TransactionType.BONUS
-                          && t.getReason() != null && t.getReason().startsWith("Detektiv chyb:"))
-                .count();
-        checkAndAwardBadge(child, Badge.SHERLOCK, bonusCount, 10, earned);
+        long selfCheckCount = pointTransactionRepository.countBonusByChildIdAndBonusKind(childId, "SELF_CHECK");
+        checkAndAwardBadge(child, Badge.SHERLOCK, selfCheckCount, 10, earned);
+
+        long noReminderCount = pointTransactionRepository.countBonusByChildIdAndBonusKind(childId, "NO_REMINDER");
+        checkAndAwardBadge(child, Badge.SELF_STARTER, noReminderCount, 10, earned);
 
         return earned;
     }
