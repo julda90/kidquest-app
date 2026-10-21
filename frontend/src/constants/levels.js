@@ -1,23 +1,23 @@
 export const LEVEL_NAMES = {
   elsa: [
-    'Sněhová vločka', 'Ledový krystal', 'Zimní víla', 'Ledová princezna',
-    'Strážkyně severu', 'Paní ledového hradu', 'Mistryně sněhu', 'Ledový drak',
-    'Polární záře', 'Věčná zima', 'Hvězdný led', 'Ledová královna',
+    'Sněhová vločka', 'Ledový krystal', 'Ledová princezna', 'Sněžná tanečnice',
+    'Strážkyně severu', 'Přítelkyně sobíka', 'Mistryně ledu', 'Paní polární záře',
+    'Ledová kouzelnice', 'Paní hor', 'Ledová královna', 'Legenda severu',
   ],
   unicorn: [
-    'Hvězdička', 'Duhová jiskra', 'Pastelová perlička', 'Malý jednorožec',
-    'Duhový jednorožec', 'Křídlatý jednorožec', 'Stříbrný roh', 'Kouzelný jednorožec',
-    'Zlatý jednorožec', 'Hvězdný jednorožec', 'Duhový drak', 'Královna duhy',
+    'Hvězdička', 'Duhová jiskra', 'Malý jednorožec', 'Třpytivá hříva',
+    'Duhový jednorožec', 'Kamarádka motýlků', 'Hvězdný jednorožec', 'Obláčková tanečnice',
+    'Měsíční jednorožec', 'Kouzelný jednorožec', 'Duhová princezna', 'Královna duhy',
   ],
   hotwheels: [
-    'Chodec', 'Kolo', 'Skútr', 'Závodní kolo',
-    'Motorkář', 'Závodní auto', 'Dragster', 'Turbo závodník',
-    'Supersport', 'Formule', 'Hypercar', 'Šampion okruhu',
+    'Šlapač', 'Motokárník', 'Rallyeman', 'Závodník',
+    'Pouštní jezdec', 'Horský jezdec', 'Šampion', 'Nitro',
+    'Kaskadér', 'Tryskáč', 'Raketoplán', 'Legenda rychlosti',
   ],
   minecraft: [
-    'Dřevěný meč', 'Kamenný meč', 'Zlatý meč', 'Železný meč',
-    'Diamantový meč', 'Netheritový meč', 'Průzkumník', 'Hrdina Netheru',
-    'Ender bojovník', 'Drakobijce', 'Strážce konců', 'Netheritový král',
+    'Dřevěný krumpáč', 'Kamenný krumpáč', 'Železný krumpáč', 'Průzkumník',
+    'Zlatý krumpáč', 'Strážce lesa', 'Diamantový krumpáč', 'Rytíř',
+    'Lovec pokladů', 'Ohnivý horník', 'Pán oblaků', 'Legenda',
   ],
 }
 
