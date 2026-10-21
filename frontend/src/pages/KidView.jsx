@@ -844,7 +844,7 @@ export default function KidView() {
           {byDay.length === 0 && <div className={styles.emptyState}>Zatím žádné záznamy.</div>}
           {byDay.map(group => (
             <div key={group.day} className={styles.diaryDay}>
-              <div className={styles.diaryDayLabel}>{formatDate(group.day + 'T00:00:00')}</div>
+              <div className={styles.diaryDayLabel}>{czShortDate(group.day + 'T00:00:00')}</div>
               {group.items.map(tx => (
                 <div key={tx.id} className={styles.diaryEntry}>
                   <span className={styles.diaryIco}>{TX_ICONS[tx.type] ?? '📋'}</span>
