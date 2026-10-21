@@ -6,5 +6,5 @@ export const updateChild    = (childId,  data)   => apiFetch(`/api/children/${ch
 export const deleteChild    = (childId)          => apiFetch(`/api/children/${childId}`,         { method: 'DELETE' })
 export const getProgress    = (childId)          => apiFetch(`/api/children/${childId}/progress`)
 export const openChest      = (childId)          => apiFetch(`/api/children/${childId}/chest/open`, { method: 'POST' })
-export const updateSkin     = (childId, skin)    => apiFetch(`/api/children/${childId}/skin`,       { method: 'PUT',  body: JSON.stringify({ skin }) })
+export const updateAppearance = (childId, body) => apiFetch(`/api/children/${childId}/appearance`, { method: 'PUT', body: JSON.stringify(body) })
 export const getEarningRate = (familyId, days = 14) => apiFetch(`/api/children/family/${familyId}/earning-rate?days=${days}`)

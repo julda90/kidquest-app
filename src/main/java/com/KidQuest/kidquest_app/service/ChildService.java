@@ -55,9 +55,10 @@ public class ChildService {
         child.setDeletedAt(LocalDateTime.now());
         childRepository.save(child);
     }
-    public ChildResponse updateSkin(UUID childId, String skin) {
+    public ChildResponse updateAppearance(UUID childId, Integer avatarLevel, Integer landscapeLevel) {
         Child child = findById(childId);
-        child.setSelectedSkin(skin);
+        if (avatarLevel != null) child.setSelectedAvatarLevel(avatarLevel);
+        if (landscapeLevel != null) child.setSelectedLandscapeLevel(landscapeLevel);
         return response(childRepository.save(child));
     }
 
@@ -67,7 +68,8 @@ public class ChildService {
         response.setName(child.getName());
         response.setAvatar(child.getAvatar());
         response.setAge(child.getAge());
-        response.setSelectedSkin(child.getSelectedSkin());
+        response.setSelectedAvatarLevel(child.getSelectedAvatarLevel());
+        response.setSelectedLandscapeLevel(child.getSelectedLandscapeLevel());
         response.setCreatedAt(child.getCreatedAt());
         response.setUpdatedAt(child.getUpdatedAt());
         response.setFamilyId(child.getFamily().getId());

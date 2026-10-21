@@ -9,8 +9,13 @@ import com.KidQuest.kidquest_app.model.TransactionType;
 import com.KidQuest.kidquest_app.repository.ChildBadgeRepository;
 import com.KidQuest.kidquest_app.repository.PointTransactionRepository;
 import com.KidQuest.kidquest_app.repository.RewardRedemptionRepository;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.annotation.PostConstruct;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
 
+import java.io.InputStream;
 import java.time.Clock;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
@@ -28,23 +33,45 @@ public class ProgressService {
     public static final int CHEST_BONUS  = 25;
     public static final int STREAK_BONUS = 10;
 
-    // XP thresholds: index = level (0-based), value = XP needed to reach that level
-    private static final int[] THRESHOLDS_OLDER  = {0, 200, 600, 1500, 3000, 6000};
-    private static final int[] THRESHOLDS_YOUNGER = {0, 100, 300,  750, 1500, 3000};
+    // Loaded from catalog/levels.json at startup
+    private int[] THRESHOLDS_STANDARD;
+    private int[] THRESHOLDS_YOUNG;
+    private int PRESTIGE_STEP_STANDARD;
+    private int PRESTIGE_STEP_YOUNG;
 
     private final PointTransactionRepository pointTransactionRepository;
     private final ChildBadgeRepository childBadgeRepository;
     private final RewardRedemptionRepository redemptionRepository;
     private final Clock clock;
+    private final ObjectMapper objectMapper;
 
     public ProgressService(PointTransactionRepository pointTransactionRepository,
                            ChildBadgeRepository childBadgeRepository,
                            RewardRedemptionRepository redemptionRepository,
-                           Clock clock) {
+                           Clock clock,
+                           ObjectMapper objectMapper) {
         this.pointTransactionRepository = pointTransactionRepository;
         this.childBadgeRepository = childBadgeRepository;
         this.redemptionRepository = redemptionRepository;
         this.clock = clock;
+        this.objectMapper = objectMapper;
+    }
+
+    @PostConstruct
+    public void loadLevels() {
+        try (InputStream is = new ClassPathResource("catalog/levels.json").getInputStream()) {
+            JsonNode root = objectMapper.readTree(is);
+            JsonNode std = root.get("standard");
+            JsonNode yng = root.get("young");
+            THRESHOLDS_STANDARD = new int[std.size()];
+            for (int i = 0; i < std.size(); i++) THRESHOLDS_STANDARD[i] = std.get(i).asInt();
+            THRESHOLDS_YOUNG = new int[yng.size()];
+            for (int i = 0; i < yng.size(); i++) THRESHOLDS_YOUNG[i] = yng.get(i).asInt();
+            PRESTIGE_STEP_STANDARD = root.get("prestigeStep").get("standard").asInt();
+            PRESTIGE_STEP_YOUNG    = root.get("prestigeStep").get("young").asInt();
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to load catalog/levels.json", e);
+        }
     }
 
     public int balance(UUID childId) {
@@ -55,25 +82,44 @@ public class ProgressService {
         return pointTransactionRepository.sumXpByChildId(childId, XP_TYPES);
     }
 
-    /** Level info: 1-based level number and progress toward next threshold. */
-    public record LevelInfo(int level, int xp, int currentThreshold, Integer nextThreshold, double progressPct) {}
+    /** Level info: 1-based level (1–12), prestige stars, XP and progress. */
+    public record LevelInfo(int level, int maxLevel, int prestigeStars, int xp,
+                            int currentThreshold, Integer nextThreshold, double progressPct) {}
 
     /** Compute level from a known XP value without querying the DB. */
     public LevelInfo levelFromXp(Child child, int currentXp) {
-        int[] thresholds = (child.getAge() != null && child.getAge() < 6) ? THRESHOLDS_YOUNGER : THRESHOLDS_OLDER;
+        boolean young = child.getAge() != null && child.getAge() < 6;
+        int[] thresholds = young ? THRESHOLDS_YOUNG : THRESHOLDS_STANDARD;
+        int maxLevel = thresholds.length; // 12
+        int prestigeStep = young ? PRESTIGE_STEP_YOUNG : PRESTIGE_STEP_STANDARD;
+
+        int topThreshold = thresholds[maxLevel - 1];
+
+        if (currentXp >= topThreshold) {
+            // Prestige: player stays at level 12, stars accumulate
+            int overXp = currentXp - topThreshold;
+            int prestigeStars = overXp / prestigeStep + 1;
+            int intoStep = overXp % prestigeStep;
+            double pct = (double) intoStep / prestigeStep * 100.0;
+            return new LevelInfo(maxLevel, maxLevel, prestigeStars, currentXp,
+                    topThreshold, null, pct);
+        }
+
         int lvl = 0;
-        for (int i = thresholds.length - 1; i >= 0; i--) {
+        for (int i = maxLevel - 1; i >= 0; i--) {
             if (currentXp >= thresholds[i]) { lvl = i; break; }
         }
+
         int currentThreshold = thresholds[lvl];
-        Integer nextThreshold = (lvl + 1 < thresholds.length) ? thresholds[lvl + 1] : null;
-        double pct = 0.0;
+        Integer nextThreshold = (lvl + 1 < maxLevel) ? thresholds[lvl + 1] : null;
+        double pct;
         if (nextThreshold != null && nextThreshold > currentThreshold) {
             pct = (double)(currentXp - currentThreshold) / (nextThreshold - currentThreshold) * 100.0;
-        } else if (nextThreshold == null) {
+        } else {
             pct = 100.0;
         }
-        return new LevelInfo(lvl + 1, currentXp, currentThreshold, nextThreshold, Math.min(100.0, pct));
+        return new LevelInfo(lvl + 1, maxLevel, 0, currentXp,
+                currentThreshold, nextThreshold, Math.min(100.0, pct));
     }
 
     public LevelInfo level(Child child) {
@@ -81,12 +127,28 @@ public class ProgressService {
     }
 
     private static final Map<String, String[]> LEVEL_NAMES_MAP = Map.of(
-        "elsa",      new String[]{"Sněhová vločka", "Ledový krystal", "Ledová princezna", "Strážkyně severu", "Mistryně ledu", "Ledová královna"},
-        "unicorn",   new String[]{"Hvězdička", "Duhová jiskra", "Malý jednorožec", "Duhový jednorožec", "Kouzelný jednorožec", "Královna duhy"},
-        "hotwheels", new String[]{"Dřevěný", "Kamenný", "Železný", "Zlatý", "Diamantový", "Netheritový krumpáč"},
-        "minecraft", new String[]{"Dřevěný", "Kamenný", "Železný", "Zlatý", "Diamantový", "Netheritový krumpáč"}
+        "elsa",      new String[]{
+            "Sněhová vločka", "Ledový krystal", "Zimní víla", "Ledová princezna",
+            "Strážkyně severu", "Paní ledového hradu", "Mistryně sněhu", "Ledový drak",
+            "Polární záře", "Věčná zima", "Hvězdný led", "Ledová královna"},
+        "unicorn",   new String[]{
+            "Hvězdička", "Duhová jiskra", "Pastelová perlička", "Malý jednorožec",
+            "Duhový jednorožec", "Křídlatý jednorožec", "Stříbrný roh", "Kouzelný jednorožec",
+            "Zlatý jednorožec", "Hvězdný jednorožec", "Duhový drak", "Královna duhy"},
+        "minecraft", new String[]{
+            "Dřevěný meč", "Kamenný meč", "Zlatý meč", "Železný meč",
+            "Diamantový meč", "Netheritový meč", "Průzkumník", "Hrdina Netheru",
+            "Ender bojovník", "Drakobijce", "Strážce konců", "Netheritový král"},
+        "racer",     new String[]{
+            "Chodec", "Kolo", "Skútr", "Závodní kolo",
+            "Motorkář", "Závodní auto", "Dragster", "Turbo závodník",
+            "Supersport", "Formule", "Hypercarro", "Šampion okruhu"}
     );
-    private static final String[] DEFAULT_LEVEL_NAMES = {"Nováček", "Pomocník", "Šikovný", "Zkušený", "Expertní", "Mistr"};
+    private static final String[] DEFAULT_LEVEL_NAMES = {
+        "Nováček", "Učedník", "Pomocník", "Šikovný",
+        "Zkušený", "Zručný", "Pokročilý", "Expertní",
+        "Mistr", "Velmistr", "Legenda", "Hrdina"
+    };
 
     public static String levelName(String avatar, int level) {
         String[] names = LEVEL_NAMES_MAP.getOrDefault(avatar, DEFAULT_LEVEL_NAMES);
@@ -225,6 +287,8 @@ public class ProgressService {
         r.setBalance(balance);
         r.setXp(li.xp());
         r.setLevel(li.level());
+        r.setMaxLevel(li.maxLevel());
+        r.setPrestigeStars(li.prestigeStars());
         r.setLevelName(levelName(child.getAvatar(), li.level()));
         r.setCurrentThreshold(li.currentThreshold());
         r.setNextThreshold(li.nextThreshold());
@@ -238,6 +302,8 @@ public class ProgressService {
         r.setRecordTotalTasks(totalTasks);
         r.setRecordLongestStreak(longestStr);
         r.setRecordBestDayTasks(bestDay);
+        r.setSelectedAvatarLevel(child.getSelectedAvatarLevel());
+        r.setSelectedLandscapeLevel(child.getSelectedLandscapeLevel());
         return r;
     }
 

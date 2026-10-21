@@ -19,7 +19,9 @@ public class ChildResponse {
 
     private String avatar;
 
-    private String selectedSkin;
+    private Integer selectedAvatarLevel;
+
+    private Integer selectedLandscapeLevel;
 
     private LocalDateTime createdAt;
 

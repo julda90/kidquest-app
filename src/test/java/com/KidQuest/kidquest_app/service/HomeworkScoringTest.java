@@ -77,7 +77,7 @@ class HomeworkScoringTest {
 
         when(progressService.xp(childId)).thenReturn(0);
         when(progressService.levelFromXp(eq(child), anyInt()))
-                .thenReturn(new ProgressService.LevelInfo(1, 0, 0, 200, 0.0));
+                .thenReturn(new ProgressService.LevelInfo(1, 12, 0, 0, 0, 200, 0.0));
         when(progressService.streak(eq(childId), any(LocalDate.class)))
                 .thenReturn(new ProgressService.StreakInfo(0, false));
 

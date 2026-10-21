@@ -27,4 +27,10 @@ public class ProgressResponse {
     private int recordTotalTasks;
     private int recordLongestStreak;
     private int recordBestDayTasks;
+
+    // Level / prestige extras
+    private int prestigeStars;
+    private int maxLevel;
+    private Integer selectedAvatarLevel;
+    private Integer selectedLandscapeLevel;
 }

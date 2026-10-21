@@ -118,7 +118,7 @@ class RoutineServiceTest {
         when(taskService.response(any())).thenReturn(new TaskResponse());
         when(progressService.xp(any())).thenReturn(0);
         when(progressService.levelFromXp(any(), anyInt()))
-                .thenReturn(new ProgressService.LevelInfo(1, 0, 0, 200, 0.0));
+                .thenReturn(new ProgressService.LevelInfo(1, 12, 0, 0, 0, 200, 0.0));
         when(progressService.streak(any(), any())).thenReturn(new ProgressService.StreakInfo(0, false));
         when(familyGoalRepository.findByFamilyIdAndReachedAtIsNullAndCancelledAtIsNull(any()))
                 .thenReturn(Optional.empty());

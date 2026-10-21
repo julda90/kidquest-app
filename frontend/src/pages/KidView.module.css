@@ -1176,3 +1176,38 @@
   color: #fff;
   cursor: pointer;
 }
+
+/* ── Level-up full-screen overlay ── */
+.levelUpOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0,0,0,0.72);
+  cursor: pointer;
+  animation: fadeInOverlay 0.3s ease;
+}
+@keyframes fadeInOverlay { from { opacity: 0; } to { opacity: 1; } }
+.levelUpCard {
+  text-align: center;
+  padding: 40px 48px;
+  background: linear-gradient(135deg, #f59e0b 0%, #ef4444 50%, #8b5cf6 100%);
+  border-radius: 28px;
+  box-shadow: 0 0 60px rgba(245,158,11,0.7);
+  animation: popInBig 0.5s cubic-bezier(0.34,1.56,0.64,1);
+}
+@keyframes popInBig { from { transform: scale(0.4); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+.levelUpIcon  { font-size: 64px; margin-bottom: 8px; }
+.levelUpTitle { font-family: 'Fredoka One','Segoe UI',sans-serif; font-size: 32px; color: #fff; margin-bottom: 8px; }
+.levelUpName  { font-family: 'Fredoka One','Segoe UI',sans-serif; font-size: 26px; color: #fff; margin-bottom: 4px; }
+.levelUpLevel { font-size: 18px; color: rgba(255,255,255,0.85); margin-bottom: 20px; }
+.levelUpHint  { font-size: 13px; color: rgba(255,255,255,0.60); }
+
+/* ── Prestige stars ── */
+.prestigeStars { font-size: 16px; }
+.topPrestige   { font-size: 11px; }
+
+/* ── Locked map node ── */
+.xpMapNodeLocked { opacity: 0.35; filter: blur(1px); }

@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { getMe } from '../api/users'
-import { getChildren, getProgress, openChest, updateSkin } from '../api/children'
+import { getChildren, getProgress, openChest, updateAppearance } from '../api/children'
 import { submitTask, getOpenQuests, claimQuest, getTodayTasks, toggleStep as apiToggleStep, submitRoutine } from '../api/tasks'
 import { getRewards } from '../api/rewards'
 import { getTransactionsByChild } from '../api/pointTransactions'
@@ -191,14 +191,26 @@ function ChildPicker({ children, onPick }) {
 const TAB_SEGS = ['today', 'map', 'shop', 'trophies', 'me']
 
 const MAP_STAGES = {
-  frozen:    ['Vesnice', 'Ledové jezero', 'Ledový les', 'Horský průsmyk', 'Ledový palác', 'Trůnní sál'],
-  unicorn:   ['Louka', 'Duhový most', 'Oblaka', 'Hvězdné pole', 'Měsíc', 'Duhový hrad'],
-  minecraft: ['Les', 'Jeskyně', 'Železný důl', 'Zlatý důl', 'Diamantová hloubka', 'Nether'],
+  frozen: [
+    'Vesnice', 'Ledové jezero', 'Ledový les', 'Horský průsmyk',
+    'Ledový hrad', 'Sněžná bouře', 'Ledová jeskyně', 'Polární noc',
+    'Severní hvězda', 'Věčný led', 'Koruna hor', 'Trůnní sál',
+  ],
+  unicorn: [
+    'Louka', 'Duhový most', 'Oblaka', 'Hvězdné pole',
+    'Měsíční krajina', 'Duhový les', 'Krystalová jeskyně', 'Vílí rybník',
+    'Oblačný hrad', 'Hvězdná brána', 'Hvězdný palác', 'Duhový hrad',
+  ],
+  minecraft: [
+    'Les', 'Jeskyně', 'Železný důl', 'Zlatý důl',
+    'Diamantová hloubka', 'Nether', 'Pevnost Netheru', 'Ohnivé bažiny',
+    'Basaltové delta', 'End ostrov', 'End City', 'Drakova aréna',
+  ],
 }
 const MAP_STAGE_ICO = {
-  frozen:    ['🏘️', '🧊', '🌲', '🏔️', '🏰', '👑'],
-  unicorn:   ['🌸', '🌈', '☁️', '⭐', '🌙', '🏰'],
-  minecraft: ['🌲', '🕳️', '⛏️', '💰', '💎', '🔥'],
+  frozen: ['🏘️', '🧊', '🌲', '🏔️', '🏰', '🌨️', '🗻', '🌑', '⭐', '❄️', '👑', '💎'],
+  unicorn: ['🌸', '🌈', '☁️', '⭐', '🌙', '🦋', '💎', '🏊', '🏰', '🌠', '🌟', '🦄'],
+  minecraft: ['🌲', '🕳️', '⛏️', '💰', '💎', '🔥', '🏯', '🌋', '🪨', '🌌', '🏙️', '🐉'],
 }
 
 const BADGE_META = {
@@ -583,76 +595,78 @@ export default function KidView() {
 
   // ── Section: Mapa ────────────────────────────────────────────────────────
   function renderMapa() {
-    const level    = progress?.level ?? 1
-    const xpPct    = progress?.progressPct ?? 0
-    const xp       = progress?.xp ?? 0
-    const maxLevel = 6
-    const stages   = MAP_STAGES[theme] ?? MAP_STAGES.frozen
-    const stageIco = MAP_STAGE_ICO[theme] ?? MAP_STAGE_ICO.frozen
-    const lvlWidth = 100 / maxLevel
+    const level         = progress?.level ?? 1
+    const xpPct         = progress?.progressPct ?? 0
+    const xp            = progress?.xp ?? 0
+    const maxLevel      = progress?.maxLevel ?? 12
+    const prestigeStars = progress?.prestigeStars ?? 0
+    const stages        = MAP_STAGES[theme] ?? MAP_STAGES.frozen
+    const stageIco      = MAP_STAGE_ICO[theme] ?? MAP_STAGE_ICO.frozen
+    const lvlWidth      = 100 / maxLevel
 
-    // Avatar position on the full track (0–100%)
     const avatarPct = Math.min(((level - 1) + (xpPct / 100)) * lvlWidth, 98)
-    const isMaxLevel = level >= maxLevel
+    const isMaxLevel = level >= maxLevel && prestigeStars > 0
 
-    // Fire level-up confetti when level increases
+    // Fire level-up overlay when level increases
     if (prevLevelRef.current !== null && prevLevelRef.current < level) {
       setLevelUpAnim(true)
-      setTimeout(() => setLevelUpAnim(false), 3000)
+      setTimeout(() => setLevelUpAnim(false), 4000)
     }
     prevLevelRef.current = level
 
     return (
       <>
-        {levelUpAnim && <div className={styles.levelUpBanner}>🎉 Nová úroveň: {progress?.levelName}! 🎉</div>}
-
-        {/* Level title */}
+        {/* Level title + prestige */}
         <div className={styles.xpMapHeader}>
-          <span className={styles.xpMapLvl}>Úroveň {level}: {progress?.levelName ?? ''}</span>
+          <span className={styles.xpMapLvl}>
+            Úroveň {level}: {progress?.levelName ?? ''}
+            {prestigeStars > 0 && <span className={styles.prestigeStars}>{' '}{'⭐'.repeat(Math.min(prestigeStars, 5))}</span>}
+          </span>
           <span className={styles.xpMapXp}>{ptIcon} {xp} XP</span>
         </div>
 
         {/* Scrollable stage track */}
         <div className={styles.xpMapScroll}>
           <div className={styles.xpMapTrack} style={{ width: `${maxLevel * 120}px` }}>
-            {/* Filled portion */}
             <div className={styles.xpMapFill} style={{ width: `${avatarPct}%` }} />
 
-            {/* Level boundary dots + labels */}
-            {stages.map((name, i) => {
+            {stages.slice(0, maxLevel).map((name, i) => {
               const posX = (i / maxLevel * 100).toFixed(1)
               const done = i < level - 1 || (i === level - 1 && xpPct >= 100)
+              const locked = i >= level
               return (
                 <div key={i} className={styles.xpMapNode} style={{ left: `${posX}%` }}>
-                  <div className={`${styles.xpMapNodeDot} ${done ? styles.xpMapNodeDone : i === level - 1 ? styles.xpMapNodeCur : ''}`}>
-                    {stageIco[i]}
+                  <div className={[
+                    styles.xpMapNodeDot,
+                    done ? styles.xpMapNodeDone : i === level - 1 ? styles.xpMapNodeCur : '',
+                    locked ? styles.xpMapNodeLocked : '',
+                  ].join(' ')}>
+                    {locked ? '🔒' : stageIco[i]}
                   </div>
                   <div className={styles.xpMapNodeLabel}>{name}</div>
                 </div>
               )
             })}
 
-            {/* Avatar */}
             <div className={styles.xpMapAvatar} style={{ left: `${avatarPct}%` }}>
               {THEME_AVATAR[theme]}
             </div>
           </div>
         </div>
 
-        {/* XP progress within current level */}
-        {!isMaxLevel && (
-          <div className={styles.xpProgressRow}>
-            <div className={styles.xpProgressBar}>
-              <div className={styles.xpProgressFill} style={{ width: `${xpPct}%` }} />
-            </div>
-            <span className={styles.xpProgressLabel}>
-              {progress?.currentThreshold} → {progress?.nextThreshold} XP
-              &nbsp;({Math.round(xpPct)}%)
-            </span>
+        {/* XP progress bar */}
+        <div className={styles.xpProgressRow}>
+          <div className={styles.xpProgressBar}>
+            <div className={styles.xpProgressFill} style={{ width: `${xpPct}%` }} />
           </div>
-        )}
-        {isMaxLevel && (
-          <div className={styles.xpMaxLabel}>⚡ Maximální úroveň! Jsi legendou!</div>
+          <span className={styles.xpProgressLabel}>
+            {isMaxLevel
+              ? `⭐ Prestiž ${prestigeStars} — ${Math.round(xpPct)}% k další hvězdě`
+              : `${progress?.currentThreshold} → ${progress?.nextThreshold} XP (${Math.round(xpPct)}%)`}
+          </span>
+        </div>
+        {isMaxLevel && prestigeStars >= 1 && (
+          <div className={styles.xpMaxLabel}>⚡ Maximální úroveň! Prestiž {'⭐'.repeat(prestigeStars)}</div>
         )}
       </>
     )
@@ -859,8 +873,8 @@ export default function KidView() {
     const xpPct   = progress?.progressPct ?? 0
     const xpNext  = progress?.nextThreshold ?? null
 
-    const activeSkin  = child.selectedSkin ?? child.avatar ?? 'elsa'
-    const skinEmoji   = SKINS.find(s => s.id === activeSkin)?.emoji ?? THEME_AVATAR[theme]
+    const selectedAvatarLevel    = progress?.selectedAvatarLevel ?? level
+    const selectedLandscapeLevel = progress?.selectedLandscapeLevel ?? level
 
     // Diary: last 50 transactions grouped by day
     const diary = transactions.slice(0, 50)
@@ -877,7 +891,7 @@ export default function KidView() {
         {/* Left column */}
         <div className={styles.meLeft}>
           <div className={styles.meAvaBlock}>
-            <div className={styles.meAvaEmoji}>{skinEmoji}</div>
+            <div className={styles.meAvaEmoji}>{THEME_AVATAR[theme]}</div>
             <div className={styles.meName}>{child.name}</div>
             {child.age && <div className={styles.meAge}>{child.age} let</div>}
           </div>
@@ -908,28 +922,57 @@ export default function KidView() {
             </div>
           </div>
 
-          {/* Skin selector */}
-          <div className={styles.sectionHead}>🎨 Moje postavička</div>
+          {/* Wardrobe — avatar level picker */}
+          <div className={styles.sectionHead}>🎨 Šatník — Postavička</div>
           <div className={styles.skinGrid}>
-            {SKINS.map(sk => {
-              const unlocked = level >= sk.minLevel
-              const active   = activeSkin === sk.id
+            {Array.from({ length: progress?.maxLevel ?? 12 }, (_, i) => i + 1).map(lvlNum => {
+              const unlocked = lvlNum <= level
+              const active   = selectedAvatarLevel === lvlNum
               return (
                 <button
-                  key={sk.id}
+                  key={lvlNum}
                   className={`${styles.skinCard} ${active ? styles.skinActive : ''} ${!unlocked ? styles.skinLocked : ''}`}
                   disabled={!unlocked}
                   onClick={async () => {
                     if (!unlocked) return
                     try {
-                      const updated = await updateSkin(child.id, sk.id)
-                      setChild(updated)
+                      await updateAppearance(child.id, { avatarLevel: lvlNum })
+                      setProgress(prev => ({ ...prev, selectedAvatarLevel: lvlNum }))
                     } catch { /**/ }
                   }}
                 >
-                  <span className={styles.skinEmoji}>{sk.emoji}</span>
-                  <span className={styles.skinName}>{sk.name}</span>
-                  {!unlocked && <span className={styles.skinLock}>🔒 Lv{sk.minLevel}</span>}
+                  <span className={styles.skinEmoji}>{!unlocked ? '🔒' : THEME_AVATAR[theme]}</span>
+                  <span className={styles.skinName}>{getLevelName(child.avatar, lvlNum)}</span>
+                  {!unlocked && <span className={styles.skinLock}>Lv{lvlNum}</span>}
+                </button>
+              )
+            })}
+          </div>
+
+          {/* Wardrobe — landscape level picker */}
+          <div className={styles.sectionHead}>🗺️ Šatník — Krajina</div>
+          <div className={styles.skinGrid}>
+            {Array.from({ length: progress?.maxLevel ?? 12 }, (_, i) => i + 1).map(lvlNum => {
+              const stages   = MAP_STAGES[theme] ?? MAP_STAGES.frozen
+              const stageIco = MAP_STAGE_ICO[theme] ?? MAP_STAGE_ICO.frozen
+              const unlocked = lvlNum <= level
+              const active   = selectedLandscapeLevel === lvlNum
+              return (
+                <button
+                  key={lvlNum}
+                  className={`${styles.skinCard} ${active ? styles.skinActive : ''} ${!unlocked ? styles.skinLocked : ''}`}
+                  disabled={!unlocked}
+                  onClick={async () => {
+                    if (!unlocked) return
+                    try {
+                      await updateAppearance(child.id, { landscapeLevel: lvlNum })
+                      setProgress(prev => ({ ...prev, selectedLandscapeLevel: lvlNum }))
+                    } catch { /**/ }
+                  }}
+                >
+                  <span className={styles.skinEmoji}>{!unlocked ? '🔒' : (stageIco[lvlNum - 1] ?? '🌍')}</span>
+                  <span className={styles.skinName}>{stages[lvlNum - 1] ?? `Krajina ${lvlNum}`}</span>
+                  {!unlocked && <span className={styles.skinLock}>Lv{lvlNum}</span>}
                 </button>
               )
             })}
@@ -1030,7 +1073,10 @@ export default function KidView() {
             <div className={styles.topXpTrack}>
               <div className={styles.topXpFill} style={{ width: `${progress?.progressPct ?? 0}%` }} />
             </div>
-            <span className={styles.topXpLvl}>Lv{progress?.level ?? 1}</span>
+            <span className={styles.topXpLvl}>
+              Lv{progress?.level ?? 1}
+              {(progress?.prestigeStars ?? 0) > 0 && <span className={styles.topPrestige}>{' '}{'⭐'.repeat(Math.min(progress.prestigeStars, 3))}</span>}
+            </span>
           </button>
           <button className={styles.switchTopBtn} onClick={backToPicker} title="Změnit hráče">
             👥
@@ -1046,6 +1092,18 @@ export default function KidView() {
         </div>
       </main>
       {chestToast && <div className={styles.chestToast}>{chestToast}</div>}
+
+      {levelUpAnim && (
+        <div className={styles.levelUpOverlay} onClick={() => setLevelUpAnim(false)}>
+          <div className={styles.levelUpCard}>
+            <div className={styles.levelUpIcon}>🎉</div>
+            <div className={styles.levelUpTitle}>Nová úroveň!</div>
+            <div className={styles.levelUpName}>{progress?.levelName ?? ''}</div>
+            <div className={styles.levelUpLevel}>Úroveň {progress?.level ?? ''}</div>
+            <div className={styles.levelUpHint}>Klepni pro zavření</div>
+          </div>
+        </div>
+      )}
 
       {showFreshStart && (
         <div className={styles.freshStartOverlay}>

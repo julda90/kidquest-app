@@ -74,11 +74,11 @@ public class ChildController {
         return ResponseEntity.noContent().build();
     }
 
-    @PutMapping("/{id}/skin")
-    public ResponseEntity<ChildResponse> updateSkin(@PathVariable UUID id, @RequestBody Map<String, String> body) {
-        String skin = body.get("skin");
-        if (skin == null || skin.isBlank()) throw new BadRequestException("skin is required");
-        return ResponseEntity.ok(childService.updateSkin(id, skin));
+    @PutMapping("/{id}/appearance")
+    public ResponseEntity<ChildResponse> updateAppearance(@PathVariable UUID id, @RequestBody Map<String, Object> body) {
+        Integer avatarLevel = body.containsKey("avatarLevel") ? ((Number) body.get("avatarLevel")).intValue() : null;
+        Integer landscapeLevel = body.containsKey("landscapeLevel") ? ((Number) body.get("landscapeLevel")).intValue() : null;
+        return ResponseEntity.ok(childService.updateAppearance(id, avatarLevel, landscapeLevel));
     }
 
     @GetMapping("/{id}/progress")

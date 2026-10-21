@@ -34,8 +34,11 @@ public class Child {
     @Column(length = 50)
     private String avatar;
 
-    @Column(name = "selected_skin", length = 30)
-    private String selectedSkin;
+    @Column(name = "selected_avatar_level")
+    private Integer selectedAvatarLevel;
+
+    @Column(name = "selected_landscape_level")
+    private Integer selectedLandscapeLevel;
 
     @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)
