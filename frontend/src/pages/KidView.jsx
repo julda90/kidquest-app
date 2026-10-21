@@ -598,6 +598,18 @@ export default function KidView() {
         .filter(r => r.status === 'REQUESTED' || r.status === 'APPROVED')
         .map(r => [r.rewardId, r])
     )
+
+    // Weekly limit: ISO week Monday at midnight
+    const now = new Date()
+    const dayOfWeek = now.getDay() === 0 ? 6 : now.getDay() - 1 // Mon=0
+    const weekStart = new Date(now); weekStart.setDate(now.getDate() - dayOfWeek); weekStart.setHours(0,0,0,0)
+    function weeklyUsed(rewardId) {
+      return redemptions.filter(r =>
+        r.rewardId === rewardId &&
+        ['REQUESTED','APPROVED','DELIVERED'].includes(r.status) &&
+        new Date(r.createdAt) >= weekStart
+      ).length
+    }
     const thirtyDaysAgo = new Date(); thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
     const recentRedemptions = [...redemptions]
       .filter(r => new Date(r.createdAt) > thirtyDaysAgo)
@@ -611,16 +623,18 @@ export default function KidView() {
         </div>
         <div className={styles.odmenyGrid}>
           {rewards.map(r => {
-            const canAfford  = totalPts >= r.pointCost
-            const barPct     = Math.min(totalPts / r.pointCost * 100, 100)
-            const need       = Math.max(r.pointCost - totalPts, 0)
-            const existing   = activeByRewardId[r.id]
-            const isLoading  = redeeming === r.id
-            const confirming = confirmRedeemId === r.id
+            const canAfford     = totalPts >= r.pointCost
+            const barPct        = Math.min(totalPts / r.pointCost * 100, 100)
+            const need          = Math.max(r.pointCost - totalPts, 0)
+            const existing      = activeByRewardId[r.id]
+            const isLoading     = redeeming === r.id
+            const confirming    = confirmRedeemId === r.id
+            const weeklyAtLimit = r.weeklyLimit != null && weeklyUsed(r.id) >= r.weeklyLimit
             return (
-              <div key={r.id} className={`${styles.odmenyCard} ${canAfford ? styles.odmenyDone : ''}`}>
-                {existing?.status === 'APPROVED' && <div className={styles.odmenyDoneBadge}>SCHVÁLENO!</div>}
-                {existing?.status === 'REQUESTED' && <div className={styles.odmenyPendingBadge}>Čeká na rodiče…</div>}
+              <div key={r.id} className={`${styles.odmenyCard} ${canAfford && !weeklyAtLimit ? styles.odmenyDone : ''}`}>
+                {weeklyAtLimit && <div className={styles.odmenyPendingBadge}>Znovu od pondělí 🔄</div>}
+                {!weeklyAtLimit && existing?.status === 'APPROVED' && <div className={styles.odmenyDoneBadge}>SCHVÁLENO!</div>}
+                {!weeklyAtLimit && existing?.status === 'REQUESTED' && <div className={styles.odmenyPendingBadge}>Čeká na rodiče…</div>}
                 <div className={styles.odmenyIco}>{r.icon || '🎁'}</div>
                 <div className={styles.odmenyName}>{r.name}</div>
                 {r.description && <div className={styles.odmenyDesc}>{r.description}</div>}
@@ -631,13 +645,13 @@ export default function KidView() {
                   <span>{ptIcon} {Math.min(totalPts, r.pointCost)} / {r.pointCost}</span>
                   {!canAfford && <span className={styles.odmenyNeed}>ještě {need} {ptIcon}</span>}
                 </div>
-                {canAfford && !existing && !confirming && (
+                {canAfford && !existing && !confirming && !weeklyAtLimit && (
                   <button className={styles.redeemBtn}
                     onClick={() => setConfirmRedeemId(r.id)}>
                     🎁 Chci tuhle odměnu!
                   </button>
                 )}
-                {canAfford && !existing && confirming && (
+                {canAfford && !existing && confirming && !weeklyAtLimit && (
                   <div className={styles.confirmRow}>
                     <span className={styles.confirmText}>Opravdu chceš?</span>
                     <button className={styles.confirmYes} disabled={isLoading}

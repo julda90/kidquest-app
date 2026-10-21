@@ -1,16 +1,15 @@
 import { useState } from 'react'
 import f from './Form.module.css'
+import { TIER_RANGES, midpoint } from '../constants/rewardTiers'
 
 const TIER_OPTIONS = ['SMALL', 'MEDIUM', 'BIG', 'MEGA']
-const TIER_LABELS  = { SMALL: 'Malá (50)', MEDIUM: 'Střední (150)', BIG: 'Velká (300)', MEGA: 'Mega (600)' }
-const TIER_PRICES  = { SMALL: 50, MEDIUM: 150, BIG: 300, MEGA: 600 }
 
 const ICON_OPTIONS = ['🍦','🍫','🍕','🎬','🎮','🧗','🎳','🧩','🧱','📚','🎨','🚲','🏊','🎡','🐴','🍰','🧸','⚽','🎟️','🌙','🎪','🛁','☕','🥐']
 
 export default function RewardForm({ initial = {}, familyId, children = [], onSubmit, onCancel }) {
   const [name,    setName]    = useState(initial.name        ?? '')
   const [desc,    setDesc]    = useState(initial.description ?? '')
-  const [cost,    setCost]    = useState(initial.pointCost   ?? TIER_PRICES.SMALL)
+  const [cost,    setCost]    = useState(initial.pointCost   ?? midpoint(TIER_RANGES.STANDARD.SMALL))
   const [active,  setActive]  = useState(initial.active      ?? true)
   const [tier,    setTier]    = useState(initial.tier        ?? 'SMALL')
   const [icon,    setIcon]    = useState(initial.icon        ?? '')
@@ -21,7 +20,11 @@ export default function RewardForm({ initial = {}, familyId, children = [], onSu
 
   function handleTierChange(t) {
     setTier(t)
-    if (!initial.id) setCost(TIER_PRICES[t])
+    if (!initial.id) {
+      const child = children.find(c => c.id === childId)
+      const group = (child?.age != null && child.age < 6) ? 'YOUNG' : 'STANDARD'
+      setCost(midpoint(TIER_RANGES[group][t]))
+    }
   }
 
   function validate() {
@@ -74,7 +77,10 @@ export default function RewardForm({ initial = {}, familyId, children = [], onSu
         <div className={f.group}>
           <label>Tier</label>
           <select value={tier} onChange={e => handleTierChange(e.target.value)}>
-            {TIER_OPTIONS.map(t => <option key={t} value={t}>{TIER_LABELS[t]}</option>)}
+            {TIER_OPTIONS.map(t => {
+              const r = TIER_RANGES.STANDARD[t]
+              return <option key={t} value={t}>{r.label} ({r.min}–{r.max})</option>
+            })}
           </select>
         </div>
         <div className={f.group}>

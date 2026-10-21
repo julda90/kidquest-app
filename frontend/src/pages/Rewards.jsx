@@ -11,13 +11,12 @@ import ConfirmDialog from '../components/ConfirmDialog'
 import RewardForm from '../components/RewardForm'
 import CatalogDialog from '../components/CatalogDialog'
 import styles from './Rewards.module.css'
+import { TIER_RANGES, rangeFor, isOutOfRange } from '../constants/rewardTiers'
 
-const TIER_ORDER  = ['SMALL', 'MEDIUM', 'BIG', 'MEGA']
-const TIER_LABELS = { SMALL: 'Malé', MEDIUM: 'Střední', BIG: 'Velké', MEGA: 'Mega' }
-const TIER_PRICES = { SMALL: 50, MEDIUM: 150, BIG: 300, MEGA: 600 }
+const TIER_ORDER = ['SMALL', 'MEDIUM', 'BIG', 'MEGA']
 
 function daysOfWork(cost, avgDaily) {
-  if (!avgDaily || avgDaily <= 0) return null
+  if (!avgDaily || avgDaily < 5) return null
   return Math.ceil(cost / avgDaily)
 }
 
@@ -89,9 +88,7 @@ export default function Rewards() {
   }, {})
 
   function isMispriced(reward) {
-    const expected = TIER_PRICES[reward.tier]
-    if (!expected) return false
-    return Math.abs(reward.pointCost - expected) / expected > 0.5
+    return isOutOfRange(reward, children)
   }
 
   async function handleSaveReward(data) {
@@ -187,17 +184,19 @@ export default function Rewards() {
         {TIER_ORDER.map(tier => {
           const list = byTier[tier]
           if (!list.length) return null
+          const stdRange = TIER_RANGES.STANDARD[tier]
           return (
             <section key={tier} className={styles.tierSection}>
               <h2 className={styles.tierTitle}>
-                {TIER_LABELS[tier]}
-                <span className={styles.tierHint}>doporučená cena: {TIER_PRICES[tier]} bodů</span>
+                {stdRange.label}
+                <span className={styles.tierHint}>{stdRange.min}–{stdRange.max} bodů · {stdRange.hint}</span>
               </h2>
               <div className={styles.rewardGrid}>
                 {list.map(reward => {
                   const stat    = statFor(reward.id)
                   const avg     = reward.childId ? avgDailyForChild(reward.childId) : familyAvgDaily()
                   const days    = daysOfWork(reward.pointCost, avg)
+                  const noData  = avg != null && avg < 5
                   const mispric = isMispriced(reward)
                   return (
                     <div key={reward.id}
@@ -252,9 +251,10 @@ export default function Rewards() {
                         </div>
                       )}
 
-                      {days != null && (
-                        <div className={styles.daysHint}>≈ {days} d. práce</div>
-                      )}
+                      {noData
+                        ? <div className={styles.daysHint}>málo dat</div>
+                        : days != null && <div className={styles.daysHint}>≈ {days} d. práce</div>
+                      }
 
                       {stat && (
                         <div className={styles.statRow}>

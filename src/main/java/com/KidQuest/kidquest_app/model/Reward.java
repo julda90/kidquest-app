@@ -52,6 +52,9 @@ public class Reward {
     @Column(name = "archived_at")
     private LocalDateTime archivedAt;
 
+    @Column(name = "weekly_limit")
+    private Integer weeklyLimit;
+
     @CreatedDate
     @Column(name="created_at",updatable = false)
     private LocalDateTime createdAt;

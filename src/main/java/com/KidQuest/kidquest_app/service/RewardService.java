@@ -100,6 +100,7 @@ public class RewardService {
         } else {
             reward.setChild(null);
         }
+        reward.setWeeklyLimit(req.getWeeklyLimit());
     }
 
     public List<RewardStatResponse> getStats(UUID familyId) {
@@ -125,6 +126,7 @@ public class RewardService {
         r.setFamilyId(reward.getFamily().getId());
         r.setArchivedAt(reward.getArchivedAt());
         r.setCatalogKey(reward.getCatalogKey());
+        r.setWeeklyLimit(reward.getWeeklyLimit());
         if (reward.getChild() != null) {
             r.setChildId(reward.getChild().getId());
             r.setChildName(reward.getChild().getName());

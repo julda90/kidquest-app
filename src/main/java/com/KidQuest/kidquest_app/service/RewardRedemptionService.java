@@ -12,6 +12,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Clock;
+import java.time.DayOfWeek;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -51,6 +53,17 @@ public class RewardRedemptionService {
                 .anyMatch(r -> r.getReward().getId().equals(rewardId));
         if (alreadyRequested) {
             throw new ConflictException("Redemption already requested for this reward.");
+        }
+
+        // Weekly limit enforcement
+        if (reward.getWeeklyLimit() != null && reward.getWeeklyLimit() > 0) {
+            LocalDateTime weekStart = LocalDate.now(clock)
+                    .with(DayOfWeek.MONDAY)
+                    .atStartOfDay();
+            long usedThisWeek = redemptionRepository.countByChildRewardAndWeek(childId, rewardId, weekStart);
+            if (usedThisWeek >= reward.getWeeklyLimit()) {
+                throw new ConflictException("Týdenní limit pro tuto odměnu byl vyčerpán. Znovu od pondělí.");
+            }
         }
 
         RewardRedemption redemption = new RewardRedemption();

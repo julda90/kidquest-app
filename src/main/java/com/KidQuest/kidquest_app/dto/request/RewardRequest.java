@@ -30,4 +30,5 @@ public class RewardRequest {
 
     private UUID childId;
     private String catalogKey;
+    private Integer weeklyLimit;
 }

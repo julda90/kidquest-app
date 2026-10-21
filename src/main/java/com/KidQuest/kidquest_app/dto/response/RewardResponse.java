@@ -24,4 +24,5 @@ public class RewardResponse {
     private String childName;
     private LocalDateTime archivedAt;
     private String catalogKey;
+    private Integer weeklyLimit;
 }

@@ -28,6 +28,10 @@ public interface RewardRedemptionRepository extends JpaRepository<RewardRedempti
 
     boolean existsByRewardId(UUID rewardId);
 
+    @Query("SELECT COUNT(r) FROM RewardRedemption r WHERE r.child.id = :childId AND r.reward.id = :rewardId " +
+           "AND r.status IN ('REQUESTED','APPROVED','DELIVERED') AND r.createdAt >= :weekStart")
+    long countByChildRewardAndWeek(UUID childId, UUID rewardId, LocalDateTime weekStart);
+
     @Query("SELECT r.reward.id, COUNT(r), MAX(r.createdAt) FROM RewardRedemption r " +
            "WHERE r.reward.family.id = :familyId AND r.status IN ('APPROVED', 'DELIVERED') " +
            "GROUP BY r.reward.id")
