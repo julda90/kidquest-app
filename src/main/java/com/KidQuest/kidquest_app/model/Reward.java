@@ -35,6 +35,17 @@ public class Reward {
 
     private Boolean active;
 
+    @Enumerated(EnumType.STRING)
+    @Column(length = 20, nullable = false)
+    private RewardTier tier = RewardTier.SMALL;
+
+    @Column(length = 16)
+    private String icon;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "child_id")
+    private Child child;
+
     @CreatedDate
     @Column(name="created_at",updatable = false)
     private LocalDateTime createdAt;

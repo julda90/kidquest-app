@@ -1,5 +1,6 @@
 package com.KidQuest.kidquest_app.dto.response;
 
+import com.KidQuest.kidquest_app.model.TransactionType;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -14,4 +15,6 @@ public class PointTransactionResponse {
     private Integer amount;
     private String reason;
     private LocalDateTime createdAt;
+    private TransactionType type;
+    private UUID taskId;
 }

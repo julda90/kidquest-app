@@ -1,5 +1,6 @@
 package com.KidQuest.kidquest_app.dto.response;
 
+import com.KidQuest.kidquest_app.model.RewardTier;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -17,4 +18,7 @@ public class RewardResponse {
     private Boolean active;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    private RewardTier tier;
+    private String icon;
+    private UUID childId;
 }

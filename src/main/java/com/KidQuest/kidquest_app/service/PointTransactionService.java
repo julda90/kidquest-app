@@ -4,6 +4,7 @@ import com.KidQuest.kidquest_app.dto.request.PointTransactionRequest;
 import com.KidQuest.kidquest_app.dto.response.PointTransactionResponse;
 import com.KidQuest.kidquest_app.exception.ResourceNotFoundException;
 import com.KidQuest.kidquest_app.model.PointTransaction;
+import com.KidQuest.kidquest_app.model.TransactionType;
 import com.KidQuest.kidquest_app.repository.PointTransactionRepository;
 import org.springframework.stereotype.Service;
 
@@ -26,6 +27,7 @@ public class PointTransactionService {
         tx.setChild(childService.findById(childId));
         tx.setAmount(request.getAmount());
         tx.setReason(request.getReason());
+        tx.setType(TransactionType.MANUAL);
         return toResponse(pointTransactionRepository.save(tx));
     }
 
@@ -49,6 +51,8 @@ public class PointTransactionService {
         r.setAmount(tx.getAmount());
         r.setReason(tx.getReason());
         r.setCreatedAt(tx.getCreatedAt());
+        r.setType(tx.getType());
+        if (tx.getTask() != null) r.setTaskId(tx.getTask().getId());
         return r;
     }
 }

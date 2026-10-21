@@ -1,15 +1,21 @@
 package com.KidQuest.kidquest_app.controller;
 
+import com.KidQuest.kidquest_app.dto.request.ApproveRequest;
 import com.KidQuest.kidquest_app.dto.request.TaskRequest;
+import com.KidQuest.kidquest_app.dto.response.ApprovalResult;
 import com.KidQuest.kidquest_app.dto.response.TaskResponse;
+import com.KidQuest.kidquest_app.model.TaskKind;
+import com.KidQuest.kidquest_app.service.TaskApprovalService;
 import com.KidQuest.kidquest_app.service.TaskService;
-import io.lettuce.core.dynamic.annotation.Value;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 
 @RestController
@@ -17,9 +23,11 @@ import java.util.UUID;
 public class TaskController {
 
     private final TaskService taskService;
+    private final TaskApprovalService taskApprovalService;
 
-    public TaskController(TaskService taskService) {
+    public TaskController(TaskService taskService, TaskApprovalService taskApprovalService) {
         this.taskService = taskService;
+        this.taskApprovalService = taskApprovalService;
     }
 
     @GetMapping("/child/{childId}")
@@ -47,6 +55,38 @@ public class TaskController {
     public ResponseEntity<Void> deleteTask(@PathVariable UUID taskId){
         taskService.delete(taskId);
         return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/{taskId}/approve")
+    public ResponseEntity<ApprovalResult> approveTask(@PathVariable UUID taskId,
+                                                      @RequestBody(required = false) ApproveRequest request) {
+        if (request == null) request = new ApproveRequest();
+        return ResponseEntity.ok(taskApprovalService.approve(taskId, request));
+    }
+
+    @PostMapping("/{taskId}/reject")
+    public ResponseEntity<Void> rejectTask(@PathVariable UUID taskId) {
+        taskApprovalService.reject(taskId);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/{taskId}/submit")
+    public ResponseEntity<Void> submitTask(@PathVariable UUID taskId) {
+        taskApprovalService.submit(taskId);
+        return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/kinds")
+    public ResponseEntity<List<Map<String, Object>>> getTaskKinds() {
+        List<Map<String, Object>> kinds = Arrays.stream(TaskKind.values())
+                .map(k -> Map.<String, Object>of(
+                        "kind", k.name(),
+                        "group", k.group(),
+                        "defaultPointsOlder", k.defaultPoints(false),
+                        "defaultPointsYounger", k.defaultPoints(true)
+                ))
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(kinds);
     }
 
 }

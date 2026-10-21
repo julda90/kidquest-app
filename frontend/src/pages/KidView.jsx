@@ -2,10 +2,12 @@ import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { getMe } from '../api/users'
-import { getChildren } from '../api/children'
-import { getTasksByChild, updateTask } from '../api/tasks'
+import { getChildren, getProgress, openChest } from '../api/children'
+import { getTasksByChild, submitTask } from '../api/tasks'
 import { getRewards } from '../api/rewards'
 import { getTransactionsByChild } from '../api/pointTransactions'
+import { redeemReward, getRedemptionsByChild, cancelRedemption } from '../api/redemptions'
+import { getLevelName } from '../constants/levels'
 import styles from './KidView.module.css'
 
 // ── Theme mapping ─────────────────────────────────────────────────────────────
@@ -135,9 +137,6 @@ function loadMorning(childId, count) {
 function saveMorning(childId, state) {
   try { localStorage.setItem(`morning_${childId}_${todayKey()}`, JSON.stringify(state)) } catch { /**/ }
 }
-function loadStreak(childId) {
-  try { return parseInt(localStorage.getItem(`streak_${childId}`) || '0', 10) } catch { return 0 }
-}
 function parseTaskName(reason) {
   if (!reason) return '—'
   const m = reason.match(/^Completed task:\s*(.+)$/i)
@@ -187,15 +186,20 @@ export default function KidView() {
   const [tasks,        setTasks]        = useState([])
   const [rewards,      setRewards]      = useState([])
   const [transactions, setTransactions] = useState([])
-  const [totalPts,     setTotalPts]     = useState(0)
+  const [progress,     setProgress]     = useState(null)
+  const [redemptions,  setRedemptions]  = useState([])
   const [morningDone,  setMorningDone]  = useState([])
   const [activeNav,    setActiveNav]    = useState(0)
   const [submitting,   setSubmitting]   = useState(null)
+  const [redeeming,    setRedeeming]    = useState(null)
+  const [chestToast,   setChestToast]   = useState(null)
+
+  const totalPts = progress?.balance ?? 0
+  const streak   = progress?.streakDays ?? 0
 
   const theme        = child ? (THEME_MAP[child.avatar] || 'frozen') : 'frozen'
   const particleType = theme === 'frozen' ? 'snow' : theme === 'unicorn' ? 'sparkle' : 'pixel'
   const steps        = child ? MORNING_STEPS[theme] : []
-  const streak       = child ? loadStreak(child.id) : 0
   const ptIcon       = THEME_PT_ICON[theme]
   const nav          = THEME_NAV[theme]
 
@@ -224,16 +228,19 @@ export default function KidView() {
       localStorage.setItem('kid_selectedChildId', c.id)
       const t = THEME_MAP[c.avatar] || 'frozen'
       const stepCount = MORNING_STEPS[t].length
-      const [tkArr, rwArr, txArr] = await Promise.all([
+      const [tkArr, rwArr, txArr, prog, redArr] = await Promise.all([
         getTasksByChild(c.id),
         getRewards(fIdToUse),
         getTransactionsByChild(c.id),
+        getProgress(c.id),
+        getRedemptionsByChild(c.id),
       ])
       setChild(c)
       setTasks(tkArr.filter(tk => tk.status === 'ASSIGNED' || tk.status === 'PENDING_APPROVAL'))
       setRewards(rwArr.filter(r => r.active).sort((a, b) => a.pointCost - b.pointCost))
       setTransactions([...txArr].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)))
-      setTotalPts(txArr.reduce((s, tx) => s + tx.amount, 0))
+      setProgress(prog)
+      setRedemptions(redArr)
       setMorningDone(loadMorning(c.id, stepCount))
       setActiveNav(0)
     } catch (e) { setError(e.message) }
@@ -243,7 +250,7 @@ export default function KidView() {
   function backToPicker() {
     try { localStorage.removeItem('kid_selectedChildId') } catch { /**/ }
     setChild(null); setTasks([]); setRewards([]); setTransactions([])
-    setTotalPts(0); setMorningDone([]); setActiveNav(0)
+    setProgress(null); setRedemptions([]); setMorningDone([]); setActiveNav(0)
   }
 
   // ── Submit task ───────────────────────────────────────────────────────────
@@ -251,11 +258,7 @@ export default function KidView() {
     if (task.status !== 'ASSIGNED') return
     setSubmitting(task.taskId)
     try {
-      await updateTask(task.taskId, {
-        title: task.title, description: task.description,
-        pointValue: task.pointValue, dueDate: task.dueDate,
-        status: 'PENDING_APPROVAL', assignedToId: task.assignedTo ?? null,
-      })
+      await submitTask(task.taskId)
       setTasks(prev => prev.map(t => t.taskId === task.taskId ? { ...t, status: 'PENDING_APPROVAL' } : t))
     } catch { /**/ } finally { setSubmitting(null) }
   }
@@ -443,8 +446,29 @@ export default function KidView() {
     )
   }
 
+  async function handleRedeem(reward) {
+    if (!child) return
+    setRedeeming(reward.id)
+    try {
+      const r = await redeemReward(child.id, reward.id)
+      setRedemptions(prev => [...prev, r])
+    } catch { /**/ } finally { setRedeeming(null) }
+  }
+
+  async function handleCancelRedemption(redemptionId) {
+    try {
+      const r = await cancelRedemption(redemptionId)
+      setRedemptions(prev => prev.map(x => x.id === redemptionId ? r : x))
+    } catch { /**/ }
+  }
+
   // ── Section: Odměny ───────────────────────────────────────────────────────
   function renderOdmeny() {
+    const activeRedemptionsByRewardId = Object.fromEntries(
+      redemptions
+        .filter(r => r.status === 'REQUESTED' || r.status === 'APPROVED')
+        .map(r => [r.rewardId, r])
+    )
     return (
       <>
         <div className={styles.odmenyHeader}>
@@ -453,13 +477,16 @@ export default function KidView() {
         </div>
         <div className={styles.odmenyGrid}>
           {rewards.map(r => {
-            const done   = totalPts >= r.pointCost
-            const barPct = Math.min(totalPts / r.pointCost * 100, 100)
-            const need   = Math.max(r.pointCost - totalPts, 0)
+            const canAfford = totalPts >= r.pointCost
+            const barPct    = Math.min(totalPts / r.pointCost * 100, 100)
+            const need      = Math.max(r.pointCost - totalPts, 0)
+            const existing  = activeRedemptionsByRewardId[r.id]
+            const isLoading = redeeming === r.id
             return (
-              <div key={r.id} className={`${styles.odmenyCard} ${done ? styles.odmenyDone : ''}`}>
-                {done && <div className={styles.odmenyDoneBadge}>SPLNĚNO!</div>}
-                <div className={styles.odmenyIco}>🎁</div>
+              <div key={r.id} className={`${styles.odmenyCard} ${canAfford ? styles.odmenyDone : ''}`}>
+                {existing?.status === 'APPROVED' && <div className={styles.odmenyDoneBadge}>SCHVÁLENO!</div>}
+                {existing?.status === 'REQUESTED' && <div className={styles.odmenyPendingBadge}>Čeká na rodiče…</div>}
+                <div className={styles.odmenyIco}>{r.icon || '🎁'}</div>
                 <div className={styles.odmenyName}>{r.name}</div>
                 {r.description && <div className={styles.odmenyDesc}>{r.description}</div>}
                 <div className={styles.odmenyBar}>
@@ -467,8 +494,20 @@ export default function KidView() {
                 </div>
                 <div className={styles.odmenyInfo}>
                   <span>{ptIcon} {Math.min(totalPts, r.pointCost)} / {r.pointCost}</span>
-                  {!done && <span className={styles.odmenyNeed}>ještě {need} {ptIcon}</span>}
+                  {!canAfford && <span className={styles.odmenyNeed}>ještě {need} {ptIcon}</span>}
                 </div>
+                {canAfford && !existing && (
+                  <button className={styles.redeemBtn} disabled={isLoading}
+                    onClick={() => handleRedeem(r)}>
+                    {isLoading ? '…' : '🎁 Chci tuhle odměnu!'}
+                  </button>
+                )}
+                {existing?.status === 'REQUESTED' && (
+                  <button className={styles.cancelRedeemBtn}
+                    onClick={() => handleCancelRedemption(existing.id)}>
+                    Zrušit žádost
+                  </button>
+                )}
               </div>
             )
           })}
@@ -520,11 +559,30 @@ export default function KidView() {
 
   // ── Section: Já ──────────────────────────────────────────────────────────
   function renderJa() {
+    const level     = progress?.level ?? 1
+    const levelName = getLevelName(child.avatar, level)
+    const xp        = progress?.xp ?? 0
+    const xpCur     = progress?.currentThreshold ?? 0
+    const xpNext    = progress?.nextThreshold ?? null
+    const xpPct     = progress?.progressPct ?? 0
+    const badges    = progress?.badges ?? []
+    const BADGE_ICONS = { LUMBERJACK: '🪵', SHERLOCK: '🔍', HEAD_WAITER: '🍽️', TIDY: '🧹', LAUNDRY_PRO: '🧺' }
     return (
       <div className={styles.jaSection}>
         <div className={styles.jaAva}>{THEME_AVATAR[theme]}</div>
         <div className={styles.jaName}>{child.name}</div>
         {child.age && <div className={styles.jaAge}>{child.age} let</div>}
+
+        <div className={styles.jaLevelRow}>
+          <span className={styles.jaLevelNum}>Úroveň {level}</span>
+          <span className={styles.jaLevelName}>{levelName}</span>
+        </div>
+        <div className={styles.jaXpBarWrap}>
+          <div className={styles.jaXpBar} style={{ width: `${xpPct}%` }} />
+        </div>
+        <div className={styles.jaXpLabel}>
+          {xp} XP {xpNext ? `/ ${xpNext}` : '(max)'}
+        </div>
 
         <div className={styles.jaStats}>
           <div className={styles.jaStat}>
@@ -540,6 +598,30 @@ export default function KidView() {
             <span className={styles.jaStatL}>🔥 série</span>
           </div>
         </div>
+
+        {badges.length > 0 && (
+          <div className={styles.jaBadges}>
+            {badges.map(b => (
+              <span key={b} className={styles.jaBadge} title={b}>
+                {BADGE_ICONS[b] ?? '🏅'}
+              </span>
+            ))}
+          </div>
+        )}
+
+        {progress?.chestAvailable && (
+          <button className={styles.chestBtn} onClick={async () => {
+            try {
+              const res = await openChest(child.id)
+              const prog = await getProgress(child.id)
+              setProgress(prog)
+              setChestToast(`🎁 Pokladnice! +${res.awardedPoints} bodů`)
+              setTimeout(() => setChestToast(null), 4000)
+            } catch { /**/ }
+          }}>
+            🎁 Otevřít pokladnici!
+          </button>
+        )}
 
         <button className={styles.switchBtn} onClick={backToPicker}>
           👥 Změnit hráče
@@ -612,6 +694,7 @@ export default function KidView() {
           {activeNav === 4 && renderJa()}
         </div>
       </main>
+      {chestToast && <div className={styles.chestToast}>{chestToast}</div>}
     </div>
   )
 }

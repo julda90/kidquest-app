@@ -3,9 +3,8 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { getMe } from '../api/users'
 import { getChildren } from '../api/children'
-import { getTasksByFamily, createTask, updateTask, deleteTask } from '../api/tasks'
+import { getTasksByFamily, createTask, updateTask, deleteTask, approveTask, rejectTask } from '../api/tasks'
 import { getFamilies } from '../api/families'
-import { createPointTransaction } from '../api/pointTransactions'
 import { getAvatarSrc } from '../constants/avatars'
 import Sidebar from '../components/Sidebar'
 import Modal from '../components/Modal'
@@ -15,7 +14,7 @@ import styles from './Tasks.module.css'
 
 const STATUS_CYCLE = {
   UNASSIGNED: 'ASSIGNED', ASSIGNED: 'PENDING_APPROVAL',
-  PENDING_APPROVAL: 'COMPLETED', COMPLETED: 'UNASSIGNED', REJECTED: 'ASSIGNED',
+  COMPLETED: 'UNASSIGNED', REJECTED: 'ASSIGNED',
 }
 const STATUS_LABEL = {
   UNASSIGNED: 'Unassigned', ASSIGNED: 'Assigned',
@@ -49,6 +48,8 @@ export default function Tasks() {
   const [deleting,     setDeleting]     = useState(false)
   const [awardTarget,  setAwardTarget]  = useState(null) // { task, child }
   const [awarding,     setAwarding]     = useState(false)
+  const [bonusChecked, setBonusChecked] = useState(false)
+  const [awardToast,   setAwardToast]   = useState(null)
 
   const load = useCallback(async () => {
     try {
@@ -108,14 +109,26 @@ export default function Tasks() {
     const { task } = awardTarget
     setAwarding(true)
     try {
-      await applyStatusUpdate(task, 'COMPLETED')
-      await createPointTransaction(task.assignedTo, {
-        amount: task.pointValue,
-        reason: `Completed task: ${task.title}`,
-      })
+      const result = await approveTask(task.taskId, bonusChecked)
       setAwardTarget(null)
-    } catch { /* applyStatusUpdate already refetches; just close */ setAwardTarget(null) }
+      setBonusChecked(false)
+      const parts = [`⭐ +${result.awardedPoints} bodů`]
+      if (result.levelUp) parts.push(`🆙 Nová úroveň ${result.newLevel}!`)
+      if (result.streakDays > 1) parts.push(`🔥 Série ${result.streakDays} dní`)
+      if (result.newBadges?.length) parts.push(`🏅 Nový odznak!`)
+      if (result.goalReached) parts.push(`🎯 Rodinný cíl splněn!`)
+      setAwardToast(parts.join(' · '))
+      setTimeout(() => setAwardToast(null), 5000)
+      await refetch(task.familyId || familyId)
+    } catch { setAwardTarget(null) }
     finally { setAwarding(false) }
+  }
+
+  async function handleRejectTask(task) {
+    try {
+      await rejectTask(task.taskId)
+      await refetch(task.familyId || familyId)
+    } catch { /* ignore */ }
   }
 
   async function handleDelete() {
@@ -240,21 +253,35 @@ export default function Tasks() {
           loading={deleting} />
       )}
 
+      {awardToast && (
+        <div className={styles.toast}>{awardToast}</div>
+      )}
+
       {awardTarget && (
-        <Modal title="Award Points" onClose={() => !awarding && setAwardTarget(null)}>
+        <Modal title="Schválit úkol" onClose={() => !awarding && setAwardTarget(null)}>
           <div className={styles.awardDialog}>
-            <div className={styles.awardPtsBadge}>⭐ {awardTarget.task.pointValue}</div>
+            <div className={styles.awardPtsBadge}>⭐ {awardTarget.task.pointValue}{bonusChecked && awardTarget.task.bonusValue ? ` + ${awardTarget.task.bonusValue}` : ''}</div>
             <p className={styles.awardMsg}>
-              Mark <strong>"{awardTarget.task.title}"</strong> as completed
-              and award <strong>{awardTarget.task.pointValue} points</strong> to{' '}
-              <strong>{awardTarget.child?.name ?? 'the assignee'}</strong>?
+              Označit <strong>„{awardTarget.task.title}"</strong> jako splněný
+              a přidat <strong>{awardTarget.task.pointValue} bodů</strong> pro{' '}
+              <strong>{awardTarget.child?.name ?? 'dítě'}</strong>?
             </p>
+            {awardTarget.task.kind === 'HOMEWORK' && (
+              <label className={styles.bonusCheck}>
+                <input type="checkbox" checked={bonusChecked}
+                  onChange={e => setBonusChecked(e.target.checked)} />
+                {' '}🔍 Sám/sama našel(a) a opravil(a) chybu (+{awardTarget.task.bonusValue ?? 15})
+              </label>
+            )}
             <div className={styles.awardActions}>
-              <button className={styles.awardCancel} onClick={() => setAwardTarget(null)} disabled={awarding}>
-                Cancel
+              <button className={styles.awardCancel} onClick={() => { setAwardTarget(null); setBonusChecked(false) }} disabled={awarding}>
+                Zrušit
+              </button>
+              <button className={styles.awardCancel} onClick={() => { handleRejectTask(awardTarget.task); setAwardTarget(null) }} disabled={awarding}>
+                ✗ Zamítnout
               </button>
               <button className={styles.awardConfirm} onClick={handleAwardConfirm} disabled={awarding}>
-                {awarding ? 'Awarding…' : '⭐ Award Points'}
+                {awarding ? 'Schvaluji…' : '✓ Schválit'}
               </button>
             </div>
           </div>

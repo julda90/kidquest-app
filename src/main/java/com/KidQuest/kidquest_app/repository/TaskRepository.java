@@ -14,4 +14,8 @@ public interface TaskRepository extends JpaRepository<Task, UUID> {
     List<Task> findAllByFamilyIdAndDeletedAtIsNull(UUID familyId);
 
     Optional<Task> findByIdAndDeletedAtIsNull(UUID id);
+
+    long countByAssignedToIdAndStatusAndKindIn(UUID childId, com.KidQuest.kidquest_app.model.TaskStatus status, java.util.List<com.KidQuest.kidquest_app.model.TaskKind> kinds);
+
+    long countByAssignedToIdAndStatus(UUID childId, com.KidQuest.kidquest_app.model.TaskStatus status);
 }

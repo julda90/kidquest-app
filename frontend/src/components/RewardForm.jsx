@@ -1,12 +1,17 @@
 import { useState } from 'react'
 import f from './Form.module.css'
 
+const TIER_OPTIONS = ['SMALL', 'MEDIUM', 'BIG', 'MEGA']
+const TIER_LABELS  = { SMALL: 'Malá', MEDIUM: 'Střední', BIG: 'Velká', MEGA: 'Mega' }
+
 export default function RewardForm({ initial = {}, families = [], onSubmit, onCancel }) {
   const [name,     setName]     = useState(initial.name        ?? '')
   const [desc,     setDesc]     = useState(initial.description ?? '')
   const [cost,     setCost]     = useState(initial.pointCost   ?? '')
   const [active,   setActive]   = useState(initial.active      ?? true)
   const [familyId, setFamilyId] = useState(initial.familyId   ?? (families[0]?.id ?? ''))
+  const [tier,     setTier]     = useState(initial.tier        ?? 'SMALL')
+  const [icon,     setIcon]     = useState(initial.icon        ?? '')
   const [errors,      setErrors]      = useState({})
   const [serverError, setServerError] = useState('')
   const [loading,     setLoading]     = useState(false)
@@ -25,7 +30,7 @@ export default function RewardForm({ initial = {}, families = [], onSubmit, onCa
     if (!validate()) return
     setLoading(true)
     try {
-      await onSubmit({ familyId, name: name.trim(), description: desc.trim() || null, pointCost: Number(cost), active })
+      await onSubmit({ familyId, name: name.trim(), description: desc.trim() || null, pointCost: Number(cost), active, tier, icon: icon.trim() || null })
     } catch (err) {
       setServerError(err.message || 'Failed to save reward.')
     } finally {
@@ -67,6 +72,19 @@ export default function RewardForm({ initial = {}, families = [], onSubmit, onCa
         <input type="number" min="1" value={cost} onChange={e => setCost(e.target.value)}
           className={errors.cost ? f.inputError : ''} placeholder="50" />
         {errors.cost && <span className={f.fieldError}>{errors.cost}</span>}
+      </div>
+
+      <div className={f.row}>
+        <div className={f.group}>
+          <label>Tier</label>
+          <select value={tier} onChange={e => setTier(e.target.value)}>
+            {TIER_OPTIONS.map(t => <option key={t} value={t}>{TIER_LABELS[t]}</option>)}
+          </select>
+        </div>
+        <div className={f.group}>
+          <label>Icon (emoji)</label>
+          <input value={icon} onChange={e => setIcon(e.target.value)} placeholder="🎮" maxLength={16} />
+        </div>
       </div>
 
       <div className={f.group}>

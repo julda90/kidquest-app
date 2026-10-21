@@ -1,7 +1,6 @@
 package com.KidQuest.kidquest_app.dto.request;
 
-import com.KidQuest.kidquest_app.model.Child;
-import com.KidQuest.kidquest_app.model.Family;
+import com.KidQuest.kidquest_app.model.TaskKind;
 import com.KidQuest.kidquest_app.model.TaskStatus;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -30,5 +29,9 @@ public class TaskRequest {
     private TaskStatus status;
 
     private UUID assignedToId;
+
+    private TaskKind kind;
+
+    private Integer bonusValue;
 }
 

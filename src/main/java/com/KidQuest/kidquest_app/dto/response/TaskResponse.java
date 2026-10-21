@@ -1,5 +1,6 @@
 package com.KidQuest.kidquest_app.dto.response;
 
+import com.KidQuest.kidquest_app.model.TaskKind;
 import com.KidQuest.kidquest_app.model.TaskStatus;
 import lombok.Getter;
 import lombok.Setter;
@@ -28,4 +29,10 @@ public class TaskResponse {
     private LocalDate dueDate;
 
     private LocalDateTime createdAt;
+
+    private TaskKind kind;
+
+    private Integer bonusValue;
+
+    private LocalDateTime approvedAt;
 }

@@ -1,10 +1,12 @@
 package com.KidQuest.kidquest_app.controller;
 
+import com.KidQuest.kidquest_app.dto.request.FamilyGoalRequest;
 import com.KidQuest.kidquest_app.dto.request.FamilyRequest;
+import com.KidQuest.kidquest_app.dto.response.FamilyGoalResponse;
 import com.KidQuest.kidquest_app.dto.response.FamilyResponse;
 import com.KidQuest.kidquest_app.model.Family;
+import com.KidQuest.kidquest_app.service.FamilyGoalService;
 import com.KidQuest.kidquest_app.service.FamilyService;
-import io.lettuce.core.dynamic.annotation.Value;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -17,9 +19,11 @@ import java.util.UUID;
 public class FamilyController {
 
     private final FamilyService familyService;
+    private final FamilyGoalService familyGoalService;
 
-    public FamilyController(FamilyService familyService) {
+    public FamilyController(FamilyService familyService, FamilyGoalService familyGoalService) {
         this.familyService = familyService;
+        this.familyGoalService = familyGoalService;
     }
 
     @GetMapping("/{id}")
@@ -49,4 +53,22 @@ public class FamilyController {
         return ResponseEntity.noContent().build();
     }
 
+    @GetMapping("/{id}/goal")
+    public ResponseEntity<FamilyGoalResponse> getActiveGoal(@PathVariable UUID id) {
+        return familyGoalService.getActiveGoal(id)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.noContent().build());
+    }
+
+    @PostMapping("/{id}/goal")
+    public ResponseEntity<FamilyGoalResponse> createGoal(
+            @PathVariable UUID id, @RequestBody @Valid FamilyGoalRequest request) {
+        return ResponseEntity.status(201).body(familyGoalService.createGoal(id, request));
+    }
+
+    @PostMapping("/{id}/goal/{goalId}/cancel")
+    public ResponseEntity<FamilyGoalResponse> cancelGoal(
+            @PathVariable UUID id, @PathVariable UUID goalId) {
+        return ResponseEntity.ok(familyGoalService.cancelGoal(id, goalId));
+    }
 }

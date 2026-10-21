@@ -43,6 +43,16 @@ public class Task {
     @Column(name="due_date")
     private LocalDate dueDate;
 
+    @Enumerated(EnumType.STRING)
+    @Column(length = 30, nullable = false)
+    private TaskKind kind = TaskKind.OTHER;
+
+    @Column(name = "bonus_value", nullable = false)
+    private Integer bonusValue = 0;
+
+    @Column(name = "approved_at")
+    private LocalDateTime approvedAt;
+
     @CreatedDate
     @Column(name="created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;

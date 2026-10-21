@@ -58,7 +58,7 @@ public class ChildServiceTest {
 
     @Test
     public void shouldReturnChildById(){
-        when(childRepository.findById(childId)).thenReturn(Optional.of(child));
+        when(childRepository.findByIdAndDeletedAtIsNull(childId)).thenReturn(Optional.of(child));
 
         assertEquals(childService.findById(child.getId()), child);
 
@@ -75,7 +75,7 @@ public class ChildServiceTest {
 
     @Test
     public void shouldThrowExceptionWhenChildNotFound(){
-        when(childRepository.findById(childId)).thenReturn(Optional.empty());
+        when(childRepository.findByIdAndDeletedAtIsNull(childId)).thenReturn(Optional.empty());
 
         assertThrows(ResourceNotFoundException.class, () -> childService.findById(childId));
     }
@@ -95,7 +95,7 @@ public class ChildServiceTest {
 
     @Test
     public void shouldUpdateChild(){
-        when(childRepository.findById(childId)).thenReturn(Optional.of(child));
+        when(childRepository.findByIdAndDeletedAtIsNull(childId)).thenReturn(Optional.of(child));
         when(childRepository.save(child)).thenReturn(child);
         childResponse = childService.update(childId, childRequest);
         assertEquals(childResponse.getName(), child.getName());
@@ -103,10 +103,10 @@ public class ChildServiceTest {
 
     @Test
     public void shouldDeleteChild(){
-        when(childRepository.findById(childId)).thenReturn(Optional.of(child));
+        when(childRepository.findByIdAndDeletedAtIsNull(childId)).thenReturn(Optional.of(child));
         childService.deleteById(childId);
 
-        verify(childRepository).deleteById(childId);
+        verify(childRepository).save(child);
     }
 
 }

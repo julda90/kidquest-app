@@ -15,10 +15,12 @@ public class RewardService {
 
     private final RewardRepository rewardRepository;
     private final FamilyService familyService;
+    private final ChildService childService;
 
-    public RewardService(RewardRepository rewardRepository, FamilyService familyService) {
+    public RewardService(RewardRepository rewardRepository, FamilyService familyService, ChildService childService) {
         this.rewardRepository = rewardRepository;
         this.familyService = familyService;
+        this.childService = childService;
     }
     private Reward findEntityById(UUID rewardId){
         return rewardRepository.findById(rewardId).orElseThrow(()-> new ResourceNotFoundException("No such reward wit this id: " + rewardId));
@@ -43,6 +45,11 @@ public class RewardService {
         reward.setPointCost(rewardRequest.getPointCost());
         reward.setActive(rewardRequest.getActive());
         reward.setFamily(familyService.findById(familyId));
+        if (rewardRequest.getTier() != null) reward.setTier(rewardRequest.getTier());
+        reward.setIcon(rewardRequest.getIcon());
+        if (rewardRequest.getChildId() != null) {
+            reward.setChild(childService.findById(rewardRequest.getChildId()));
+        }
         return response(rewardRepository.save(reward));
     }
     public RewardResponse update(UUID rewardId, RewardRequest updatedReward){
@@ -51,6 +58,13 @@ public class RewardService {
         existingReward.setDescription(updatedReward.getDescription());
         existingReward.setPointCost(updatedReward.getPointCost());
         existingReward.setActive(updatedReward.getActive());
+        if (updatedReward.getTier() != null) existingReward.setTier(updatedReward.getTier());
+        existingReward.setIcon(updatedReward.getIcon());
+        if (updatedReward.getChildId() != null) {
+            existingReward.setChild(childService.findById(updatedReward.getChildId()));
+        } else {
+            existingReward.setChild(null);
+        }
         return response(rewardRepository.save(existingReward));
     }
     public void delete(UUID rewardId){
@@ -66,6 +80,10 @@ public class RewardService {
         response.setActive(reward.getActive());
         response.setCreatedAt(reward.getCreatedAt());
         response.setUpdatedAt(reward.getUpdatedAt());
+        response.setTier(reward.getTier());
+        response.setIcon(reward.getIcon());
+        if (reward.getChild() != null) response.setChildId(reward.getChild().getId());
+        response.setFamilyId(reward.getFamily().getId());
         return response;
     }
 

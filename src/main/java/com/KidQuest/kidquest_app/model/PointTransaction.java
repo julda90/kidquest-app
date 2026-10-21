@@ -29,6 +29,18 @@ public class PointTransaction {
 
     private String reason;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private TransactionType type = TransactionType.MANUAL;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "task_id")
+    private Task task;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "redemption_id")
+    private RewardRedemption redemption;
+
     @Column(name="created_at")
     @CreatedDate
     private LocalDateTime createdAt;

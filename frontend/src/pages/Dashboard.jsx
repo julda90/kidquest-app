@@ -3,10 +3,10 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { getMe } from '../api/users'
 import { getChildren, createChild, updateChild, deleteChild } from '../api/children'
-import { getTasksByFamily, createTask, updateTask, deleteTask } from '../api/tasks'
+import { getTasksByFamily, createTask, updateTask, deleteTask, approveTask, rejectTask } from '../api/tasks'
 import { getRewards, createReward, updateReward, deleteReward } from '../api/rewards'
-import { getFamilies, createFamily, updateFamily, deleteFamily } from '../api/families'
-import { createPointTransaction } from '../api/pointTransactions'
+import { getFamilies, createFamily, updateFamily, deleteFamily, getActiveGoal, createGoal, cancelGoal } from '../api/families'
+import { getRedemptionsByFamily, approveRedemption, deliverRedemption, cancelRedemption } from '../api/redemptions'
 import Sidebar from '../components/Sidebar'
 import Modal from '../components/Modal'
 import ConfirmDialog from '../components/ConfirmDialog'
@@ -17,7 +17,7 @@ import FamilyForm from '../components/FamilyForm'
 import { AVATARS, getAvatarSrc } from '../constants/avatars'
 import styles from './Dashboard.module.css'
 
-const STATUS_CYCLE = { UNASSIGNED: 'ASSIGNED', ASSIGNED: 'PENDING_APPROVAL', PENDING_APPROVAL: 'COMPLETED', COMPLETED: 'UNASSIGNED', REJECTED: 'ASSIGNED' }
+const STATUS_CYCLE = { UNASSIGNED: 'ASSIGNED', ASSIGNED: 'PENDING_APPROVAL', COMPLETED: 'UNASSIGNED', REJECTED: 'ASSIGNED' }
 const STATUS_LABEL = { UNASSIGNED: 'Unassigned', ASSIGNED: 'Assigned', PENDING_APPROVAL: 'Pending Approval', COMPLETED: 'Completed', REJECTED: 'Rejected' }
 const STATUS_CLASS = { UNASSIGNED: styles.tagGray, ASSIGNED: styles.tagBlue, PENDING_APPROVAL: styles.tagOrange, COMPLETED: styles.tagGreen, REJECTED: styles.tagRed }
 
@@ -32,13 +32,18 @@ export default function Dashboard() {
   const { logout } = useAuth()
   const navigate   = useNavigate()
 
-  const [user,     setUser]     = useState(null)
-  const [children, setChildren] = useState([])
-  const [tasks,    setTasks]    = useState([])
-  const [rewards,  setRewards]  = useState([])
-  const [families, setFamilies] = useState([])
-  const [loading,  setLoading]  = useState(true)
-  const [error,    setError]    = useState('')
+  const [user,        setUser]        = useState(null)
+  const [children,    setChildren]    = useState([])
+  const [tasks,       setTasks]       = useState([])
+  const [rewards,     setRewards]     = useState([])
+  const [families,    setFamilies]    = useState([])
+  const [redemptions, setRedemptions] = useState([])
+  const [familyGoal,  setFamilyGoal]  = useState(null)
+  const [loading,     setLoading]     = useState(true)
+  const [error,       setError]       = useState('')
+  const [goalModal,   setGoalModal]   = useState(false)
+  const [goalName,    setGoalName]    = useState('')
+  const [goalTarget,  setGoalTarget]  = useState('')
 
   // modal state: { type: 'task'|'child'|'reward', item: null|object }
   const [modal,         setModal]         = useState(null)
@@ -46,6 +51,8 @@ export default function Dashboard() {
   const [deleting,      setDeleting]      = useState(false)
   const [awardTarget,   setAwardTarget]   = useState(null) // { task, child }
   const [awarding,      setAwarding]      = useState(false)
+  const [bonusChecked,  setBonusChecked]  = useState(false)
+  const [awardToast,    setAwardToast]    = useState(null)
 
   const familyId = user?.familyId
 
@@ -60,14 +67,18 @@ export default function Dashboard() {
         setError('Your account is not linked to a family. Please contact support or re-create your family.')
         return
       }
-      const [ch, tk, rw] = await Promise.all([
+      const [ch, tk, rw, redArr, goal] = await Promise.all([
         getChildren(activeFamilyId),
         getTasksByFamily(activeFamilyId),
         getRewards(activeFamilyId),
+        getRedemptionsByFamily(activeFamilyId),
+        getActiveGoal(activeFamilyId).catch(() => null),
       ])
       setChildren(ch)
       setTasks(tk)
       setRewards(rw)
+      setRedemptions(redArr)
+      setFamilyGoal(goal)
     } catch (e) {
       setError(e.message)
     } finally {
@@ -79,14 +90,43 @@ export default function Dashboard() {
 
   async function refetchFamily(fId) {
     localStorage.setItem('activeFamilyId', fId)
-    const [ch, tk, rw] = await Promise.all([
+    const [ch, tk, rw, redArr, goal] = await Promise.all([
       getChildren(fId),
       getTasksByFamily(fId),
       getRewards(fId),
+      getRedemptionsByFamily(fId),
+      getActiveGoal(fId).catch(() => null),
     ])
     setChildren(ch)
     setTasks(tk)
     setRewards(rw)
+    setRedemptions(redArr)
+    setFamilyGoal(goal)
+  }
+
+  async function handleApproveRedemption(id) {
+    try { await approveRedemption(id); await refetchFamily(familyId) } catch { /**/ }
+  }
+  async function handleDeliverRedemption(id) {
+    try { await deliverRedemption(id); await refetchFamily(familyId) } catch { /**/ }
+  }
+  async function handleCancelRedemption(id) {
+    try { await cancelRedemption(id); await refetchFamily(familyId) } catch { /**/ }
+  }
+
+  async function handleCreateGoal(e) {
+    e.preventDefault()
+    if (!goalName.trim() || !goalTarget) return
+    try {
+      await createGoal(familyId, { name: goalName.trim(), targetPoints: Number(goalTarget) })
+      setGoalModal(false); setGoalName(''); setGoalTarget('')
+      await refetchFamily(familyId)
+    } catch { /**/ }
+  }
+
+  async function handleCancelGoal() {
+    if (!familyGoal) return
+    try { await cancelGoal(familyId, familyGoal.id); await refetchFamily(familyId) } catch { /**/ }
   }
 
   // ── Task handlers ──────────────────────────────────────────────────────────
@@ -123,14 +163,26 @@ export default function Dashboard() {
     const { task } = awardTarget
     setAwarding(true)
     try {
-      await applyTaskStatus(task, 'COMPLETED')
-      await createPointTransaction(task.assignedTo, {
-        amount: task.pointValue,
-        reason: `Completed task: ${task.title}`,
-      })
+      const result = await approveTask(task.taskId, bonusChecked)
       setAwardTarget(null)
+      setBonusChecked(false)
+      const parts = [`⭐ +${result.awardedPoints} bodů`]
+      if (result.levelUp) parts.push(`🆙 Nová úroveň ${result.newLevel}!`)
+      if (result.streakDays > 1) parts.push(`🔥 Série ${result.streakDays} dní`)
+      if (result.newBadges?.length) parts.push(`🏅 Nový odznak!`)
+      if (result.goalReached) parts.push(`🎯 Rodinný cíl splněn!`)
+      setAwardToast(parts.join(' · '))
+      setTimeout(() => setAwardToast(null), 5000)
+      await refetchFamily(task.familyId)
     } catch { setAwardTarget(null) }
     finally { setAwarding(false) }
+  }
+
+  async function handleRejectTask(task) {
+    try {
+      await rejectTask(task.taskId)
+      await refetchFamily(task.familyId)
+    } catch { /* ignore */ }
   }
 
   // ── Child handlers ─────────────────────────────────────────────────────────
@@ -348,6 +400,85 @@ export default function Dashboard() {
             }
           </section>
 
+          {/* Pending Redemptions */}
+          {redemptions.filter(r => r.status === 'REQUESTED' || r.status === 'APPROVED').length > 0 && (
+            <section className={`${styles.panel} ${styles.panelFull}`}>
+              <div className={styles.panelHeader}>
+                <h2>🎁 Žádosti o odměny</h2>
+              </div>
+              <div className={styles.redemptionList}>
+                {redemptions
+                  .filter(r => r.status === 'REQUESTED' || r.status === 'APPROVED')
+                  .map(r => (
+                    <div key={r.id} className={styles.redemptionCard}>
+                      <div className={styles.redemptionInfo}>
+                        <span className={styles.redemptionIcon}>{r.rewardIcon || '🎁'}</span>
+                        <div>
+                          <div className={styles.redemptionName}>{r.rewardName}</div>
+                          <div className={styles.redemptionMeta}>
+                            {r.childName} · ⭐ {r.pointCost} bodů ·{' '}
+                            <span className={r.status === 'APPROVED' ? styles.tagGreen : styles.tagOrange}>
+                              {r.status === 'APPROVED' ? 'Schváleno' : 'Čeká'}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                      <div className={styles.rowActions}>
+                        {r.status === 'REQUESTED' && (
+                          <button className={`${styles.tag} ${styles.tagGreen} ${styles.tagBtn}`}
+                            onClick={() => handleApproveRedemption(r.id)}>
+                            ✓ Schválit
+                          </button>
+                        )}
+                        {r.status === 'APPROVED' && (
+                          <button className={`${styles.tag} ${styles.tagBlue} ${styles.tagBtn}`}
+                            onClick={() => handleDeliverRedemption(r.id)}>
+                            📦 Předat
+                          </button>
+                        )}
+                        <button className={`${styles.tag} ${styles.tagRed} ${styles.tagBtn}`}
+                          onClick={() => handleCancelRedemption(r.id)}>
+                          ✗ Zrušit
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+              </div>
+            </section>
+          )}
+
+          {/* Family Goal */}
+          <section className={`${styles.panel} ${styles.panelFull}`}>
+            <div className={styles.panelHeader}>
+              <h2>🎯 Rodinný cíl</h2>
+              {!familyGoal && (
+                <button className={styles.btnAdd} onClick={() => setGoalModal(true)}>+ Vytvořit cíl</button>
+              )}
+            </div>
+            {familyGoal ? (
+              <div className={styles.goalCard}>
+                <div className={styles.goalName}>{familyGoal.name}</div>
+                <div className={styles.goalProgress}>
+                  <div className={styles.goalBar}>
+                    <div className={styles.goalFill} style={{ width: `${familyGoal.progressPct}%` }} />
+                  </div>
+                  <span className={styles.goalLabel}>
+                    ⭐ {familyGoal.currentProgress} / {familyGoal.targetPoints}
+                    {familyGoal.reachedAt && ' · 🎉 Splněno!'}
+                  </span>
+                </div>
+                {!familyGoal.reachedAt && (
+                  <button className={`${styles.tag} ${styles.tagRed} ${styles.tagBtn}`}
+                    style={{ marginTop: 8 }} onClick={handleCancelGoal}>
+                    Zrušit cíl
+                  </button>
+                )}
+              </div>
+            ) : (
+              <p className={styles.empty}>Žádný aktivní cíl. Vytvořte rodinný cíl pro společnou motivaci.</p>
+            )}
+          </section>
+
           {/* Families */}
           <section className={`${styles.panel} ${styles.panelFull}`}>
             <div className={styles.panelHeader}>
@@ -410,6 +541,10 @@ export default function Dashboard() {
         </Modal>
       )}
 
+      {awardToast && (
+        <div className={styles.toast}>{awardToast}</div>
+      )}
+
       {deleteTarget && (
         <ConfirmDialog
           message={`Delete "${deleteTarget.name}"? This cannot be undone.`}
@@ -419,23 +554,60 @@ export default function Dashboard() {
       )}
 
       {awardTarget && (
-        <Modal title="Award Points" onClose={() => !awarding && setAwardTarget(null)}>
+        <Modal title="Schválit úkol" onClose={() => !awarding && setAwardTarget(null)}>
           <div className={styles.awardDialog}>
-            <div className={styles.awardPtsBadge}>⭐ {awardTarget.task.pointValue}</div>
+            <div className={styles.awardPtsBadge}>⭐ {awardTarget.task.pointValue}{bonusChecked && awardTarget.task.bonusValue ? ` + ${awardTarget.task.bonusValue}` : ''}</div>
             <p className={styles.awardMsg}>
-              Mark <strong>"{awardTarget.task.title}"</strong> as completed
-              and award <strong>{awardTarget.task.pointValue} points</strong> to{' '}
-              <strong>{awardTarget.child?.name ?? 'the assignee'}</strong>?
+              Označit <strong>„{awardTarget.task.title}"</strong> jako splněný
+              a přidat <strong>{awardTarget.task.pointValue} bodů</strong> pro{' '}
+              <strong>{awardTarget.child?.name ?? 'dítě'}</strong>?
             </p>
+            {awardTarget.task.kind === 'HOMEWORK' && (
+              <label className={styles.bonusCheck}>
+                <input type="checkbox" checked={bonusChecked}
+                  onChange={e => setBonusChecked(e.target.checked)} />
+                {' '}🔍 Sám/sama našel(a) a opravil(a) chybu (+{awardTarget.task.bonusValue ?? 15})
+              </label>
+            )}
             <div className={styles.awardActions}>
-              <button className={styles.awardCancel} onClick={() => setAwardTarget(null)} disabled={awarding}>
-                Cancel
+              <button className={styles.awardCancel} onClick={() => { setAwardTarget(null); setBonusChecked(false) }} disabled={awarding}>
+                Zrušit
+              </button>
+              <button className={styles.awardReject ?? styles.awardCancel} onClick={() => { handleRejectTask(awardTarget.task); setAwardTarget(null) }} disabled={awarding}>
+                ✗ Zamítnout
               </button>
               <button className={styles.awardConfirm} onClick={handleAwardConfirm} disabled={awarding}>
-                {awarding ? 'Awarding…' : '⭐ Award Points'}
+                {awarding ? 'Schvaluji…' : '✓ Schválit'}
               </button>
             </div>
           </div>
+        </Modal>
+      )}
+
+      {goalModal && (
+        <Modal title="Nový rodinný cíl" onClose={() => setGoalModal(false)}>
+          <form onSubmit={handleCreateGoal} style={{ display:'flex', flexDirection:'column', gap:14 }}>
+            <div>
+              <label style={{ display:'block', marginBottom:4, fontWeight:600, fontSize:14 }}>Název cíle *</label>
+              <input value={goalName} onChange={e => setGoalName(e.target.value)}
+                placeholder="Výlet do ZOO" required style={{ width:'100%', padding:'8px 10px', borderRadius:8, border:'1px solid #ddd', fontSize:14 }} />
+            </div>
+            <div>
+              <label style={{ display:'block', marginBottom:4, fontWeight:600, fontSize:14 }}>Cílové body *</label>
+              <input type="number" min="1" value={goalTarget} onChange={e => setGoalTarget(e.target.value)}
+                placeholder="500" required style={{ width:'100%', padding:'8px 10px', borderRadius:8, border:'1px solid #ddd', fontSize:14 }} />
+            </div>
+            <div style={{ display:'flex', gap:10, justifyContent:'flex-end' }}>
+              <button type="button" onClick={() => setGoalModal(false)}
+                style={{ padding:'8px 18px', borderRadius:8, border:'1px solid #ddd', background:'#f5f5f5', cursor:'pointer' }}>
+                Zrušit
+              </button>
+              <button type="submit"
+                style={{ padding:'8px 18px', borderRadius:8, border:'none', background:'#667eea', color:'#fff', cursor:'pointer', fontWeight:700 }}>
+                Vytvořit
+              </button>
+            </div>
+          </form>
         </Modal>
       )}
     </div>

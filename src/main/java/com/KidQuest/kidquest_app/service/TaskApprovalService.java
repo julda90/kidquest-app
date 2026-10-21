@@ -1,0 +1,204 @@
+package com.KidQuest.kidquest_app.service;
+
+import com.KidQuest.kidquest_app.dto.request.ApproveRequest;
+import com.KidQuest.kidquest_app.dto.response.ApprovalResult;
+import com.KidQuest.kidquest_app.exception.BadRequestException;
+import com.KidQuest.kidquest_app.exception.ConflictException;
+import com.KidQuest.kidquest_app.model.*;
+import com.KidQuest.kidquest_app.repository.*;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.time.Clock;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
+
+@Service
+public class TaskApprovalService {
+
+    private final TaskRepository taskRepository;
+    private final PointTransactionRepository pointTransactionRepository;
+    private final ChildBadgeRepository childBadgeRepository;
+    private final FamilyGoalRepository familyGoalRepository;
+    private final TaskService taskService;
+    private final ProgressService progressService;
+    private final Clock clock;
+
+    public TaskApprovalService(TaskRepository taskRepository,
+                               PointTransactionRepository pointTransactionRepository,
+                               ChildBadgeRepository childBadgeRepository,
+                               FamilyGoalRepository familyGoalRepository,
+                               TaskService taskService,
+                               ProgressService progressService,
+                               Clock clock) {
+        this.taskRepository = taskRepository;
+        this.pointTransactionRepository = pointTransactionRepository;
+        this.childBadgeRepository = childBadgeRepository;
+        this.familyGoalRepository = familyGoalRepository;
+        this.taskService = taskService;
+        this.progressService = progressService;
+        this.clock = clock;
+    }
+
+    @Transactional
+    public ApprovalResult approve(UUID taskId, ApproveRequest request) {
+        Task task = taskService.findById(taskId);
+
+        if (task.getAssignedTo() == null) {
+            throw new BadRequestException("Task is not assigned to a child.");
+        }
+        if (task.getStatus() != TaskStatus.PENDING_APPROVAL && task.getStatus() != TaskStatus.ASSIGNED) {
+            throw new BadRequestException("Task must be in PENDING_APPROVAL or ASSIGNED status to be approved.");
+        }
+        if (pointTransactionRepository.existsByTaskIdAndType(taskId, TransactionType.TASK)) {
+            throw new ConflictException("Task has already been approved. Points were already awarded.");
+        }
+
+        LocalDateTime now = LocalDateTime.now(clock);
+        LocalDate today   = now.toLocalDate();
+        Child child       = task.getAssignedTo();
+        UUID childId      = child.getId();
+
+        // Capture level before any new transactions
+        int xpBefore = progressService.xp(childId);
+        int levelBefore = progressService.levelFromXp(child, xpBefore).level();
+
+        // Detect if today already has a TASK transaction (for streak bonus eligibility)
+        boolean firstTaskToday = !pointTransactionRepository.existsByChildIdAndTypeAndCreatedAtBetween(
+                childId, TransactionType.TASK, today.atStartOfDay(), today.plusDays(1).atStartOfDay());
+
+        task.setStatus(TaskStatus.COMPLETED);
+        task.setApprovedAt(now);
+        taskRepository.save(task);
+
+        int awarded = task.getPointValue() != null ? task.getPointValue() : 0;
+
+        PointTransaction taskTx = new PointTransaction();
+        taskTx.setChild(child);
+        taskTx.setAmount(awarded);
+        taskTx.setReason(task.getTitle());
+        taskTx.setType(TransactionType.TASK);
+        taskTx.setTask(task);
+        pointTransactionRepository.save(taskTx);
+
+        if (request.isBonus() && task.getBonusValue() != null && task.getBonusValue() > 0) {
+            PointTransaction bonusTx = new PointTransaction();
+            bonusTx.setChild(child);
+            bonusTx.setAmount(task.getBonusValue());
+            bonusTx.setReason("Detektiv chyb: " + task.getTitle());
+            bonusTx.setType(TransactionType.BONUS);
+            bonusTx.setTask(task);
+            pointTransactionRepository.save(bonusTx);
+            awarded += task.getBonusValue();
+        }
+
+        // Streak bonus — awarded on the first task of each new active day
+        ProgressService.StreakInfo streakInfo = progressService.streak(childId, today);
+        if (firstTaskToday && streakInfo.days() > 0) {
+            PointTransaction streakTx = new PointTransaction();
+            streakTx.setChild(child);
+            streakTx.setAmount(ProgressService.STREAK_BONUS);
+            streakTx.setReason("Série " + streakInfo.days() + " " + (streakInfo.days() == 1 ? "den" : "dní"));
+            streakTx.setType(TransactionType.STREAK);
+            pointTransactionRepository.save(streakTx);
+            awarded += ProgressService.STREAK_BONUS;
+        }
+
+        // Level-up detection
+        int xpAfter    = progressService.xp(childId);
+        int levelAfter = progressService.levelFromXp(child, xpAfter).level();
+        boolean levelUp = levelAfter > levelBefore;
+
+        List<Badge> newBadges = evaluateBadges(task);
+
+        boolean goalReached = updateFamilyGoal(task.getFamily().getId(), now);
+
+        ApprovalResult result = new ApprovalResult();
+        result.setTask(taskService.response(task));
+        result.setAwardedPoints(awarded);
+        result.setNewBadges(newBadges);
+        result.setLevelUp(levelUp);
+        result.setNewLevel(levelAfter);
+        result.setStreakDays(streakInfo.days());
+        result.setGoalReached(goalReached);
+        return result;
+    }
+
+    @Transactional
+    public void reject(UUID taskId) {
+        Task task = taskService.findById(taskId);
+        task.setStatus(TaskStatus.REJECTED);
+        taskRepository.save(task);
+    }
+
+    @Transactional
+    public void submit(UUID taskId) {
+        Task task = taskService.findById(taskId);
+        if (task.getStatus() != TaskStatus.ASSIGNED) {
+            throw new BadRequestException("Only ASSIGNED tasks can be submitted for approval.");
+        }
+        task.setStatus(TaskStatus.PENDING_APPROVAL);
+        taskRepository.save(task);
+    }
+
+    private List<Badge> evaluateBadges(Task task) {
+        if (task.getAssignedTo() == null) return List.of();
+
+        Child child = task.getAssignedTo();
+        UUID childId = child.getId();
+        List<Badge> earned = new ArrayList<>();
+
+        checkAndAwardBadge(child, Badge.LUMBERJACK,
+                countCompleted(childId, List.of(TaskKind.WOOD, TaskKind.KINDLING)), 10, earned);
+
+        checkAndAwardBadge(child, Badge.HEAD_WAITER,
+                countCompleted(childId, List.of(TaskKind.TABLE)), 20, earned);
+
+        checkAndAwardBadge(child, Badge.TIDY,
+                countCompleted(childId, List.of(TaskKind.ROOM)), 20, earned);
+
+        checkAndAwardBadge(child, Badge.LAUNDRY_PRO,
+                countCompleted(childId, List.of(TaskKind.LAUNDRY)), 20, earned);
+
+        long bonusCount = pointTransactionRepository.findByChildId(childId).stream()
+                .filter(t -> t.getType() == TransactionType.BONUS
+                          && t.getReason() != null && t.getReason().startsWith("Detektiv chyb:"))
+                .count();
+        checkAndAwardBadge(child, Badge.SHERLOCK, bonusCount, 10, earned);
+
+        return earned;
+    }
+
+    private long countCompleted(UUID childId, List<TaskKind> kinds) {
+        return taskRepository.countByAssignedToIdAndStatusAndKindIn(childId, TaskStatus.COMPLETED, kinds);
+    }
+
+    private void checkAndAwardBadge(Child child, Badge badge, long count, int threshold, List<Badge> earned) {
+        if (count >= threshold && !childBadgeRepository.existsByChildIdAndBadge(child.getId(), badge)) {
+            ChildBadge cb = new ChildBadge();
+            cb.setChild(child);
+            cb.setBadge(badge);
+            childBadgeRepository.save(cb);
+            earned.add(badge);
+        }
+    }
+
+    private boolean updateFamilyGoal(UUID familyId, LocalDateTime now) {
+        return familyGoalRepository
+                .findByFamilyIdAndReachedAtIsNullAndCancelledAtIsNull(familyId)
+                .map(goal -> {
+                    int progress = pointTransactionRepository
+                            .sumFamilyGoalProgressSince(familyId, goal.getCreatedAt());
+                    if (progress >= goal.getTargetPoints()) {
+                        goal.setReachedAt(now);
+                        familyGoalRepository.save(goal);
+                        return true;
+                    }
+                    return false;
+                })
+                .orElse(false);
+    }
+}

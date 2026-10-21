@@ -63,7 +63,7 @@ public class TaskServiceTest {
     @Test
     public void shouldReturnTaskByTaskId() {
 
-        when(taskRepository.findById(taskId)).thenReturn(Optional.of(task));
+        when(taskRepository.findByIdAndDeletedAtIsNull(taskId)).thenReturn(Optional.of(task));
 
         assertEquals(taskService.findById(taskId),task);
 
@@ -71,7 +71,7 @@ public class TaskServiceTest {
 
     @Test
     public void shouldThrowExceptionWhenTaskNotFound() {
-        when(taskRepository.findById(taskId)).thenReturn(Optional.empty());
+        when(taskRepository.findByIdAndDeletedAtIsNull(taskId)).thenReturn(Optional.empty());
         assertThrows(ResourceNotFoundException.class, () -> taskService.findById(taskId));
     }
 
@@ -94,7 +94,7 @@ public class TaskServiceTest {
 
     @Test
     public void updateTask() {
-        when(taskRepository.findById(taskId)).thenReturn(Optional.of(task));
+        when(taskRepository.findByIdAndDeletedAtIsNull(taskId)).thenReturn(Optional.of(task));
         when(taskRepository.save(task)).thenReturn(task);
 
         TaskResponse response = taskService.updateTask(taskId, taskRequest);
