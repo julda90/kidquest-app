@@ -37,7 +37,7 @@ SET tier       = v.tier,
         SELECT c.id FROM child c
         WHERE c.family_id = r.family_id
           AND c.deleted_at IS NULL
-          AND c.name ILIKE 'S_ra'
+          AND c.age < 6
         LIMIT 1
     )
 FROM (VALUES

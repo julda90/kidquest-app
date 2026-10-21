@@ -4,8 +4,8 @@ import styles from './CatalogDialog.module.css'
 
 const AUDIENCE_LABEL = { ALL: 'Pro všechny', YOUNG: 'Pro malé' }
 
-export default function CatalogDialog({ familyId, children = [], onClose, onImported }) {
-  const [tab,         setTab]         = useState('rewards') // 'rewards' | 'tasks'
+export default function CatalogDialog({ familyId, children = [], onClose, onImported, defaultTab = 'rewards' }) {
+  const [tab,         setTab]         = useState(defaultTab) // 'rewards' | 'tasks'
   const [rewards,     setRewards]     = useState([])
   const [tasks,       setTasks]       = useState([])
   const [selected,    setSelected]    = useState({ rewards: new Set(), tasks: new Set() })

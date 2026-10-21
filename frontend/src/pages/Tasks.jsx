@@ -10,6 +10,7 @@ import Sidebar from '../components/Sidebar'
 import Modal from '../components/Modal'
 import ConfirmDialog from '../components/ConfirmDialog'
 import TaskForm from '../components/TaskForm'
+import CatalogDialog from '../components/CatalogDialog'
 import styles from './Tasks.module.css'
 
 const STATUS_CYCLE = {
@@ -170,7 +171,11 @@ export default function Tasks() {
             <h1 className={styles.title}>Tasks</h1>
             <p className={styles.subtitle}>Manage and track tasks for your family.</p>
           </div>
-          <button className={styles.btnAdd} onClick={() => setModal({ item: null })}>+ Add Task</button>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button className={styles.btnAdd} style={{ background: '#6366f1' }}
+              onClick={() => setModal({ type: 'catalog' })}>📦 Z katalogu</button>
+            <button className={styles.btnAdd} onClick={() => setModal({ item: null })}>+ Add Task</button>
+          </div>
         </header>
 
         <div className={styles.filters}>
@@ -245,7 +250,16 @@ export default function Tasks() {
         }
       </main>
 
-      {modal && (
+      {modal?.type === 'catalog' && (
+        <CatalogDialog
+          familyId={familyId}
+          children={children}
+          defaultTab="tasks"
+          onClose={() => setModal(null)}
+          onImported={() => { setModal(null); refetch(familyId) }} />
+      )}
+
+      {modal && modal.type !== 'catalog' && (
         <Modal title={modal.item ? 'Edit Task' : 'New Task'} onClose={() => setModal(null)}>
           <TaskForm initial={modal.item ?? {}} children={children} families={families}
             onSubmit={handleSave} onCancel={() => setModal(null)} />
