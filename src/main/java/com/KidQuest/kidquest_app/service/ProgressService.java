@@ -97,10 +97,10 @@ public class ProgressService {
     public record StreakInfo(int days, boolean jokerUsedThisWeek) {}
 
     public StreakInfo streak(UUID childId, LocalDate today) {
-        // Fetch active days in the last 90 days
+        // Fetch active days in the last 90 days (routine tasks use due_date)
         LocalDateTime since = today.minusDays(90).atStartOfDay();
         List<LocalDate> activeDays = pointTransactionRepository
-                .findActiveDaysSince(childId, since)
+                .findActiveDaysRoutineAwareSince(childId, since)
                 .stream().map(java.sql.Date::toLocalDate).collect(Collectors.toList());
 
         Set<LocalDate> activeSet = new HashSet<>(activeDays);
@@ -180,6 +180,7 @@ public class ProgressService {
         int totalRed    = (int) redemptionRepository.findByChildId(childId).size();
         long selfCheckCount  = pointTransactionRepository.countBonusByChildIdAndBonusKind(childId, "SELF_CHECK");
         long noReminderCount = pointTransactionRepository.countBonusByChildIdAndBonusKind(childId, "NO_REMINDER");
+        long routineApprovals = pointTransactionRepository.countRoutineTaskTransactions(childId);
 
         // Load earned badges into a map for quick lookup
         Map<Badge, ChildBadge> earnedMap = childBadgeRepository.findByChildId(childId)
@@ -189,7 +190,7 @@ public class ProgressService {
         awardIfMet(child, earnedMap, Badge.STREAK_7,      si.days() >= 7);
         awardIfMet(child, earnedMap, Badge.STREAK_30,    si.days() >= 30);
         awardIfMet(child, earnedMap, Badge.FIRST_REWARD, totalRed >= 1);
-        awardIfMet(child, earnedMap, Badge.EARLY_BIRD,   totalTasks >= 10);
+        awardIfMet(child, earnedMap, Badge.EARLY_BIRD,   routineApprovals >= 10);
         awardIfMet(child, earnedMap, Badge.TEAM_PLAYER,  totalTasks >= 50);
         awardIfMet(child, earnedMap, Badge.SELF_STARTER, noReminderCount >= 10);
 
@@ -206,7 +207,8 @@ public class ProgressService {
                 int cur = switch (b) {
                     case STREAK_7, STREAK_30     -> si.days();
                     case FIRST_REWARD            -> totalRed;
-                    case EARLY_BIRD, TEAM_PLAYER -> totalTasks;
+                    case EARLY_BIRD              -> (int) routineApprovals;
+                    case TEAM_PLAYER             -> totalTasks;
                     case SHERLOCK                -> (int) selfCheckCount;
                     case SELF_STARTER            -> (int) noReminderCount;
                     default -> 0;
@@ -250,7 +252,7 @@ public class ProgressService {
     }
 
     private int longestStreak(UUID childId) {
-        List<LocalDate> activeDays = pointTransactionRepository.findAllActiveDays(childId)
+        List<LocalDate> activeDays = pointTransactionRepository.findAllActiveDaysRoutineAware(childId)
                 .stream().map(java.sql.Date::toLocalDate).collect(Collectors.toList());
         if (activeDays.isEmpty()) return 0;
         List<LocalDate> sorted = activeDays.stream().sorted().toList();

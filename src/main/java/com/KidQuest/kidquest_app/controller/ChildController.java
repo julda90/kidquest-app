@@ -4,13 +4,18 @@ import com.KidQuest.kidquest_app.dto.request.ChildRequest;
 import com.KidQuest.kidquest_app.dto.response.ChildResponse;
 import com.KidQuest.kidquest_app.dto.response.EarningRateResponse;
 import com.KidQuest.kidquest_app.dto.response.ProgressResponse;
+import com.KidQuest.kidquest_app.dto.response.TaskResponse;
+import com.KidQuest.kidquest_app.dto.response.TodayResponse;
 import com.KidQuest.kidquest_app.exception.BadRequestException;
 import com.KidQuest.kidquest_app.model.Child;
 import com.KidQuest.kidquest_app.model.PointTransaction;
+import com.KidQuest.kidquest_app.model.TaskKind;
 import com.KidQuest.kidquest_app.model.TransactionType;
 import com.KidQuest.kidquest_app.repository.PointTransactionRepository;
 import com.KidQuest.kidquest_app.service.ChildService;
 import com.KidQuest.kidquest_app.service.ProgressService;
+import com.KidQuest.kidquest_app.service.RoutineService;
+import com.KidQuest.kidquest_app.service.TaskService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -28,13 +33,18 @@ public class ChildController {
     private final ChildService childService;
     private final ProgressService progressService;
     private final PointTransactionRepository pointTransactionRepository;
+    private final RoutineService routineService;
+    private final TaskService taskService;
     private final Clock clock;
 
     public ChildController(ChildService childService, ProgressService progressService,
-                           PointTransactionRepository pointTransactionRepository, Clock clock) {
+                           PointTransactionRepository pointTransactionRepository,
+                           RoutineService routineService, TaskService taskService, Clock clock) {
         this.childService = childService;
         this.progressService = progressService;
         this.pointTransactionRepository = pointTransactionRepository;
+        this.routineService = routineService;
+        this.taskService = taskService;
         this.clock = clock;
     }
 
@@ -89,6 +99,20 @@ public class ChildController {
                     return new EarningRateResponse(child.getId(), avg);
                 }).toList();
         return ResponseEntity.ok(rates);
+    }
+
+    @GetMapping("/{id}/today")
+    public ResponseEntity<TodayResponse> getToday(@PathVariable UUID id) {
+        var routine = routineService.getOrCreateToday(id);
+        List<TaskResponse> tasks = taskService.findAllByAssignedToId(id).stream()
+                .filter(t -> t.getKind() != TaskKind.ROUTINE)
+                .filter(t -> "ASSIGNED".equals(t.getStatus() != null ? t.getStatus().name() : "") ||
+                             "PENDING_APPROVAL".equals(t.getStatus() != null ? t.getStatus().name() : ""))
+                .toList();
+        TodayResponse resp = new TodayResponse();
+        resp.setRoutine(routine);
+        resp.setTasks(tasks);
+        return ResponseEntity.ok(resp);
     }
 
     @PostMapping("/{id}/chest/open")

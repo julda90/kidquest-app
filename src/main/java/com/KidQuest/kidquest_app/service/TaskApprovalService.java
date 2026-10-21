@@ -12,6 +12,9 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Clock;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -25,6 +28,8 @@ public class TaskApprovalService {
     private final FamilyGoalRepository familyGoalRepository;
     private final TaskService taskService;
     private final ProgressService progressService;
+    private final RoutineRepository routineRepository;
+    private final TaskStepRepository taskStepRepository;
     private final Clock clock;
 
     public TaskApprovalService(TaskRepository taskRepository,
@@ -33,6 +38,8 @@ public class TaskApprovalService {
                                FamilyGoalRepository familyGoalRepository,
                                TaskService taskService,
                                ProgressService progressService,
+                               RoutineRepository routineRepository,
+                               TaskStepRepository taskStepRepository,
                                Clock clock) {
         this.taskRepository = taskRepository;
         this.pointTransactionRepository = pointTransactionRepository;
@@ -40,6 +47,8 @@ public class TaskApprovalService {
         this.familyGoalRepository = familyGoalRepository;
         this.taskService = taskService;
         this.progressService = progressService;
+        this.routineRepository = routineRepository;
+        this.taskStepRepository = taskStepRepository;
         this.clock = clock;
     }
 
@@ -153,13 +162,87 @@ public class TaskApprovalService {
     }
 
     @Transactional
+    public void returnRoutine(UUID taskId, List<Integer> stepPositions) {
+        Task task = taskService.findById(taskId);
+        if (task.getStatus() != TaskStatus.PENDING_APPROVAL) {
+            throw new BadRequestException("Vrátit lze jen rutinu ve stavu PENDING_APPROVAL.");
+        }
+        List<TaskStep> steps = taskStepRepository.findByTaskIdOrderByPosition(task.getId());
+        for (TaskStep s : steps) {
+            if (stepPositions != null && stepPositions.contains(s.getPosition())) {
+                s.setDoneAt(null);
+                s.setReturned(true);
+            }
+        }
+        taskStepRepository.saveAll(steps);
+        task.setStatus(TaskStatus.ASSIGNED);
+        taskRepository.save(task);
+    }
+
+    @Transactional
     public void submit(UUID taskId) {
         Task task = taskService.findById(taskId);
         if (task.getStatus() != TaskStatus.ASSIGNED) {
             throw new BadRequestException("Only ASSIGNED tasks can be submitted for approval.");
         }
+
+        if (task.getKind() == TaskKind.ROUTINE) {
+            submitRoutineTask(task);
+        } else {
+            task.setStatus(TaskStatus.PENDING_APPROVAL);
+            taskRepository.save(task);
+        }
+    }
+
+    private void submitRoutineTask(Task task) {
+        List<TaskStep> steps = taskStepRepository.findByTaskIdOrderByPosition(task.getId());
+        boolean allDone = steps.stream().allMatch(s -> s.getDoneAt() != null);
+        if (!allDone) {
+            throw new BadRequestException("Ještě nemáš všechno.");
+        }
+
+        ZoneId prague = ZoneId.of("Europe/Prague");
+        ZonedDateTime nowPrague = ZonedDateTime.now(clock).withZoneSameInstant(prague);
+        LocalDate today = nowPrague.toLocalDate();
+
+        Routine routine = task.getRoutineId() != null
+                ? routineRepository.findById(task.getRoutineId()).orElse(null)
+                : null;
+        LocalTime deadlineTime = (routine != null) ? routine.getDeadline() : LocalTime.of(7, 30);
+        ZonedDateTime deadlineZdt = ZonedDateTime.of(today, deadlineTime, prague);
+        boolean onTime = !nowPrague.isAfter(deadlineZdt);
+
+        if (task.getFirstSubmittedOnTime() == null) {
+            if (!onTime) {
+                throw new BadRequestException("Dnes už je pozdě. Zítra to dáš! ⏰");
+            }
+            task.setFirstSubmittedOnTime(true);
+        } else if (Boolean.TRUE.equals(task.getFirstSubmittedOnTime())) {
+            ZonedDateTime endOfDay = ZonedDateTime.of(today, LocalTime.of(23, 59, 59), prague);
+            if (nowPrague.isAfter(endOfDay)) {
+                throw new BadRequestException("Dnes už je pozdě. Zítra to dáš! ⏰");
+            }
+        }
+
+        task.setSubmittedAt(LocalDateTime.now(clock));
         task.setStatus(TaskStatus.PENDING_APPROVAL);
+        steps.forEach(s -> s.setReturned(false));
+        taskStepRepository.saveAll(steps);
         taskRepository.save(task);
+    }
+
+    @Transactional
+    public List<ApprovalResult> approveBatch(List<UUID> taskIds) {
+        ApproveRequest req = new ApproveRequest();
+        List<ApprovalResult> results = new ArrayList<>();
+        for (UUID id : taskIds) {
+            try {
+                results.add(approve(id, req));
+            } catch (Exception e) {
+                // skip already-approved or invalid; return partial success
+            }
+        }
+        return results;
     }
 
     private List<Badge> evaluateBadges(Task task) {
@@ -186,6 +269,9 @@ public class TaskApprovalService {
 
         long noReminderCount = pointTransactionRepository.countBonusByChildIdAndBonusKind(childId, "NO_REMINDER");
         checkAndAwardBadge(child, Badge.SELF_STARTER, noReminderCount, 10, earned);
+
+        long routineApprovals = pointTransactionRepository.countRoutineTaskTransactions(childId);
+        checkAndAwardBadge(child, Badge.EARLY_BIRD, routineApprovals, 10, earned);
 
         return earned;
     }

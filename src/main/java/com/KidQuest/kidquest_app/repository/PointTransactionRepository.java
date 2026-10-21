@@ -74,4 +74,44 @@ public interface PointTransactionRepository extends JpaRepository<PointTransacti
                    "WHERE child_id = :childId AND type IN ('TASK', 'BONUS') AND created_at >= :since",
            nativeQuery = true)
     int sumTaskBonusSince(UUID childId, LocalDateTime since);
+
+    /** Active task days (routine-aware): ROUTINE tasks use task.due_date, others use created_at */
+    @Query(value =
+        "SELECT DISTINCT d FROM (" +
+        "  SELECT CAST(pt.created_at AS DATE) AS d" +
+        "  FROM point_transaction pt" +
+        "  LEFT JOIN task t ON t.id = pt.task_id" +
+        "  WHERE pt.child_id = :childId AND pt.type = 'TASK' AND pt.created_at >= :since" +
+        "    AND (pt.task_id IS NULL OR t.kind != 'ROUTINE')" +
+        "  UNION" +
+        "  SELECT CAST(t.due_date AS DATE) AS d" +
+        "  FROM point_transaction pt" +
+        "  JOIN task t ON t.id = pt.task_id" +
+        "  WHERE pt.child_id = :childId AND pt.type = 'TASK' AND pt.created_at >= :since" +
+        "    AND t.kind = 'ROUTINE'" +
+        ") sub",
+        nativeQuery = true)
+    List<java.sql.Date> findActiveDaysRoutineAwareSince(UUID childId, LocalDateTime since);
+
+    /** All active task days (routine-aware), no date limit */
+    @Query(value =
+        "SELECT DISTINCT d FROM (" +
+        "  SELECT CAST(pt.created_at AS DATE) AS d" +
+        "  FROM point_transaction pt" +
+        "  LEFT JOIN task t ON t.id = pt.task_id" +
+        "  WHERE pt.child_id = :childId AND pt.type = 'TASK'" +
+        "    AND (pt.task_id IS NULL OR t.kind != 'ROUTINE')" +
+        "  UNION" +
+        "  SELECT CAST(t.due_date AS DATE) AS d" +
+        "  FROM point_transaction pt" +
+        "  JOIN task t ON t.id = pt.task_id" +
+        "  WHERE pt.child_id = :childId AND pt.type = 'TASK'" +
+        "    AND t.kind = 'ROUTINE'" +
+        ") sub",
+        nativeQuery = true)
+    List<java.sql.Date> findAllActiveDaysRoutineAware(UUID childId);
+
+    /** Count TASK transactions where associated task has kind=ROUTINE */
+    @Query("SELECT COUNT(t) FROM PointTransaction t WHERE t.child.id = :childId AND t.type = 'TASK' AND t.task.kind = 'ROUTINE'")
+    long countRoutineTaskTransactions(UUID childId);
 }

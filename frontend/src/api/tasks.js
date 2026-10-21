@@ -11,3 +11,8 @@ export const submitTask       = (taskId)         => apiFetch(`/api/tasks/${taskI
 export const getTaskKinds       = ()                        => apiFetch(`/api/tasks/kinds`)
 export const getOpenQuests      = (familyId)                => apiFetch(`/api/tasks/family/${familyId}/open-quests`)
 export const claimQuest         = (taskId, childId)         => apiFetch(`/api/tasks/${taskId}/claim?childId=${childId}`, { method: 'POST' })
+export const toggleStep         = (taskId, position)        => apiFetch(`/api/tasks/${taskId}/steps/${position}/toggle`, { method: 'POST' })
+export const submitRoutine      = (taskId)                  => apiFetch(`/api/tasks/${taskId}/submit`, { method: 'POST' })
+export const returnRoutine      = (taskId, steps)           => apiFetch(`/api/tasks/${taskId}/return`, { method: 'POST', body: JSON.stringify({ steps }) })
+export const approveBatch       = (taskIds)                 => apiFetch(`/api/tasks/approve-batch`,    { method: 'POST', body: JSON.stringify({ taskIds }) })
+export const getTodayTasks      = (childId)                 => apiFetch(`/api/children/${childId}/today`)

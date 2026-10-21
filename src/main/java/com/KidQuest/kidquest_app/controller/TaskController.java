@@ -1,10 +1,14 @@
 package com.KidQuest.kidquest_app.controller;
 
+import com.KidQuest.kidquest_app.dto.request.ApproveBatchRequest;
 import com.KidQuest.kidquest_app.dto.request.ApproveRequest;
+import com.KidQuest.kidquest_app.dto.request.ReturnRequest;
 import com.KidQuest.kidquest_app.dto.request.TaskRequest;
 import com.KidQuest.kidquest_app.dto.response.ApprovalResult;
 import com.KidQuest.kidquest_app.dto.response.TaskResponse;
+import com.KidQuest.kidquest_app.dto.response.TaskStepResponse;
 import com.KidQuest.kidquest_app.model.TaskKind;
+import com.KidQuest.kidquest_app.service.RoutineService;
 import com.KidQuest.kidquest_app.service.TaskApprovalService;
 import com.KidQuest.kidquest_app.service.TaskService;
 import jakarta.validation.Valid;
@@ -24,10 +28,13 @@ public class TaskController {
 
     private final TaskService taskService;
     private final TaskApprovalService taskApprovalService;
+    private final RoutineService routineService;
 
-    public TaskController(TaskService taskService, TaskApprovalService taskApprovalService) {
+    public TaskController(TaskService taskService, TaskApprovalService taskApprovalService,
+                          RoutineService routineService) {
         this.taskService = taskService;
         this.taskApprovalService = taskApprovalService;
+        this.routineService = routineService;
     }
 
     @GetMapping("/child/{childId}")
@@ -85,6 +92,24 @@ public class TaskController {
     public ResponseEntity<TaskResponse> claimQuest(@PathVariable UUID taskId,
                                                    @RequestParam UUID childId) {
         return ResponseEntity.ok(taskService.claimQuest(taskId, childId));
+    }
+
+    @PostMapping("/{taskId}/steps/{position}/toggle")
+    public ResponseEntity<TaskStepResponse> toggleStep(@PathVariable UUID taskId,
+                                                        @PathVariable int position) {
+        return ResponseEntity.ok(routineService.toggleStep(taskId, position));
+    }
+
+    @PostMapping("/{taskId}/return")
+    public ResponseEntity<Void> returnRoutine(@PathVariable UUID taskId,
+                                               @RequestBody ReturnRequest req) {
+        taskApprovalService.returnRoutine(taskId, req.getSteps());
+        return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/approve-batch")
+    public ResponseEntity<List<ApprovalResult>> approveBatch(@RequestBody ApproveBatchRequest req) {
+        return ResponseEntity.ok(taskApprovalService.approveBatch(req.getTaskIds()));
     }
 
     @GetMapping("/kinds")

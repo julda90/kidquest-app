@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { getMe } from '../api/users'
 import { getChildren, getProgress, openChest, updateSkin } from '../api/children'
-import { getTasksByChild, submitTask, getOpenQuests, claimQuest } from '../api/tasks'
+import { submitTask, getOpenQuests, claimQuest, getTodayTasks, toggleStep as apiToggleStep, submitRoutine } from '../api/tasks'
 import { getRewards } from '../api/rewards'
 import { getTransactionsByChild } from '../api/pointTransactions'
 import { redeemReward, getRedemptionsByChild, cancelRedemption } from '../api/redemptions'
@@ -252,7 +252,9 @@ export default function KidView() {
   const [redemptions,  setRedemptions]  = useState([])
   const [openQuestTemplates, setOpenQuestTemplates] = useState([])
   const [claiming,     setClaiming]     = useState(null)
-  const [morningDone,  setMorningDone]  = useState([])
+  const [routineData,  setRoutineData]  = useState(null)
+  const [togglingStep, setTogglingStep] = useState(null)
+  const [submittingRoutine, setSubmittingRoutine] = useState(false)
   const [submitting,      setSubmitting]      = useState(null)
   const [confirmRedeemId, setConfirmRedeemId] = useState(null)
   const [showFreshStart,  setShowFreshStart]  = useState(false)
@@ -299,8 +301,8 @@ export default function KidView() {
       const t = THEME_MAP[c.avatar] || 'frozen'
       const ag = (c.age != null && c.age < 5) ? 'preschool' : 'school'
       const stepCount = MORNING_STEPS[t][ag].length
-      const [tkArr, rwArr, txArr, prog, redArr, oqArr] = await Promise.all([
-        getTasksByChild(c.id),
+      const [todayRes, rwArr, txArr, prog, redArr, oqArr] = await Promise.all([
+        getTodayTasks(c.id),
         getRewards(fIdToUse),
         getTransactionsByChild(c.id),
         getProgress(c.id),
@@ -308,7 +310,8 @@ export default function KidView() {
         getOpenQuests(fIdToUse),
       ])
       setChild(c)
-      setTasks(tkArr.filter(tk => tk.status === 'ASSIGNED' || tk.status === 'PENDING_APPROVAL'))
+      setRoutineData(todayRes.routine ?? null)
+      setTasks(todayRes.tasks ?? [])
       setRewards(rwArr
         .filter(r => r.active && !r.archivedAt && (!r.childId || r.childId === c.id))
         .sort((a, b) => a.pointCost - b.pointCost))
@@ -316,7 +319,6 @@ export default function KidView() {
       setProgress(prog)
       setRedemptions(redArr)
       setOpenQuestTemplates(oqArr)
-      setMorningDone(loadMorning(c.id, stepCount))
 
       // Level-up fix: seed prevLevelRef from localStorage to avoid false animation after reset
       try {
@@ -345,7 +347,7 @@ export default function KidView() {
   function backToPicker() {
     try { localStorage.removeItem('kid_selectedChildId') } catch { /**/ }
     setChild(null); setTasks([]); setRewards([]); setTransactions([])
-    setProgress(null); setRedemptions([]); setOpenQuestTemplates([]); setMorningDone([])
+    setProgress(null); setRedemptions([]); setOpenQuestTemplates([]); setRoutineData(null)
     navigate('/kid', { replace: true })
   }
 
@@ -369,13 +371,26 @@ export default function KidView() {
     } catch { /**/ } finally { setClaiming(null) }
   }
 
-  // ── Toggle morning step ───────────────────────────────────────────────────
-  function toggleStep(idx) {
-    if (!child) return
-    setMorningDone(prev => {
-      const next = [...prev]; next[idx] = !next[idx]
-      saveMorning(child.id, next); return next
-    })
+  // ── Toggle routine step (live API) ────────────────────────────────────────
+  async function handleToggleStep(position) {
+    if (!routineData || togglingStep !== null) return
+    setTogglingStep(position)
+    try {
+      const updated = await apiToggleStep(routineData.taskId, position)
+      setRoutineData(prev => ({
+        ...prev,
+        steps: prev.steps.map(s => s.position === position ? { ...s, doneAt: updated.doneAt, returned: false } : s),
+      }))
+    } catch { /**/ } finally { setTogglingStep(null) }
+  }
+
+  async function handleSubmitRoutine() {
+    if (!routineData || submittingRoutine) return
+    setSubmittingRoutine(true)
+    try {
+      await submitRoutine(routineData.taskId)
+      setRoutineData(prev => ({ ...prev, status: 'PENDING_APPROVAL', submittedAt: new Date().toISOString() }))
+    } catch (e) { alert(e.message ?? 'Chyba při odesílání rutiny') } finally { setSubmittingRoutine(false) }
   }
 
   // ── Canvas ────────────────────────────────────────────────────────────────
@@ -414,37 +429,73 @@ export default function KidView() {
 
   // ── Section: Výzvy ───────────────────────────────────────────────────────
   function renderVyzvy() {
-    const doneCnt = morningDone.filter(Boolean).length
-    const mTtl    = `${MORNING_TITLE[theme]} — Dnes: ${doneCnt}/${steps.length}`
+    const rd = routineData
     return (
       <>
-        {/* Morning band */}
-        <div className={styles.morningBand}>
-          <div className={styles.morningHeader}>
-            <span className={styles.morningTitle}>{mTtl}</span>
-            {streak > 0 && (
-              <span className={styles.streakBadge}>
-                🔥 {streak} {streak === 1 ? 'den' : streak < 5 ? 'dny' : 'dní'} v řadě!
-              </span>
-            )}
-          </div>
-          <div className={styles.morningSteps}>
-            {steps.map((s, i) => {
-              const done = morningDone[i] ?? false
-              const isCur = !done && morningDone.slice(0, i).every(Boolean)
-              return (
-                <div key={i} className={styles.step}>
-                  {i > 0 && <span className={styles.stepArrow}>›</span>}
-                  <div
-                    className={[styles.stepIco, done ? styles.stepDone : '', isCur ? `${styles.stepCur} ${styles.stepCurAnim}` : ''].join(' ')}
-                    onClick={() => toggleStep(i)}
-                  >{s.i}</div>
-                  <span className={styles.stepLabel}>{s.l}</span>
-                </div>
-              )
-            })}
-          </div>
-        </div>
+        {/* Dynamic routine band */}
+        {rd && (() => {
+          const allDone = rd.steps.length > 0 && rd.steps.every(s => s.doneAt)
+          const isApproved = rd.status === 'APPROVED'
+          const isPending  = rd.status === 'PENDING_APPROVAL'
+          const isLocked   = rd.locked
+          const canAct     = !isPending && !isApproved && (!isLocked || rd.onTimeEligible)
+          const doneCnt    = rd.steps.filter(s => s.doneAt).length
+          const mTtl       = `${MORNING_TITLE[theme]} — Dnes: ${doneCnt}/${rd.steps.length}`
+          return (
+            <div className={styles.morningBand}>
+              <div className={styles.morningHeader}>
+                <span className={styles.morningTitle}>{mTtl}</span>
+                {streak > 0 && (
+                  <span className={styles.streakBadge}>
+                    🔥 {streak} {streak === 1 ? 'den' : streak < 5 ? 'dny' : 'dní'} v řadě!
+                  </span>
+                )}
+                <span className={styles.routineDeadline}>⏰ do {rd.deadline}</span>
+              </div>
+
+              {isApproved && <div className={styles.routineApproved}>✅ Schváleno! Skvělá práce!</div>}
+              {isPending  && <div className={styles.routinePending}>🎉 Odesláno – čeká na rodiče…</div>}
+              {isLocked && !rd.onTimeEligible && <div className={styles.routineLocked}>⏰ Termín vypršel</div>}
+
+              <div className={styles.morningSteps}>
+                {rd.steps.map((s, i) => {
+                  const done       = !!s.doneAt
+                  const returned   = s.returned
+                  const isCur      = !done && rd.steps.slice(0, i).every(x => x.doneAt)
+                  const isToggling = togglingStep === s.position
+                  return (
+                    <div key={s.id} className={styles.step}>
+                      {i > 0 && <span className={styles.stepArrow}>›</span>}
+                      <div
+                        className={[
+                          styles.stepIco,
+                          done ? styles.stepDone : '',
+                          isCur && canAct ? `${styles.stepCur} ${styles.stepCurAnim}` : '',
+                          returned ? styles.stepReturned : '',
+                        ].join(' ')}
+                        onClick={() => canAct && !isToggling && handleToggleStep(s.position)}
+                        style={{ cursor: canAct ? 'pointer' : 'default', opacity: isToggling ? 0.5 : 1 }}
+                      >{s.icon}</div>
+                      <span className={styles.stepLabel}>{s.label}</span>
+                      {returned && <span style={{ fontSize: 10, color: '#f97316' }}>!</span>}
+                    </div>
+                  )
+                })}
+              </div>
+
+              {canAct && allDone && !isPending && !isApproved && (
+                <button
+                  className={styles.routineSubmitBtn}
+                  onClick={handleSubmitRoutine}
+                  disabled={submittingRoutine}
+                >
+                  {submittingRoutine ? '…' : '🚀 Odeslat rodičům!'}
+                </button>
+              )}
+            </div>
+          )
+        })()}
+
 
         {/* Tasks */}
         <div className={styles.sectionHead}>{TASK_HEADING[theme]}</div>

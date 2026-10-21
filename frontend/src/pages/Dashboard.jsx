@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { getMe } from '../api/users'
 import { getChildren, createChild, updateChild, deleteChild } from '../api/children'
-import { getTasksByFamily, createTask, updateTask, deleteTask, approveTask, rejectTask } from '../api/tasks'
+import { getTasksByFamily, createTask, updateTask, deleteTask, approveTask, rejectTask, returnRoutine, approveBatch } from '../api/tasks'
 import { getRewards, createReward, updateReward, deleteReward } from '../api/rewards'
 import { getFamilies, createFamily, updateFamily, deleteFamily, getActiveGoal, createGoal, cancelGoal } from '../api/families'
 import { getRedemptionsByFamily, approveRedemption, deliverRedemption, cancelRedemption } from '../api/redemptions'
@@ -54,7 +54,11 @@ export default function Dashboard() {
   const [hwOnTime,      setHwOnTime]      = useState(true)
   const [hwSelfChecked, setHwSelfChecked] = useState(false)
   const [hwNoReminder,  setHwNoReminder]  = useState(false)
-  const [awardToast,    setAwardToast]    = useState(null)
+  const [awardToast,         setAwardToast]         = useState(null)
+  const [returnTaskId,       setReturnTaskId]       = useState(null)  // taskId with step-picker open
+  const [returnSteps,        setReturnSteps]        = useState([])    // selected positions
+  const [batchConfirm,       setBatchConfirm]       = useState(false)
+  const [batchApproving,     setBatchApproving]     = useState(false)
 
   const familyId = user?.familyId
 
@@ -190,6 +194,28 @@ export default function Dashboard() {
       await rejectTask(task.taskId)
       await refetchFamily(task.familyId)
     } catch { /* ignore */ }
+  }
+
+  async function handleReturnRoutine(taskId, fId) {
+    if (!returnSteps.length) return
+    try {
+      await returnRoutine(taskId, returnSteps)
+      setReturnTaskId(null); setReturnSteps([])
+      await refetchFamily(fId)
+    } catch { /* ignore */ }
+  }
+
+  async function handleApproveBatch(routineTasks) {
+    setBatchApproving(true)
+    try {
+      const ids = routineTasks.map(t => t.taskId)
+      const results = await approveBatch(ids)
+      setBatchConfirm(false)
+      const total = results.reduce((s, r) => s + (r.awardedPoints ?? 0), 0)
+      setAwardToast(`✅ Schváleno ${results.length} rutin · +${total} bodů`)
+      setTimeout(() => setAwardToast(null), 5000)
+      if (familyId) await refetchFamily(familyId)
+    } catch { /**/ } finally { setBatchApproving(false) }
   }
 
   // ── Child handlers ─────────────────────────────────────────────────────────
@@ -328,16 +354,106 @@ export default function Dashboard() {
             }
           </section>
 
+          {/* Routine approvals */}
+          {(() => {
+            const routinePending = tasks.filter(t => t.kind === 'ROUTINE' && t.status === 'PENDING_APPROVAL')
+            if (!routinePending.length) return null
+            return (
+              <section className={styles.panel} style={{ borderLeft: '3px solid #f97316' }}>
+                <div className={styles.panelHeader}>
+                  <h2>🌅 Ranní rutiny ({routinePending.length})</h2>
+                  {!batchConfirm
+                    ? <button className={styles.btnAdd} style={{ background: '#f97316' }}
+                        onClick={() => setBatchConfirm(true)}>
+                        ✅ Schválit všechny ({routinePending.length})
+                      </button>
+                    : <span style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                        <span style={{ fontSize: 12 }}>Opravdu schválit vše?</span>
+                        <button className={styles.btnAdd} style={{ background: '#16a34a' }} disabled={batchApproving}
+                          onClick={() => handleApproveBatch(routinePending)}>
+                          {batchApproving ? '…' : 'Ano ✓'}
+                        </button>
+                        <button className={styles.btnAdd} style={{ background: '#6b7280' }}
+                          onClick={() => setBatchConfirm(false)}>Ne</button>
+                      </span>
+                  }
+                </div>
+                <ul className={styles.taskList}>
+                  {routinePending.map(task => {
+                    const childObj = children.find(c => c.id === task.assignedTo)
+                    const isReturning = returnTaskId === task.taskId
+                    return (
+                      <li key={task.taskId} className={styles.taskItem}>
+                        <div className={styles.taskRow}>
+                          <div className={styles.taskTitle}>
+                            {childObj ? `${childObj.name}: ` : ''}{task.title}
+                          </div>
+                          <div className={styles.rowActions}>
+                            <button className={`${styles.tag} ${styles.tagGreen} ${styles.tagBtn}`}
+                              onClick={() => {
+                                const child = children.find(c => c.id === task.assignedTo) ?? null
+                                setAwardTarget({ task, child })
+                              }}>⭐ Schválit</button>
+                            <button className={`${styles.tag} ${styles.tagOrange} ${styles.tagBtn}`}
+                              onClick={() => {
+                                if (isReturning) { setReturnTaskId(null); setReturnSteps([]) }
+                                else { setReturnTaskId(task.taskId); setReturnSteps([]) }
+                              }}>↩ Vrátit…</button>
+                          </div>
+                        </div>
+                        {task.steps?.length > 0 && (
+                          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 4 }}>
+                            {task.steps.map(s => (
+                              <span key={s.position}
+                                style={{
+                                  fontSize: 11, padding: '2px 6px', borderRadius: 8,
+                                  background: s.doneAt ? '#d1fae5' : '#fee2e2',
+                                  color: s.doneAt ? '#065f46' : '#991b1b',
+                                  cursor: isReturning ? 'pointer' : 'default',
+                                  outline: isReturning && returnSteps.includes(s.position) ? '2px solid #f97316' : 'none',
+                                }}
+                                onClick={() => {
+                                  if (!isReturning) return
+                                  setReturnSteps(prev =>
+                                    prev.includes(s.position) ? prev.filter(x => x !== s.position) : [...prev, s.position]
+                                  )
+                                }}
+                              >{s.icon} {s.label}</span>
+                            ))}
+                          </div>
+                        )}
+                        {isReturning && (
+                          <div style={{ display: 'flex', gap: 8, marginTop: 6, alignItems: 'center' }}>
+                            <span style={{ fontSize: 11, color: '#6b7280' }}>Klikni na kroky k vrácení:</span>
+                            <button className={`${styles.tag} ${styles.tagOrange} ${styles.tagBtn}`}
+                              disabled={!returnSteps.length}
+                              onClick={() => handleReturnRoutine(task.taskId, task.familyId)}>
+                              Vrátit ({returnSteps.length})
+                            </button>
+                            <button className={`${styles.tag} ${styles.tagGray} ${styles.tagBtn}`}
+                              onClick={() => { setReturnTaskId(null); setReturnSteps([]) }}>Zrušit</button>
+                          </div>
+                        )}
+                      </li>
+                    )
+                  })}
+                </ul>
+              </section>
+            )
+          })()}
+
           {/* Tasks */}
           <section className={styles.panel}>
             <div className={styles.panelHeader}>
               <h2>Tasks</h2>
               <button className={styles.btnAdd} onClick={() => setModal({ type: 'task', item: null })}>+ Add</button>
             </div>
-            {tasks.length === 0
-              ? <p className={styles.empty}>No tasks yet.</p>
-              : <ul className={styles.taskList}>
-                  {tasks.map(task => (
+            {(() => {
+              const nonRoutineTasks = tasks.filter(t => t.kind !== 'ROUTINE')
+              return nonRoutineTasks.length === 0
+                ? <p className={styles.empty}>No tasks yet.</p>
+                : <ul className={styles.taskList}>
+                    {nonRoutineTasks.map(task => (
                     <li key={task.taskId} className={styles.taskItem}>
                       <div className={styles.taskRow}>
                         <div className={styles.taskTitle}>{task.title}</div>
@@ -369,9 +485,9 @@ export default function Dashboard() {
                         )}
                       </div>
                     </li>
-                  ))}
-                </ul>
-            }
+                    ))}
+                  </ul>
+            })()}
           </section>
 
           {/* Rewards */}

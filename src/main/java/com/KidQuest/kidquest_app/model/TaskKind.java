@@ -8,7 +8,8 @@ public enum TaskKind {
     WOOD("BIG"),
     KINDLING("BIG"),
     BIG_OTHER("BIG"),
-    OTHER("OTHER");
+    OTHER("OTHER"),
+    ROUTINE("ROUTINE");
 
     private final String group;
 
@@ -31,6 +32,7 @@ public enum TaskKind {
             case KINDLING -> 40;
             case BIG_OTHER -> 40;
             case OTHER    -> 10;
+            case ROUTINE  -> young ? 5 : 10;
         };
     }
 }
