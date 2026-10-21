@@ -23,9 +23,18 @@ const THEME_NAV = {
 
 const MORNING_TITLE = { frozen: '❄️ Ranní kouzlo', unicorn: '🌈 Ranní magie', minecraft: '⛏️ Ranní výzva' }
 const MORNING_STEPS = {
-  frozen:    [{ i: '🌅', l: 'Vstát' }, { i: '🪥', l: 'Zuby' }, { i: '👗', l: 'Obléct' }, { i: '🥣', l: 'Snídaně' }, { i: '🎒', l: 'Batoh' }],
-  unicorn:   [{ i: '🌅', l: 'Vstát' }, { i: '🪥', l: 'Zoubky' }, { i: '👗', l: 'Obléct' }, { i: '🥣', l: 'Snídaňka' }],
-  minecraft: [{ i: '🌅', l: 'Vstát' }, { i: '🪥', l: 'Zuby' }, { i: '👕', l: 'Obléct' }, { i: '🥣', l: 'Snídaně' }, { i: '🎒', l: 'Batoh' }],
+  frozen: {
+    school:    [{ i: '🌅', l: 'Vstát' }, { i: '🪥', l: 'Zuby' }, { i: '👗', l: 'Obléct' }, { i: '🥣', l: 'Snídaně' }, { i: '🎒', l: 'Batoh' }],
+    preschool: [{ i: '🌅', l: 'Vstát' }, { i: '🪥', l: 'Zuby' }, { i: '👗', l: 'Obléct' }, { i: '🥣', l: 'Snídaně' }],
+  },
+  unicorn: {
+    school:    [{ i: '🌅', l: 'Vstát' }, { i: '🪥', l: 'Zoubky' }, { i: '👗', l: 'Obléct' }, { i: '🥣', l: 'Snídaňka' }, { i: '🎒', l: 'Batoh' }],
+    preschool: [{ i: '🌅', l: 'Vstát' }, { i: '🪥', l: 'Zoubky' }, { i: '👗', l: 'Obléct' }, { i: '🥣', l: 'Snídaňka' }],
+  },
+  minecraft: {
+    school:    [{ i: '🌅', l: 'Vstát' }, { i: '🪥', l: 'Zuby' }, { i: '👕', l: 'Obléct' }, { i: '🥣', l: 'Snídaně' }, { i: '🎒', l: 'Batoh' }],
+    preschool: [{ i: '🌅', l: 'Vstát' }, { i: '🪥', l: 'Zuby' }, { i: '👕', l: 'Obléct' }, { i: '🥣', l: 'Snídaně' }],
+  },
 }
 
 const TASK_HEADING   = { frozen: '⚔️ Dnešní výzvy', unicorn: '🦄 Dnešní kouzla', minecraft: '⛏️ Dnešní výzvy' }
@@ -257,7 +266,8 @@ export default function KidView() {
 
   const theme        = child ? (THEME_MAP[child.avatar] || 'frozen') : 'frozen'
   const particleType = theme === 'frozen' ? 'snow' : theme === 'unicorn' ? 'sparkle' : 'pixel'
-  const steps        = child ? MORNING_STEPS[theme] : []
+  const ageGroup     = (child?.age != null && child.age < 5) ? 'preschool' : 'school'
+  const steps        = child ? MORNING_STEPS[theme][ageGroup] : []
   const ptIcon       = THEME_PT_ICON[theme]
   const nav          = THEME_NAV[theme]
 
@@ -285,7 +295,8 @@ export default function KidView() {
       const fIdToUse = fId || familyId
       localStorage.setItem('kid_selectedChildId', c.id)
       const t = THEME_MAP[c.avatar] || 'frozen'
-      const stepCount = MORNING_STEPS[t].length
+      const ag = (c.age != null && c.age < 5) ? 'preschool' : 'school'
+      const stepCount = MORNING_STEPS[t][ag].length
       const [tkArr, rwArr, txArr, prog, redArr, oqArr] = await Promise.all([
         getTasksByChild(c.id),
         getRewards(fIdToUse),
