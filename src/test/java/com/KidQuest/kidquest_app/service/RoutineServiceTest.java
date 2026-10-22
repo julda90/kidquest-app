@@ -105,7 +105,7 @@ class RoutineServiceTest {
         when(routineStepRepository.findByRoutineIdOrderByPosition(routineId)).thenReturn(buildRoutineSteps());
 
         // default: no existing task
-        when(taskRepository.findByRoutineIdAndAssignedToIdAndDueDate(any(), any(), any()))
+        when(taskRepository.findByRoutineIdAndAssignedToIdAndDueDateAndDeletedAtIsNull(any(), any(), any()))
                 .thenReturn(Optional.empty());
         when(taskRepository.save(any(Task.class))).thenAnswer(inv -> {
             Task t = inv.getArgument(0);
@@ -306,7 +306,7 @@ class RoutineServiceTest {
         setClock(MONDAY_7AM_UTC);
 
         // First call: no task → create → success
-        when(taskRepository.findByRoutineIdAndAssignedToIdAndDueDate(any(), any(), any()))
+        when(taskRepository.findByRoutineIdAndAssignedToIdAndDueDateAndDeletedAtIsNull(any(), any(), any()))
                 .thenReturn(Optional.empty())
                 .thenReturn(Optional.empty());
         when(taskRepository.save(any(Task.class))).thenThrow(DataIntegrityViolationException.class);
