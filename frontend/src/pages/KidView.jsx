@@ -265,6 +265,7 @@ export default function KidView() {
   const [openQuestTemplates, setOpenQuestTemplates] = useState([])
   const [claiming,     setClaiming]     = useState(null)
   const [routineData,  setRoutineData]  = useState(null)
+  const [routineError, setRoutineError] = useState(null)
   const [togglingStep, setTogglingStep] = useState(null)
   const [submittingRoutine, setSubmittingRoutine] = useState(false)
   const [submitting,      setSubmitting]      = useState(null)
@@ -387,13 +388,22 @@ export default function KidView() {
   async function handleToggleStep(position) {
     if (!routineData || togglingStep !== null) return
     setTogglingStep(position)
+    setRoutineError(null)
     try {
       const updated = await apiToggleStep(routineData.taskId, position)
       setRoutineData(prev => ({
         ...prev,
         steps: prev.steps.map(s => s.position === position ? { ...s, doneAt: updated.doneAt, returned: false } : s),
       }))
-    } catch { /**/ } finally { setTogglingStep(null) }
+    } catch (err) {
+      console.error('toggleStep failed:', err)
+      setRoutineError(err.message || 'Chyba')
+      // Re-fetch to sync locked/status state
+      try {
+        const fresh = await getTodayTasks(child.id)
+        if (fresh.routine) setRoutineData(fresh.routine)
+      } catch { /**/ }
+    } finally { setTogglingStep(null) }
   }
 
   async function handleSubmitRoutine() {
@@ -468,6 +478,7 @@ export default function KidView() {
               {isApproved && <div className={styles.routineApproved}>✅ Schváleno! Skvělá práce!</div>}
               {isPending  && <div className={styles.routinePending}>🎉 Odesláno – čeká na rodiče…</div>}
               {isLocked && !rd.onTimeEligible && <div className={styles.routineLocked}>⏰ Termín vypršel</div>}
+              {routineError && <div className={styles.routineLocked} style={{ fontSize: 12 }}>⚠️ {routineError}</div>}
 
               <div className={styles.morningSteps}>
                 {rd.steps.map((s, i) => {
