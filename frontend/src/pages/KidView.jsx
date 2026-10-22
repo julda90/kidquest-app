@@ -204,9 +204,9 @@ const MAP_STAGES = {
     'Oblačný hrad', 'Hvězdná brána', 'Hvězdný palác', 'Duhový hrad',
   ],
   minecraft: [
-    'Les', 'Jeskyně', 'Železný důl', 'Zlatý důl',
-    'Diamantová hloubka', 'Nether', 'Pevnost Netheru', 'Ohnivé bažiny',
-    'Basaltové delta', 'End ostrov', 'End City', 'Drakova aréna',
+    'Les', 'Chatka', 'Železný důl', 'Městečko',
+    'Mlýn', 'Noční mlýn', 'Krystalový důl', 'Hrad',
+    'Jungle hrad', 'Pekelný hrad', 'Vzdušný hrad', 'Nebeský hrad',
   ],
 }
 const MAP_STAGE_ICO = {
@@ -224,7 +224,7 @@ const BADGE_META = {
   LAUNDRY_PRO: { i: '🧺', n: 'Prací mistr' },
   STREAK_7:    { i: '🔥', n: '7 dní v řadě' },
   STREAK_30:   { i: '💥', n: '30 dní v řadě' },
-  EARLY_BIRD:  { i: '🐦', n: 'Pilný včelek (10 úkolů)' },
+  EARLY_BIRD:  { i: '🐦', n: 'Pilná včelka (10 úkolů)' },
   FIRST_REWARD:{ i: '🎁', n: 'První odměna' },
   TEAM_PLAYER: { i: '👥', n: 'Týmový hráč (50 úkolů)' },
 }
@@ -942,7 +942,7 @@ export default function KidView() {
           </div>
 
           {/* Wardrobe — avatar level picker */}
-          <div className={styles.sectionHead}>🎨 Šatník — Postavička</div>
+          <div className={styles.sectionHead}>🎨 Vylepšení — Postavička</div>
           <div className={styles.skinGrid}>
             {Array.from({ length: progress?.maxLevel ?? 12 }, (_, i) => i + 1).map(lvlNum => {
               const unlocked = lvlNum <= level
@@ -973,7 +973,7 @@ export default function KidView() {
           </div>
 
           {/* Wardrobe — landscape level picker */}
-          <div className={styles.sectionHead}>🗺️ Šatník — Krajina</div>
+          <div className={styles.sectionHead}>🗺️ Vylepšení — Krajina</div>
           <div className={styles.skinGrid}>
             {Array.from({ length: progress?.maxLevel ?? 12 }, (_, i) => i + 1).map(lvlNum => {
               const stages   = MAP_STAGES[theme] ?? MAP_STAGES.frozen
