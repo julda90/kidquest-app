@@ -7,6 +7,7 @@ import lombok.Setter;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 
 @Getter
@@ -45,4 +46,6 @@ public class TaskResponse {
     private UUID templateId;
 
     private Integer dailyLimit;
+
+    private List<TaskStepResponse> steps;
 }

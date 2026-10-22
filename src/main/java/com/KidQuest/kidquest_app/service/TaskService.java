@@ -2,6 +2,7 @@ package com.KidQuest.kidquest_app.service;
 
 import com.KidQuest.kidquest_app.dto.request.TaskRequest;
 import com.KidQuest.kidquest_app.dto.response.TaskResponse;
+import com.KidQuest.kidquest_app.dto.response.TaskStepResponse;
 import com.KidQuest.kidquest_app.exception.BadRequestException;
 import com.KidQuest.kidquest_app.exception.ResourceNotFoundException;
 import com.KidQuest.kidquest_app.model.Child;
@@ -9,6 +10,7 @@ import com.KidQuest.kidquest_app.model.Task;
 import com.KidQuest.kidquest_app.model.TaskKind;
 import com.KidQuest.kidquest_app.model.TaskStatus;
 import com.KidQuest.kidquest_app.repository.TaskRepository;
+import com.KidQuest.kidquest_app.repository.TaskStepRepository;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -20,11 +22,14 @@ import java.util.UUID;
 public class TaskService {
 
     private final TaskRepository taskRepository;
+    private final TaskStepRepository taskStepRepository;
     private final ChildService childService;
     private final FamilyService familyService;
 
-    public TaskService(TaskRepository taskRepository, ChildService childService, FamilyService familyService) {
+    public TaskService(TaskRepository taskRepository, TaskStepRepository taskStepRepository,
+                       ChildService childService, FamilyService familyService) {
         this.taskRepository = taskRepository;
+        this.taskStepRepository = taskStepRepository;
         this.childService = childService;
         this.familyService = familyService;
     }
@@ -122,6 +127,20 @@ public class TaskService {
         response.setOpenQuest(task.isOpenQuest());
         response.setTemplateId(task.getTemplateId());
         response.setDailyLimit(task.getDailyLimit());
+        if (task.getKind() == TaskKind.ROUTINE) {
+            List<TaskStepResponse> stepResponses = taskStepRepository.findByTaskIdOrderByPosition(task.getId())
+                    .stream().map(s -> {
+                        TaskStepResponse sr = new TaskStepResponse();
+                        sr.setId(s.getId());
+                        sr.setPosition(s.getPosition());
+                        sr.setLabel(s.getLabel());
+                        sr.setIcon(s.getIcon());
+                        sr.setDoneAt(s.getDoneAt());
+                        sr.setReturned(s.isReturned());
+                        return sr;
+                    }).toList();
+            response.setSteps(stepResponses);
+        }
         return response;
     }
 

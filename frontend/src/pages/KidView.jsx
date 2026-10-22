@@ -457,7 +457,7 @@ export default function KidView() {
         {/* Dynamic routine band */}
         {rd && (() => {
           const allDone = rd.steps.length > 0 && rd.steps.every(s => s.doneAt)
-          const isApproved = rd.status === 'APPROVED'
+          const isApproved = rd.status === 'COMPLETED'
           const isPending  = rd.status === 'PENDING_APPROVAL'
           const isLocked   = rd.locked
           const canAct     = !isPending && !isApproved && (!isLocked || rd.onTimeEligible)

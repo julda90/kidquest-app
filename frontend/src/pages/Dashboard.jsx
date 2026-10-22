@@ -185,7 +185,10 @@ export default function Dashboard() {
       setAwardToast(parts.join(' · '))
       setTimeout(() => setAwardToast(null), 5000)
       await refetchFamily(task.familyId)
-    } catch { setAwardTarget(null) }
+    } catch (err) {
+      alert(err.message || 'Schválení selhalo')
+      setAwardTarget(null)
+    }
     finally { setAwarding(false) }
   }
 
