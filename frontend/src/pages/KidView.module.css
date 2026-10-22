@@ -446,7 +446,7 @@
 .landscapeHero {
   position: absolute;
   bottom: 0;
-  right: 24px;
+  right: 20%;
   height: 42%;
   max-height: 300px;
   min-height: 120px;
