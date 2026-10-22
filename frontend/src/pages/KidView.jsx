@@ -1126,7 +1126,7 @@ export default function KidView() {
           {activeNav === 3 && renderTrofeje()}
           {activeNav === 4 && renderJa()}
         </div>
-        {activeNav === 1 && avatarSrc && landscapeSrc && (
+        {(activeNav === 1 || activeNav === 4) && avatarSrc && landscapeSrc && (
           <div className={styles.landscapeHero}>
             <img src={avatarSrc} alt="" />
           </div>
