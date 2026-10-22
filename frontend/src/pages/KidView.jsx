@@ -8,6 +8,8 @@ import { getRewards } from '../api/rewards'
 import { getTransactionsByChild } from '../api/pointTransactions'
 import { redeemReward, getRedemptionsByChild, cancelRedemption } from '../api/redemptions'
 import { getLevelName } from '../constants/levels'
+import { getLevelData } from '../constants/themes'
+import { useAppearance } from '../hooks/useAppearance'
 import styles from './KidView.module.css'
 
 // ── Theme mapping ─────────────────────────────────────────────────────────────
@@ -282,6 +284,7 @@ export default function KidView() {
   const streak   = progress?.streakDays ?? 0
 
   const theme        = child ? (THEME_MAP[child.avatar] || 'frozen') : 'frozen'
+  const { avatarSrc, landscapeSrc } = useAppearance(child, progress)
   const particleType = theme === 'frozen' ? 'snow' : theme === 'unicorn' ? 'sparkle' : 'pixel'
   const ageGroup     = (child?.age != null && child.age < 5) ? 'preschool' : 'school'
   const steps        = child ? MORNING_STEPS[theme][ageGroup] : []
@@ -660,7 +663,9 @@ export default function KidView() {
             })}
 
             <div className={styles.xpMapAvatar} style={{ left: `${avatarPct}%` }}>
-              {THEME_AVATAR[theme]}
+              {avatarSrc
+                ? <img src={avatarSrc} style={{ width: 40, height: 40, objectFit: 'cover', borderRadius: '50%', display: 'block' }} alt="" />
+                : THEME_AVATAR[theme]}
             </div>
           </div>
         </div>
@@ -902,7 +907,11 @@ export default function KidView() {
         {/* Left column */}
         <div className={styles.meLeft}>
           <div className={styles.meAvaBlock}>
-            <div className={styles.meAvaEmoji}>{THEME_AVATAR[theme]}</div>
+            <div className={styles.meAvaEmoji}>
+              {avatarSrc
+                ? <img src={avatarSrc} style={{ width: 64, height: 64, objectFit: 'cover', borderRadius: '12px' }} alt="" />
+                : THEME_AVATAR[theme]}
+            </div>
             <div className={styles.meName}>{child.name}</div>
             {child.age && <div className={styles.meAge}>{child.age} let</div>}
           </div>
@@ -952,7 +961,11 @@ export default function KidView() {
                     } catch { /**/ }
                   }}
                 >
-                  <span className={styles.skinEmoji}>{!unlocked ? '🔒' : THEME_AVATAR[theme]}</span>
+                  <span className={styles.skinEmoji}>
+                    {!unlocked ? '🔒' : (getLevelData(child.avatar, lvlNum)?.avatar
+                      ? <img src={getLevelData(child.avatar, lvlNum).avatar} style={{ width: 32, height: 32, objectFit: 'cover', borderRadius: '6px' }} alt="" />
+                      : THEME_AVATAR[theme])}
+                  </span>
                   <span className={styles.skinName}>{getLevelName(child.avatar, lvlNum)}</span>
                   {!unlocked && <span className={styles.skinLock}>Lv{lvlNum}</span>}
                 </button>
@@ -981,7 +994,11 @@ export default function KidView() {
                     } catch { /**/ }
                   }}
                 >
-                  <span className={styles.skinEmoji}>{!unlocked ? '🔒' : (stageIco[lvlNum - 1] ?? '🌍')}</span>
+                  <span className={styles.skinEmoji}>
+                    {!unlocked ? '🔒' : (getLevelData(child.avatar, lvlNum)?.thumb
+                      ? <img src={getLevelData(child.avatar, lvlNum).thumb} style={{ width: 32, height: 32, objectFit: 'cover', borderRadius: '6px' }} alt="" />
+                      : (stageIco[lvlNum - 1] ?? '🌍'))}
+                  </span>
                   <span className={styles.skinName}>{stages[lvlNum - 1] ?? `Krajina ${lvlNum}`}</span>
                   {!unlocked && <span className={styles.skinLock}>Lv{lvlNum}</span>}
                 </button>
@@ -1049,6 +1066,7 @@ export default function KidView() {
   }
 
   const vars = { ...THEME_VARS[theme] }
+  if (landscapeSrc) vars['--kbg'] = `url(${landscapeSrc}) center/cover no-repeat`
 
   return (
     <div className={styles.kidApp} style={vars}>
@@ -1057,7 +1075,9 @@ export default function KidView() {
       {/* Sidebar */}
       <aside className={styles.sidebar}>
         <button className={styles.avatar} onClick={backToPicker} title="Zpět na výběr hráče">
-          {THEME_AVATAR[theme]}
+          {avatarSrc
+            ? <img src={avatarSrc} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} alt="" />
+            : THEME_AVATAR[theme]}
         </button>
         {nav.map((n, i) => (
           <button key={i}
