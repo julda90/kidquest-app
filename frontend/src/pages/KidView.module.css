@@ -105,6 +105,7 @@
   flex-direction: column;
   min-width: 0;
   z-index: 2;
+  position: relative;
 }
 
 .topbar {
@@ -430,6 +431,35 @@
 /* Avatar as button (sidebar) */
 .avatar { cursor: pointer; border: none; }
 .avatar:hover { opacity: 0.8; }
+
+/* ── Map glass panel ── */
+.mapPanel {
+  background: rgba(0,0,0,0.55);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border-radius: 20px;
+  padding: 20px 20px 16px;
+  border: 1px solid rgba(255,255,255,0.14);
+}
+
+/* ── Large landscape avatar (bottom-right, only when image bg active) ── */
+.landscapeHero {
+  position: absolute;
+  bottom: 0;
+  right: 24px;
+  height: 42%;
+  max-height: 300px;
+  min-height: 120px;
+  pointer-events: none;
+  z-index: 1;
+  filter: drop-shadow(0 6px 20px rgba(0,0,0,0.55));
+}
+.landscapeHero img {
+  height: 100%;
+  width: auto;
+  object-fit: contain;
+  display: block;
+}
 
 /* ── Mapa section ── */
 .mapHeader {

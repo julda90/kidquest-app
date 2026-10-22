@@ -628,7 +628,7 @@ export default function KidView() {
     prevLevelRef.current = level
 
     return (
-      <>
+      <div className={styles.mapPanel}>
         {/* Level title + prestige */}
         <div className={styles.xpMapHeader}>
           <span className={styles.xpMapLvl}>
@@ -683,7 +683,7 @@ export default function KidView() {
         {isMaxLevel && prestigeStars >= 1 && (
           <div className={styles.xpMaxLabel}>⚡ Maximální úroveň! Prestiž {'⭐'.repeat(prestigeStars)}</div>
         )}
-      </>
+      </div>
     )
   }
 
@@ -1126,6 +1126,11 @@ export default function KidView() {
           {activeNav === 3 && renderTrofeje()}
           {activeNav === 4 && renderJa()}
         </div>
+        {avatarSrc && landscapeSrc && (
+          <div className={styles.landscapeHero}>
+            <img src={avatarSrc} alt="" />
+          </div>
+        )}
       </main>
       {chestToast && <div className={styles.chestToast}>{chestToast}</div>}
 
