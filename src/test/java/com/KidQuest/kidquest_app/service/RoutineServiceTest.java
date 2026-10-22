@@ -313,7 +313,7 @@ class RoutineServiceTest {
 
         // After the exception, a second find returns the existing task
         Task existing = buildRoutineTask(false, null);
-        when(taskRepository.findByRoutineIdAndAssignedToIdAndDueDate(any(), eq(childId), any()))
+        when(taskRepository.findByRoutineIdAndAssignedToIdAndDueDateAndDeletedAtIsNull(any(), eq(childId), any()))
                 .thenReturn(Optional.empty())
                 .thenReturn(Optional.of(existing));
         when(taskStepRepository.findByTaskIdOrderByPosition(existing.getId())).thenReturn(new ArrayList<>());
