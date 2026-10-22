@@ -13,7 +13,7 @@ export function getLevels(avatar) {
     case 'minecraft':  return MINECRAFT_LEVELS
     case 'elsa':       return FROZEN_LEVELS
     case 'unicorn':    return UNICORN_LEVELS
-    case 'hotwheels':  return RACER_LEVELS
+    case 'hotwheels':  return MINECRAFT_LEVELS  // hotwheels uses minecraft visual theme
     default:           return MINECRAFT_LEVELS
   }
 }
