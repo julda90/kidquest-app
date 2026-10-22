@@ -944,12 +944,12 @@
   display: flex;
   flex-direction: column;
   gap: 14px;
-  background: rgba(0,0,0,0.45);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
+  background: rgba(0,0,0,0.55);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
   border-radius: 20px;
   padding: 16px;
-  border: 1px solid rgba(255,255,255,0.10);
+  border: 1px solid rgba(255,255,255,0.14);
 }
 
 .meAvaBlock {
@@ -973,8 +973,8 @@
 }
 
 .meLevelCard {
-  background: rgba(0,0,0,0.55);
-  border: 1px solid rgba(255,255,255,0.14);
+  background: var(--kcard);
+  border: 1px solid var(--kcardb);
   border-radius: var(--kr);
   padding: 14px 16px;
   display: flex;
@@ -1019,8 +1019,8 @@
 }
 .meStat {
   flex: 1;
-  background: rgba(0,0,0,0.55);
-  border: 1px solid rgba(255,255,255,0.14);
+  background: var(--kcard);
+  border: 1px solid var(--kcardb);
   border-radius: var(--kr);
   padding: 10px 8px;
   display: flex;
@@ -1045,10 +1045,8 @@
   margin-top: 4px;
 }
 .skinCard {
-  background: rgba(0,0,0,0.68);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  border: 2px solid rgba(255,255,255,0.18);
+  background: var(--kcard);
+  border: 2px solid var(--kcardb);
   border-radius: 14px;
   padding: 10px 6px 8px;
   display: flex;
@@ -1113,10 +1111,8 @@
   align-items: center;
   gap: 8px;
   padding: 7px 10px;
-  background: rgba(0,0,0,0.62);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  border: 1px solid rgba(255,255,255,0.10);
+  background: var(--kcard);
+  border: 1px solid var(--kcardb);
   border-radius: 10px;
   margin-bottom: 4px;
 }
@@ -1222,3 +1218,12 @@
 
 /* ── Locked map node ── */
 .xpMapNodeLocked { opacity: 0.35; filter: blur(1px); }
+
+/* ── Glass backdrop for all cards when landscape image is active ── */
+/* --kcard is overridden to rgba(0,0,0,0.72) by JS when landscapeSrc is set */
+.morningBand, .taskCard, .rewardChip, .mapRewardRow, .odmenyCard,
+.zadostiItem, .trophyStat, .trophyItem, .badgeCard, .jaStat,
+.meLevelCard, .meStat, .skinCard, .diaryEntry, .freshStartCard {
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}

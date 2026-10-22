@@ -1065,7 +1065,13 @@ export default function KidView() {
   }
 
   const vars = { ...THEME_VARS[theme] }
-  if (landscapeSrc) vars['--kbg'] = `url(${landscapeSrc}) center/cover no-repeat`
+  if (landscapeSrc) {
+    vars['--kbg']    = `url(${landscapeSrc}) center/cover no-repeat`
+    vars['--kcard']  = 'rgba(0,0,0,0.72)'
+    vars['--kcardb'] = 'rgba(255,255,255,0.20)'
+    vars['--ksb']    = 'rgba(0,0,0,0.62)'
+    vars['--ksbdiv'] = 'rgba(255,255,255,0.14)'
+  }
 
   return (
     <div className={styles.kidApp} style={vars}>
