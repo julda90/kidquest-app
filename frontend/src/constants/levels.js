@@ -9,11 +9,6 @@ export const LEVEL_NAMES = {
     'Duhový jednorožec', 'Kamarádka motýlků', 'Hvězdný jednorožec', 'Obláčková tanečnice',
     'Měsíční jednorožec', 'Kouzelný jednorožec', 'Duhová princezna', 'Královna duhy',
   ],
-  hotwheels: [
-    'Šlapač', 'Motokárník', 'Rallyeman', 'Závodník',
-    'Pouštní jezdec', 'Horský jezdec', 'Šampion', 'Nitro',
-    'Kaskadér', 'Tryskáč', 'Raketoplán', 'Legenda rychlosti',
-  ],
   minecraft: [
     'Dřevěný krumpáč', 'Kamenný krumpáč', 'Železný krumpáč', 'Průzkumník',
     'Zlatý krumpáč', 'Strážce lesa', 'Diamantový krumpáč', 'Rytíř',

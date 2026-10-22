@@ -13,7 +13,7 @@ import { useAppearance } from '../hooks/useAppearance'
 import styles from './KidView.module.css'
 
 // ── Theme mapping ─────────────────────────────────────────────────────────────
-const THEME_MAP = { elsa: 'frozen', unicorn: 'unicorn', hotwheels: 'minecraft', minecraft: 'minecraft' }
+const THEME_MAP = { elsa: 'frozen', unicorn: 'unicorn', minecraft: 'minecraft' }
 const THEME_AVATAR   = { frozen: '❄️', unicorn: '🦄', minecraft: '⛏️' }
 const THEME_PT_ICON  = { frozen: '❄️', unicorn: '✨', minecraft: '💎' }
 
@@ -232,7 +232,6 @@ const BADGE_META = {
 const SKINS = [
   { id: 'elsa',      emoji: '❄️',  name: 'Elsa',       minLevel: 1 },
   { id: 'unicorn',   emoji: '🦄',  name: 'Jednorožec', minLevel: 1 },
-  { id: 'hotwheels', emoji: '🏎️', name: 'Hot Wheels', minLevel: 2 },
   { id: 'minecraft', emoji: '⛏️', name: 'Minecraft',  minLevel: 2 },
   { id: 'dragon',    emoji: '🐉',  name: 'Drak',       minLevel: 3 },
   { id: 'robot',     emoji: '🤖',  name: 'Robot',      minLevel: 3 },
