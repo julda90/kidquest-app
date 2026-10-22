@@ -70,14 +70,14 @@ public class RoutineService {
                 .anyMatch(d -> d.equals(String.valueOf(todayIso)));
         if (!isActiveDay) return null;
 
-        Task task = taskRepository.findByRoutineIdAndAssignedToIdAndDueDate(routine.getId(), childId, today)
+        Task task = taskRepository.findByRoutineIdAndAssignedToIdAndDueDateAndDeletedAtIsNull(routine.getId(), childId, today)
                 .orElse(null);
 
         if (task == null) {
             try {
                 task = createDailyTask(routine, child, today);
             } catch (DataIntegrityViolationException e) {
-                task = taskRepository.findByRoutineIdAndAssignedToIdAndDueDate(routine.getId(), childId, today)
+                task = taskRepository.findByRoutineIdAndAssignedToIdAndDueDateAndDeletedAtIsNull(routine.getId(), childId, today)
                         .orElseThrow(() -> new IllegalStateException("Race condition: routine task not found after integrity violation"));
             }
         }

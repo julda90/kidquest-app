@@ -29,7 +29,7 @@ public interface TaskRepository extends JpaRepository<Task, UUID> {
 
     boolean existsByFamilyIdAndCatalogKeyAndDeletedAtIsNull(UUID familyId, String catalogKey);
 
-    Optional<Task> findByRoutineIdAndAssignedToIdAndDueDate(UUID routineId, UUID childId, LocalDate dueDate);
+    Optional<Task> findByRoutineIdAndAssignedToIdAndDueDateAndDeletedAtIsNull(UUID routineId, UUID childId, LocalDate dueDate);
 
     List<Task> findByRoutineIdAndAssignedToId(UUID routineId, UUID childId);
 }
