@@ -1,9 +1,9 @@
-const _av = import.meta.glob('../../assets/themes/minecraft/avatar/L*.png', { eager: true, import: 'default' })
+const _av = import.meta.glob('../../assets/themes/minecraft/avatar/L*.webp', { eager: true, import: 'default' })
 const _la = import.meta.glob('../../assets/themes/minecraft/landscape/L*.webp', { eager: true, import: 'default' })
 const _th = import.meta.glob('../../assets/themes/minecraft/landscape/thumb/L*.webp', { eager: true, import: 'default' })
 
 function pad(n) { return String(n).padStart(2, '0') }
-const av = n => _av[`../../assets/themes/minecraft/avatar/L${pad(n)}.png`] ?? null
+const av = n => _av[`../../assets/themes/minecraft/avatar/L${pad(n)}.webp`] ?? null
 const la = n => _la[`../../assets/themes/minecraft/landscape/L${pad(n)}.webp`] ?? null
 const th = n => _th[`../../assets/themes/minecraft/landscape/thumb/L${pad(n)}.webp`] ?? null
 
