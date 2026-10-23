@@ -11,13 +11,24 @@ export function useAppearance(child, progress) {
   const avatarData    = levels[Math.min(avatarLevel, levels.length) - 1]    ?? levels[0]
   const landscapeData = levels[Math.min(landscapeLevel, levels.length) - 1] ?? levels[0]
 
+  // Fall back to the nearest lower level that actually has an image asset
+  function nearestSrc(data, idx, key) {
+    if (data?.[key]) return data[key]
+    for (let i = idx - 1; i >= 0; i--) {
+      if (levels[i]?.[key]) return levels[i][key]
+    }
+    return null
+  }
+  const avIdx  = Math.min(avatarLevel, levels.length) - 1
+  const laIdx  = Math.min(landscapeLevel, levels.length) - 1
+
   return {
     title:        avatarData?.title ?? '',
     level:        currentLevel,
     avatarLevel,
     landscapeLevel,
-    avatarSrc:    avatarData?.avatar    ?? null,
-    landscapeSrc: landscapeData?.landscape ?? null,
-    thumbSrc:     landscapeData?.thumb  ?? null,
+    avatarSrc:    nearestSrc(avatarData,    avIdx, 'avatar'),
+    landscapeSrc: nearestSrc(landscapeData, laIdx, 'landscape'),
+    thumbSrc:     nearestSrc(landscapeData, laIdx, 'thumb'),
   }
 }
