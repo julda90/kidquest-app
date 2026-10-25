@@ -2,25 +2,18 @@ import { useEffect, useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { getMe } from '../api/users'
-import { getChildren, createChild, updateChild, deleteChild } from '../api/children'
-import { getTasksByFamily, createTask, updateTask, deleteTask, approveTask, rejectTask, returnRoutine, approveBatch } from '../api/tasks'
-import { getRewards, createReward, updateReward, deleteReward } from '../api/rewards'
-import { getFamilies, createFamily, updateFamily, deleteFamily, getActiveGoal, createGoal, cancelGoal } from '../api/families'
+import { getChildren } from '../api/children'
+import { getTasksByFamily, approveTask, rejectTask, returnRoutine, approveBatch } from '../api/tasks'
+import { getRewards } from '../api/rewards'
+import { getFamilies, getActiveGoal, createGoal, cancelGoal } from '../api/families'
 import { getRedemptionsByFamily, approveRedemption, deliverRedemption, cancelRedemption } from '../api/redemptions'
 import Sidebar from '../components/Sidebar'
 import Modal from '../components/Modal'
-import ConfirmDialog from '../components/ConfirmDialog'
-import TaskForm from '../components/TaskForm'
-import ChildForm from '../components/ChildForm'
-import RewardForm from '../components/RewardForm'
-import FamilyForm from '../components/FamilyForm'
 import { AVATARS, getAvatarSrc } from '../constants/avatars'
 import styles from './Dashboard.module.css'
 
-const STATUS_CYCLE = { UNASSIGNED: 'ASSIGNED', ASSIGNED: 'PENDING_APPROVAL', COMPLETED: 'UNASSIGNED', REJECTED: 'ASSIGNED' }
-const STATUS_LABEL = { UNASSIGNED: 'Unassigned', ASSIGNED: 'Assigned', PENDING_APPROVAL: 'Pending Approval', COMPLETED: 'Completed', REJECTED: 'Rejected' }
-const STATUS_CLASS = { UNASSIGNED: styles.tagGray, ASSIGNED: styles.tagBlue, PENDING_APPROVAL: styles.tagOrange, COMPLETED: styles.tagGreen, REJECTED: styles.tagRed }
 const KIND_LABEL   = { ROUTINE: 'Rutina', HOMEWORK: 'Domácí úkol', QUEST: 'Výzva', TASK: 'Úkol' }
+const STATUS_CLASS = { UNASSIGNED: styles.tagGray, ASSIGNED: styles.tagBlue, PENDING_APPROVAL: styles.tagOrange, COMPLETED: styles.tagGreen, REJECTED: styles.tagRed }
 
 function ChildAvatar({ child }) {
   const src = getAvatarSrc(child.avatar)
@@ -28,6 +21,13 @@ function ChildAvatar({ child }) {
   const fallback = AVATARS[child.name.charCodeAt(0) % Math.max(AVATARS.length, 1)]
   return <span className={styles.childAvatar}>{fallback?.id ?? '👤'}</span>
 }
+
+const QUICK_NAV = [
+  { href: '/tasks',    icon: '✅', label: 'Úkoly',   desc: 'Správa a přidávání úkolů' },
+  { href: '/rewards',  icon: '🎁', label: 'Odměny',  desc: 'Katalog a ceny odměn'    },
+  { href: '/children', icon: '👶', label: 'Děti',    desc: 'Profily a nastavení dětí' },
+  { href: '/progress', icon: '🗺️', label: 'Pokrok',  desc: 'XP, úrovně, odznaky'     },
+]
 
 export default function Dashboard() {
   const { logout } = useAuth()
@@ -46,18 +46,16 @@ export default function Dashboard() {
   const [goalName,    setGoalName]    = useState('')
   const [goalTarget,  setGoalTarget]  = useState('')
 
-  // modal state: { type: 'task'|'child'|'reward', item: null|object }
-  const [modal,         setModal]         = useState(null)
-  const [deleteTarget,  setDeleteTarget]  = useState(null) // { type, id, name, familyId }
-  const [deleting,      setDeleting]      = useState(false)
-  const [awardTarget,   setAwardTarget]   = useState(null) // { task, child }
+  const [awardTarget,   setAwardTarget]   = useState(null)
   const [awarding,      setAwarding]      = useState(false)
   const [hwOnTime,      setHwOnTime]      = useState(true)
   const [hwSelfChecked, setHwSelfChecked] = useState(false)
   const [hwNoReminder,  setHwNoReminder]  = useState(false)
-  const [awardToast,         setAwardToast]         = useState(null)
-  const [returnTaskId,       setReturnTaskId]       = useState(null)  // taskId with step-picker open
-  const [returnSteps,        setReturnSteps]        = useState([])    // selected positions
+  const [awardToast,    setAwardToast]    = useState(null)
+
+  const [returnTaskId,  setReturnTaskId]  = useState(null)
+  const [returnSteps,   setReturnSteps]   = useState([])
+
   const [batchConfirm,         setBatchConfirm]         = useState(false)
   const [batchApproving,       setBatchApproving]       = useState(false)
   const [pendingSelected,      setPendingSelected]      = useState(() => new Set())
@@ -73,7 +71,6 @@ export default function Dashboard() {
       setFamilies(fams)
       const activeFamilyId = me.familyId || localStorage.getItem('activeFamilyId')
       if (!activeFamilyId) {
-        console.warn('[KidQuest] No familyId on user and no activeFamilyId in localStorage — data will not load. User id:', me.id, 'email:', me.email)
         setError('Your account is not linked to a family. Please contact support or re-create your family.')
         return
       }
@@ -114,6 +111,7 @@ export default function Dashboard() {
     setFamilyGoal(goal)
   }
 
+  // ── Redemption handlers ────────────────────────────────────────────────────
   async function handleApproveRedemption(id) {
     try { await approveRedemption(id); await refetchFamily(familyId) } catch { /**/ }
   }
@@ -124,6 +122,7 @@ export default function Dashboard() {
     try { await cancelRedemption(id); await refetchFamily(familyId) } catch { /**/ }
   }
 
+  // ── Goal handlers ──────────────────────────────────────────────────────────
   async function handleCreateGoal(e) {
     e.preventDefault()
     if (!goalName.trim() || !goalTarget) return
@@ -133,42 +132,12 @@ export default function Dashboard() {
       await refetchFamily(familyId)
     } catch { /**/ }
   }
-
   async function handleCancelGoal() {
     if (!familyGoal) return
     try { await cancelGoal(familyId, familyGoal.id); await refetchFamily(familyId) } catch { /**/ }
   }
 
-  // ── Task handlers ──────────────────────────────────────────────────────────
-  async function handleSaveTask({ familyId: selectedFamilyId, ...taskData }) {
-    if (modal.item) {
-      await updateTask(modal.item.taskId, taskData)
-    } else {
-      await createTask(selectedFamilyId, taskData)
-    }
-    setModal(null)
-    await refetchFamily(selectedFamilyId)
-  }
-
-  async function applyTaskStatus(task, nextStatus) {
-    await updateTask(task.taskId, {
-      title: task.title, description: task.description,
-      pointValue: task.pointValue, dueDate: task.dueDate,
-      status: nextStatus, assignedToId: task.assignedTo ?? null,
-    })
-    await refetchFamily(task.familyId)
-  }
-
-  function cycleTaskStatus(task) {
-    const next = STATUS_CYCLE[task.status]
-    if (next === 'COMPLETED' && task.assignedTo) {
-      const child = children.find(c => c.id === task.assignedTo) ?? null
-      setAwardTarget({ task, child })
-    } else {
-      applyTaskStatus(task, next)
-    }
-  }
-
+  // ── Approval handlers ──────────────────────────────────────────────────────
   async function handleAwardConfirm() {
     const { task } = awardTarget
     setAwarding(true)
@@ -182,25 +151,21 @@ export default function Dashboard() {
       setAwardTarget(null)
       setHwOnTime(true); setHwSelfChecked(false); setHwNoReminder(false)
       const parts = [`⭐ +${result.awardedPoints} bodů`]
-      if (result.levelUp) parts.push(`🆙 Nová úroveň ${result.newLevel}!`)
-      if (result.streakDays > 1) parts.push(`🔥 Série ${result.streakDays} dní`)
+      if (result.levelUp)         parts.push(`🆙 Nová úroveň ${result.newLevel}!`)
+      if (result.streakDays > 1)  parts.push(`🔥 Série ${result.streakDays} dní`)
       if (result.newBadges?.length) parts.push(`🏅 Nový odznak!`)
-      if (result.goalReached) parts.push(`🎯 Rodinný cíl splněn!`)
+      if (result.goalReached)     parts.push(`🎯 Rodinný cíl splněn!`)
       setAwardToast(parts.join(' · '))
       setTimeout(() => setAwardToast(null), 5000)
       await refetchFamily(task.familyId)
     } catch (err) {
       alert(err.message || 'Schválení selhalo')
       setAwardTarget(null)
-    }
-    finally { setAwarding(false) }
+    } finally { setAwarding(false) }
   }
 
   async function handleRejectTask(task) {
-    try {
-      await rejectTask(task.taskId)
-      await refetchFamily(task.familyId)
-    } catch { /* ignore */ }
+    try { await rejectTask(task.taskId); await refetchFamily(task.familyId) } catch { /**/ }
   }
 
   async function handleReturnRoutine(taskId, fId) {
@@ -209,7 +174,20 @@ export default function Dashboard() {
       await returnRoutine(taskId, returnSteps)
       setReturnTaskId(null); setReturnSteps([])
       await refetchFamily(fId)
-    } catch { /* ignore */ }
+    } catch { /**/ }
+  }
+
+  async function handleApproveBatch(routineTasks) {
+    setBatchApproving(true)
+    try {
+      const ids = routineTasks.map(t => t.taskId)
+      const results = await approveBatch(ids)
+      setBatchConfirm(false)
+      const total = results.reduce((s, r) => s + (r.awardedPoints ?? 0), 0)
+      setAwardToast(`✅ Schváleno ${results.length} rutin · +${total} bodů`)
+      setTimeout(() => setAwardToast(null), 5000)
+      if (familyId) await refetchFamily(familyId)
+    } catch { /**/ } finally { setBatchApproving(false) }
   }
 
   async function handleBulkApprovePending() {
@@ -226,89 +204,14 @@ export default function Dashboard() {
     } catch { /**/ } finally { setPendingBulkApproving(false) }
   }
 
-  async function handleApproveBatch(routineTasks) {
-    setBatchApproving(true)
-    try {
-      const ids = routineTasks.map(t => t.taskId)
-      const results = await approveBatch(ids)
-      setBatchConfirm(false)
-      const total = results.reduce((s, r) => s + (r.awardedPoints ?? 0), 0)
-      setAwardToast(`✅ Schváleno ${results.length} rutin · +${total} bodů`)
-      setTimeout(() => setAwardToast(null), 5000)
-      if (familyId) await refetchFamily(familyId)
-    } catch { /**/ } finally { setBatchApproving(false) }
-  }
-
-  // ── Child handlers ─────────────────────────────────────────────────────────
-  async function handleSaveChild({ familyId: selectedFamilyId, ...childData }) {
-    if (modal.item) {
-      await updateChild(modal.item.id, childData)
-      await refetchFamily(modal.item.familyId)
-    } else {
-      await createChild(selectedFamilyId, childData)
-      await refetchFamily(selectedFamilyId)
-    }
-    setModal(null)
-  }
-
-  // ── Reward handlers ────────────────────────────────────────────────────────
-  async function handleSaveReward({ familyId: selectedFamilyId, ...data }) {
-    if (modal.item) {
-      await updateReward(modal.item.id, data)
-    } else {
-      await createReward(selectedFamilyId || familyId, data)
-    }
-    setModal(null)
-    await refetchFamily(selectedFamilyId || familyId)
-  }
-
-  async function toggleRewardActive(reward) {
-    await updateReward(reward.id, {
-      name: reward.name, description: reward.description,
-      pointCost: reward.pointCost, active: !reward.active,
-    })
-    await refetchFamily(reward.familyId)
-  }
-
-  // ── Family handlers ────────────────────────────────────────────────────────
-  async function handleSaveFamily(data) {
-    if (modal.item) {
-      const updated = await updateFamily(modal.item.id, data)
-      setFamilies(fs => fs.map(f => f.id === updated.id ? updated : f))
-    } else {
-      const created = await createFamily(data)
-      setFamilies(fs => [...fs, created])
-    }
-    setModal(null)
-  }
-
-  // ── Delete handler ─────────────────────────────────────────────────────────
-  async function handleConfirmDelete() {
-    setDeleting(true)
-    const { type, id, familyId: itemFamilyId } = deleteTarget
-    try {
-      if (type === 'task')          await deleteTask(id)
-      else if (type === 'child')    await deleteChild(id)
-      else if (type === 'reward')   await deleteReward(id)
-      else if (type === 'family') {
-        await deleteFamily(id)
-        setFamilies(fs => fs.filter(f => f.id !== id))
-      }
-      setDeleteTarget(null)
-      if (type !== 'family') await (itemFamilyId ? refetchFamily(itemFamilyId) : load())
-    } catch {
-      setDeleteTarget(null)
-    } finally {
-      setDeleting(false)
-    }
-  }
-
   function handleLogout() { logout(); navigate('/login') }
 
   // ── Derived ────────────────────────────────────────────────────────────────
-  const activeTasks    = tasks.filter(t => t.status !== 'COMPLETED')
-  const completedTasks = tasks.filter(t => t.status === 'COMPLETED')
-  const activeRewards  = rewards.filter(r => r.active)
+  const pendingApprovals  = tasks.filter(t => t.status === 'PENDING_APPROVAL')
+  const routinePending    = tasks.filter(t => t.kind === 'ROUTINE' && t.status === 'PENDING_APPROVAL')
+  const pendingRedemptions = redemptions.filter(r => r.status === 'REQUESTED' || r.status === 'APPROVED')
+  const activeRewards     = rewards.filter(r => r.active)
+  const completedTasks    = tasks.filter(t => t.status === 'COMPLETED')
 
   if (loading) return <div className={styles.center}><span className={styles.spinner} /></div>
   if (error)   return <div className={styles.center}><p className={styles.errorMsg}>{error}</p></div>
@@ -317,12 +220,12 @@ export default function Dashboard() {
     <div className={styles.layout}>
       <Sidebar active="dashboard" onLogout={handleLogout} />
 
-      {/* Main */}
       <main className={styles.main}>
+        {/* Header */}
         <header className={styles.header}>
           <div>
-            <h1 className={styles.greeting}>Hello{user?.email ? `, ${user.email.split('@')[0]}` : ''}! 👋</h1>
-            <p className={styles.subGreeting}>Here's what's happening in your family today.</p>
+            <h1 className={styles.greeting}>Ahoj{user?.email ? `, ${user.email.split('@')[0]}` : ''}! 👋</h1>
+            <p className={styles.subGreeting}>Přehled rodinného dne.</p>
           </div>
           <div className={styles.userBadge}>
             <span className={styles.userAvatar}>👤</span>
@@ -332,23 +235,59 @@ export default function Dashboard() {
 
         {/* Stats */}
         <section className={styles.stats}>
-          <div className={styles.statCard}><span className={styles.statIcon}>👶</span><div><div className={styles.statValue}>{children.length}</div><div className={styles.statLabel}>Children</div></div></div>
-          <div className={styles.statCard}><span className={styles.statIcon}>📋</span><div><div className={styles.statValue}>{activeTasks.length}</div><div className={styles.statLabel}>Active Tasks</div></div></div>
-          <div className={styles.statCard}><span className={styles.statIcon}>✅</span><div><div className={styles.statValue}>{completedTasks.length}</div><div className={styles.statLabel}>Completed</div></div></div>
-          <div className={styles.statCard}><span className={styles.statIcon}>🎁</span><div><div className={styles.statValue}>{activeRewards.length}</div><div className={styles.statLabel}>Rewards</div></div></div>
+          <div className={`${styles.statCard} ${pendingApprovals.length ? styles.statCardAlert : ''}`}>
+            <span className={styles.statIcon}>⏳</span>
+            <div>
+              <div className={styles.statValue}>{pendingApprovals.length}</div>
+              <div className={styles.statLabel}>Čeká na schválení</div>
+            </div>
+          </div>
+          <div className={styles.statCard}>
+            <span className={styles.statIcon}>👶</span>
+            <div>
+              <div className={styles.statValue}>{children.length}</div>
+              <div className={styles.statLabel}>Děti</div>
+            </div>
+          </div>
+          <div className={styles.statCard}>
+            <span className={styles.statIcon}>✅</span>
+            <div>
+              <div className={styles.statValue}>{completedTasks.length}</div>
+              <div className={styles.statLabel}>Splněno celkem</div>
+            </div>
+          </div>
+          <div className={styles.statCard}>
+            <span className={styles.statIcon}>🎁</span>
+            <div>
+              <div className={styles.statValue}>{pendingRedemptions.length}</div>
+              <div className={styles.statLabel}>Žádosti o odměny</div>
+            </div>
+          </div>
+        </section>
+
+        {/* Quick nav */}
+        <section className={styles.quickNav}>
+          {QUICK_NAV.map(n => (
+            <a key={n.href} href={n.href} className={styles.quickCard}>
+              <span className={styles.quickIcon}>{n.icon}</span>
+              <div>
+                <div className={styles.quickLabel}>{n.label}</div>
+                <div className={styles.quickDesc}>{n.desc}</div>
+              </div>
+              <span className={styles.quickArrow}>›</span>
+            </a>
+          ))}
         </section>
 
         <div className={styles.grid}>
           {/* Pending Approvals Table */}
-          {(() => {
-            const pending = tasks.filter(t => t.status === 'PENDING_APPROVAL')
-            if (!pending.length) return null
-            const allSelected = pending.every(t => pendingSelected.has(t.taskId))
-            const selectedCount = pending.filter(t => pendingSelected.has(t.taskId)).length
+          {pendingApprovals.length > 0 && (() => {
+            const allSelected = pendingApprovals.every(t => pendingSelected.has(t.taskId))
+            const selectedCount = pendingApprovals.filter(t => pendingSelected.has(t.taskId)).length
             return (
               <section className={`${styles.panel} ${styles.panelFull} ${styles.pendingPanel}`}>
                 <div className={styles.panelHeader}>
-                  <h2>⏳ Čekají na schválení ({pending.length})</h2>
+                  <h2>⏳ Čekají na schválení ({pendingApprovals.length})</h2>
                   <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                     {selectedCount > 0 && (
                       !pendingBulkConfirm
@@ -376,7 +315,7 @@ export default function Dashboard() {
                         <th className={styles.checkCell}>
                           <input type="checkbox" checked={allSelected}
                             onChange={e => setPendingSelected(
-                              e.target.checked ? new Set(pending.map(t => t.taskId)) : new Set()
+                              e.target.checked ? new Set(pendingApprovals.map(t => t.taskId)) : new Set()
                             )} />
                         </th>
                         <th>Dítě</th>
@@ -388,7 +327,7 @@ export default function Dashboard() {
                       </tr>
                     </thead>
                     <tbody>
-                      {pending.map(task => {
+                      {pendingApprovals.map(task => {
                         const child = children.find(c => c.id === task.assignedTo)
                         const isSelected = pendingSelected.has(task.taskId)
                         const kindClass = task.kind === 'ROUTINE' ? styles.tagBlue
@@ -426,255 +365,160 @@ export default function Dashboard() {
             )
           })()}
 
-          {/* Children */}
+          {/* Routine approvals */}
+          {routinePending.length > 0 && (
+            <section className={styles.panel} style={{ borderLeft: '3px solid #f97316' }}>
+              <div className={styles.panelHeader}>
+                <h2>🌅 Ranní rutiny ({routinePending.length})</h2>
+                {!batchConfirm
+                  ? <button className={styles.btnAdd} style={{ background: '#f97316' }}
+                      onClick={() => setBatchConfirm(true)}>
+                      ✅ Schválit všechny
+                    </button>
+                  : <span style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                      <span style={{ fontSize: 12 }}>Opravdu?</span>
+                      <button className={styles.btnAdd} style={{ background: '#16a34a' }} disabled={batchApproving}
+                        onClick={() => handleApproveBatch(routinePending)}>
+                        {batchApproving ? '…' : 'Ano ✓'}
+                      </button>
+                      <button className={styles.btnAdd} style={{ background: '#6b7280' }}
+                        onClick={() => setBatchConfirm(false)}>Ne</button>
+                    </span>
+                }
+              </div>
+              <ul className={styles.taskList}>
+                {routinePending.map(task => {
+                  const childObj = children.find(c => c.id === task.assignedTo)
+                  const isReturning = returnTaskId === task.taskId
+                  return (
+                    <li key={task.taskId} className={styles.taskItem}>
+                      <div className={styles.taskRow}>
+                        <div className={styles.taskTitle}>
+                          {childObj ? `${childObj.name}: ` : ''}{task.title}
+                        </div>
+                        <div className={styles.rowActions}>
+                          <button className={`${styles.tag} ${styles.tagGreen} ${styles.tagBtn}`}
+                            onClick={() => {
+                              const ch = children.find(c => c.id === task.assignedTo) ?? null
+                              setAwardTarget({ task, child: ch })
+                            }}>⭐ Schválit</button>
+                          <button className={`${styles.tag} ${styles.tagOrange} ${styles.tagBtn}`}
+                            onClick={() => {
+                              if (isReturning) { setReturnTaskId(null); setReturnSteps([]) }
+                              else { setReturnTaskId(task.taskId); setReturnSteps([]) }
+                            }}>↩ Vrátit…</button>
+                        </div>
+                      </div>
+                      {task.steps?.length > 0 && (
+                        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 4 }}>
+                          {task.steps.map(s => (
+                            <span key={s.position}
+                              style={{
+                                fontSize: 11, padding: '2px 6px', borderRadius: 8,
+                                background: s.doneAt ? '#d1fae5' : '#fee2e2',
+                                color: s.doneAt ? '#065f46' : '#991b1b',
+                                cursor: isReturning ? 'pointer' : 'default',
+                                outline: isReturning && returnSteps.includes(s.position) ? '2px solid #f97316' : 'none',
+                              }}
+                              onClick={() => {
+                                if (!isReturning) return
+                                setReturnSteps(prev =>
+                                  prev.includes(s.position) ? prev.filter(x => x !== s.position) : [...prev, s.position]
+                                )
+                              }}
+                            >{s.icon} {s.label}</span>
+                          ))}
+                        </div>
+                      )}
+                      {isReturning && (
+                        <div style={{ display: 'flex', gap: 8, marginTop: 6, alignItems: 'center' }}>
+                          <span style={{ fontSize: 11, color: '#6b7280' }}>Klikni na kroky k vrácení:</span>
+                          <button className={`${styles.tag} ${styles.tagOrange} ${styles.tagBtn}`}
+                            disabled={!returnSteps.length}
+                            onClick={() => handleReturnRoutine(task.taskId, task.familyId)}>
+                            Vrátit ({returnSteps.length})
+                          </button>
+                          <button className={`${styles.tag} ${styles.tagGray} ${styles.tagBtn}`}
+                            onClick={() => { setReturnTaskId(null); setReturnSteps([]) }}>Zrušit</button>
+                        </div>
+                      )}
+                    </li>
+                  )
+                })}
+              </ul>
+            </section>
+          )}
+
+          {/* Children overview */}
           <section className={styles.panel}>
             <div className={styles.panelHeader}>
-              <h2>Children</h2>
-              <button className={styles.btnAdd} onClick={() => setModal({ type: 'child', item: null })}>+ Add</button>
+              <h2>Děti</h2>
+              <a href="/children" className={styles.btnLink}>Správa →</a>
             </div>
             {children.length === 0
-              ? <p className={styles.empty}>No children added yet.</p>
+              ? <p className={styles.empty}>Žádné děti.</p>
               : <div className={styles.childList}>
                   {children.map(child => {
                     const childTasks = tasks.filter(t => t.assignedTo === child.id)
-                    const done = childTasks.filter(t => t.status === 'COMPLETED').length
+                    const done       = childTasks.filter(t => t.status === 'COMPLETED').length
+                    const pending    = childTasks.filter(t => t.status === 'PENDING_APPROVAL').length
                     return (
                       <div key={child.id} className={styles.childCard}>
                         <ChildAvatar child={child} />
                         <div className={styles.childInfo}>
                           <div className={styles.childName}>{child.name}</div>
-                          <div className={styles.childMeta}>Age {child.age} · {done}/{childTasks.length} tasks done</div>
+                          <div className={styles.childMeta}>
+                            {child.age} let · {done}/{childTasks.length} splněno
+                            {pending > 0 && <span className={`${styles.tag} ${styles.tagOrange}`} style={{ marginLeft: 6 }}>⏳ {pending}</span>}
+                          </div>
                           <div className={styles.childProgressWrap}>
                             <div className={styles.progressBar}
                               style={{ width: childTasks.length ? `${(done / childTasks.length) * 100}%` : '0%' }} />
                           </div>
                         </div>
-                        <div className={styles.rowActions}>
-                          <button className={styles.iconBtn} title="Edit"
-                            onClick={() => setModal({ type: 'child', item: child })}>✏️</button>
-                          <button className={styles.iconBtn} title="Delete"
-                            onClick={() => setDeleteTarget({ type: 'child', id: child.id, name: child.name, familyId: child.familyId })}>🗑️</button>
-                        </div>
                       </div>
                     )
                   })}
-                </div>
-            }
-          </section>
-
-          {/* Routine approvals */}
-          {(() => {
-            const routinePending = tasks.filter(t => t.kind === 'ROUTINE' && t.status === 'PENDING_APPROVAL')
-            if (!routinePending.length) return null
-            return (
-              <section className={styles.panel} style={{ borderLeft: '3px solid #f97316' }}>
-                <div className={styles.panelHeader}>
-                  <h2>🌅 Ranní rutiny ({routinePending.length})</h2>
-                  {!batchConfirm
-                    ? <button className={styles.btnAdd} style={{ background: '#f97316' }}
-                        onClick={() => setBatchConfirm(true)}>
-                        ✅ Schválit všechny ({routinePending.length})
-                      </button>
-                    : <span style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                        <span style={{ fontSize: 12 }}>Opravdu schválit vše?</span>
-                        <button className={styles.btnAdd} style={{ background: '#16a34a' }} disabled={batchApproving}
-                          onClick={() => handleApproveBatch(routinePending)}>
-                          {batchApproving ? '…' : 'Ano ✓'}
-                        </button>
-                        <button className={styles.btnAdd} style={{ background: '#6b7280' }}
-                          onClick={() => setBatchConfirm(false)}>Ne</button>
-                      </span>
-                  }
-                </div>
-                <ul className={styles.taskList}>
-                  {routinePending.map(task => {
-                    const childObj = children.find(c => c.id === task.assignedTo)
-                    const isReturning = returnTaskId === task.taskId
-                    return (
-                      <li key={task.taskId} className={styles.taskItem}>
-                        <div className={styles.taskRow}>
-                          <div className={styles.taskTitle}>
-                            {childObj ? `${childObj.name}: ` : ''}{task.title}
-                          </div>
-                          <div className={styles.rowActions}>
-                            <button className={`${styles.tag} ${styles.tagGreen} ${styles.tagBtn}`}
-                              onClick={() => {
-                                const child = children.find(c => c.id === task.assignedTo) ?? null
-                                setAwardTarget({ task, child })
-                              }}>⭐ Schválit</button>
-                            <button className={`${styles.tag} ${styles.tagOrange} ${styles.tagBtn}`}
-                              onClick={() => {
-                                if (isReturning) { setReturnTaskId(null); setReturnSteps([]) }
-                                else { setReturnTaskId(task.taskId); setReturnSteps([]) }
-                              }}>↩ Vrátit…</button>
-                          </div>
-                        </div>
-                        {task.steps?.length > 0 && (
-                          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 4 }}>
-                            {task.steps.map(s => (
-                              <span key={s.position}
-                                style={{
-                                  fontSize: 11, padding: '2px 6px', borderRadius: 8,
-                                  background: s.doneAt ? '#d1fae5' : '#fee2e2',
-                                  color: s.doneAt ? '#065f46' : '#991b1b',
-                                  cursor: isReturning ? 'pointer' : 'default',
-                                  outline: isReturning && returnSteps.includes(s.position) ? '2px solid #f97316' : 'none',
-                                }}
-                                onClick={() => {
-                                  if (!isReturning) return
-                                  setReturnSteps(prev =>
-                                    prev.includes(s.position) ? prev.filter(x => x !== s.position) : [...prev, s.position]
-                                  )
-                                }}
-                              >{s.icon} {s.label}</span>
-                            ))}
-                          </div>
-                        )}
-                        {isReturning && (
-                          <div style={{ display: 'flex', gap: 8, marginTop: 6, alignItems: 'center' }}>
-                            <span style={{ fontSize: 11, color: '#6b7280' }}>Klikni na kroky k vrácení:</span>
-                            <button className={`${styles.tag} ${styles.tagOrange} ${styles.tagBtn}`}
-                              disabled={!returnSteps.length}
-                              onClick={() => handleReturnRoutine(task.taskId, task.familyId)}>
-                              Vrátit ({returnSteps.length})
-                            </button>
-                            <button className={`${styles.tag} ${styles.tagGray} ${styles.tagBtn}`}
-                              onClick={() => { setReturnTaskId(null); setReturnSteps([]) }}>Zrušit</button>
-                          </div>
-                        )}
-                      </li>
-                    )
-                  })}
-                </ul>
-              </section>
-            )
-          })()}
-
-          {/* Tasks */}
-          <section className={styles.panel}>
-            <div className={styles.panelHeader}>
-              <h2>Tasks</h2>
-              <button className={styles.btnAdd} onClick={() => setModal({ type: 'task', item: null })}>+ Add</button>
-            </div>
-            {(() => {
-              const nonRoutineTasks = tasks.filter(t => t.kind !== 'ROUTINE')
-              return nonRoutineTasks.length === 0
-                ? <p className={styles.empty}>No tasks yet.</p>
-                : <ul className={styles.taskList}>
-                    {nonRoutineTasks.map(task => (
-                    <li key={task.taskId} className={styles.taskItem}>
-                      <div className={styles.taskRow}>
-                        <div className={styles.taskTitle}>{task.title}</div>
-                        <div className={styles.rowActions}>
-                          <button className={styles.iconBtn} title="Edit"
-                            onClick={() => setModal({ type: 'task', item: task })}>✏️</button>
-                          <button className={styles.iconBtn} title="Delete"
-                            onClick={() => setDeleteTarget({ type: 'task', id: task.taskId, name: task.title, familyId: task.familyId })}>🗑️</button>
-                        </div>
-                      </div>
-                      <div className={styles.taskMeta}>
-                        <span className={styles.taskPoints}>⭐ {task.pointValue}pts</span>
-                        {task.dueDate && <span className={styles.taskDue}>📅 {task.dueDate}</span>}
-                        <button
-                          className={`${styles.tag} ${STATUS_CLASS[task.status]} ${styles.tagBtn}`}
-                          title="Click to advance status"
-                          onClick={() => cycleTaskStatus(task)}>
-                          {STATUS_LABEL[task.status]}
-                        </button>
-                        {task.status === 'PENDING_APPROVAL' && task.assignedTo && (
-                          <button
-                            className={`${styles.tag} ${styles.tagGreen} ${styles.tagBtn}`}
-                            onClick={() => {
-                              const child = children.find(c => c.id === task.assignedTo) ?? null
-                              setAwardTarget({ task, child })
-                            }}>
-                            ⭐ Award
-                          </button>
-                        )}
-                      </div>
-                    </li>
-                    ))}
-                  </ul>
-            })()}
-          </section>
-
-          {/* Rewards */}
-          <section className={`${styles.panel} ${styles.panelFull}`}>
-            <div className={styles.panelHeader}>
-              <h2>Rewards</h2>
-              <button className={styles.btnAdd} onClick={() => setModal({ type: 'reward', item: null })}>+ Add</button>
-            </div>
-            {rewards.length === 0
-              ? <p className={styles.empty}>No rewards added yet.</p>
-              : <div className={styles.rewardGrid}>
-                  {rewards.map(reward => (
-                    <div key={reward.id} className={`${styles.rewardCard} ${!reward.active ? styles.rewardInactive : ''}`}>
-                      <div className={styles.rewardCardActions}>
-                        <button className={styles.iconBtn} title="Edit"
-                          onClick={() => setModal({ type: 'reward', item: reward })}>✏️</button>
-                        <button className={styles.iconBtn} title="Delete"
-                          onClick={() => setDeleteTarget({ type: 'reward', id: reward.id, name: reward.name, familyId: reward.familyId })}>🗑️</button>
-                      </div>
-                      <div className={styles.rewardIcon}>🎁</div>
-                      <div className={styles.rewardName}>{reward.name}</div>
-                      {reward.description && <div className={styles.rewardDesc}>{reward.description}</div>}
-                      <div className={styles.rewardCost}>⭐ {reward.pointCost} pts</div>
-                      <button
-                        className={`${styles.tag} ${reward.active ? styles.tagGreen : styles.tagGray} ${styles.tagBtn}`}
-                        style={{ marginTop: 8 }}
-                        onClick={() => toggleRewardActive(reward)}>
-                        {reward.active ? 'Active' : 'Inactive'}
-                      </button>
-                    </div>
-                  ))}
                 </div>
             }
           </section>
 
           {/* Pending Redemptions */}
-          <section className={`${styles.panel} ${styles.panelFull}`}>
+          <section className={styles.panel}>
             <div className={styles.panelHeader}>
               <h2>🎁 Žádosti o odměny</h2>
             </div>
-            {redemptions.filter(r => r.status === 'REQUESTED' || r.status === 'APPROVED').length === 0
-              ? <p className={styles.emptyState}>Žádné čekající žádosti o odměny.</p>
+            {pendingRedemptions.length === 0
+              ? <p className={styles.empty}>Žádné čekající žádosti.</p>
               : <div className={styles.redemptionList}>
-                  {redemptions
-                    .filter(r => r.status === 'REQUESTED' || r.status === 'APPROVED')
-                    .map(r => (
-                      <div key={r.id} className={styles.redemptionCard}>
-                        <div className={styles.redemptionInfo}>
-                          <span className={styles.redemptionIcon}>{r.rewardIcon || '🎁'}</span>
-                          <div>
-                            <div className={styles.redemptionName}>{r.rewardName}</div>
-                            <div className={styles.redemptionMeta}>
-                              {r.childName} · ⭐ {r.pointCost} bodů ·{' '}
-                              <span className={r.status === 'APPROVED' ? styles.tagGreen : styles.tagOrange}>
-                                {r.status === 'APPROVED' ? 'Schváleno' : 'Čeká'}
-                              </span>
-                            </div>
+                  {pendingRedemptions.map(r => (
+                    <div key={r.id} className={styles.redemptionCard}>
+                      <div className={styles.redemptionInfo}>
+                        <span className={styles.redemptionIcon}>{r.rewardIcon || '🎁'}</span>
+                        <div>
+                          <div className={styles.redemptionName}>{r.rewardName}</div>
+                          <div className={styles.redemptionMeta}>
+                            {r.childName} · ⭐ {r.pointCost} ·{' '}
+                            <span className={r.status === 'APPROVED' ? styles.tagGreen : styles.tagOrange}>
+                              {r.status === 'APPROVED' ? 'Schváleno' : 'Čeká'}
+                            </span>
                           </div>
                         </div>
-                        <div className={styles.rowActions}>
-                          {r.status === 'REQUESTED' && (
-                            <button className={`${styles.tag} ${styles.tagGreen} ${styles.tagBtn}`}
-                              onClick={() => handleApproveRedemption(r.id)}>
-                              ✓ Schválit
-                            </button>
-                          )}
-                          {r.status === 'APPROVED' && (
-                            <button className={`${styles.tag} ${styles.tagBlue} ${styles.tagBtn}`}
-                              onClick={() => handleDeliverRedemption(r.id)}>
-                              📦 Předat
-                            </button>
-                          )}
-                          <button className={`${styles.tag} ${styles.tagRed} ${styles.tagBtn}`}
-                            onClick={() => handleCancelRedemption(r.id)}>
-                            ✗ Zrušit
-                          </button>
-                        </div>
                       </div>
-                    ))}
+                      <div className={styles.rowActions}>
+                        {r.status === 'REQUESTED' && (
+                          <button className={`${styles.tag} ${styles.tagGreen} ${styles.tagBtn}`}
+                            onClick={() => handleApproveRedemption(r.id)}>✓ Schválit</button>
+                        )}
+                        {r.status === 'APPROVED' && (
+                          <button className={`${styles.tag} ${styles.tagBlue} ${styles.tagBtn}`}
+                            onClick={() => handleDeliverRedemption(r.id)}>📦 Předat</button>
+                        )}
+                        <button className={`${styles.tag} ${styles.tagRed} ${styles.tagBtn}`}
+                          onClick={() => handleCancelRedemption(r.id)}>✗</button>
+                      </div>
+                    </div>
+                  ))}
                 </div>
             }
           </section>
@@ -710,92 +554,22 @@ export default function Dashboard() {
               <p className={styles.empty}>Žádný aktivní cíl. Vytvořte rodinný cíl pro společnou motivaci.</p>
             )}
           </section>
-
-          {/* Families */}
-          <section className={`${styles.panel} ${styles.panelFull}`}>
-            <div className={styles.panelHeader}>
-              <h2>Families</h2>
-              <button className={styles.btnAdd} onClick={() => setModal({ type: 'family', item: null })}>+ Add</button>
-            </div>
-            {families.length === 0
-              ? <p className={styles.empty}>No families yet.</p>
-              : <div className={styles.familyGrid}>
-                  {families.map(fam => (
-                    <div key={fam.id} className={styles.familyCard}>
-                      <span className={styles.familyIcon}>🏠</span>
-                      <div className={styles.familyInfo}>
-                        <div className={styles.familyName}>{fam.name}</div>
-                        <div className={styles.familyMeta}>
-                          {children.filter(c => c.familyId === fam.id).length} children ·{' '}
-                          {tasks.filter(t => t.familyId === fam.id).length} tasks
-                        </div>
-                      </div>
-                      <div className={styles.rowActions}>
-                        <button className={styles.iconBtn} title="Edit"
-                          onClick={() => setModal({ type: 'family', item: fam })}>✏️</button>
-                        <button className={styles.iconBtn} title="Delete"
-                          onClick={() => setDeleteTarget({ type: 'family', id: fam.id, name: fam.name })}>🗑️</button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-            }
-          </section>
         </div>
       </main>
 
-      {/* Modals */}
-      {modal?.type === 'task' && (
-        <Modal title={modal.item ? 'Edit Task' : 'New Task'} onClose={() => setModal(null)}>
-          <TaskForm initial={modal.item ?? {}} children={children} families={families}
-            onSubmit={handleSaveTask} onCancel={() => setModal(null)} />
-        </Modal>
-      )}
-
-      {modal?.type === 'child' && (
-        <Modal title={modal.item ? 'Edit Child' : 'New Child'} onClose={() => setModal(null)}>
-          <ChildForm initial={modal.item ?? {}} families={families}
-            onSubmit={handleSaveChild} onCancel={() => setModal(null)} />
-        </Modal>
-      )}
-
-      {modal?.type === 'reward' && (
-        <Modal title={modal.item ? 'Edit Reward' : 'New Reward'} onClose={() => setModal(null)}>
-          <RewardForm initial={modal.item ?? {}} families={families}
-            onSubmit={handleSaveReward} onCancel={() => setModal(null)} />
-        </Modal>
-      )}
-
-      {modal?.type === 'family' && (
-        <Modal title={modal.item ? 'Edit Family' : 'New Family'} onClose={() => setModal(null)}>
-          <FamilyForm initial={modal.item ?? {}}
-            onSubmit={handleSaveFamily} onCancel={() => setModal(null)} />
-        </Modal>
-      )}
-
-      {awardToast && (
-        <div className={styles.toast}>{awardToast}</div>
-      )}
-
-      {deleteTarget && (
-        <ConfirmDialog
-          message={`Delete "${deleteTarget.name}"? This cannot be undone.`}
-          onConfirm={handleConfirmDelete}
-          onCancel={() => setDeleteTarget(null)}
-          loading={deleting} />
-      )}
+      {/* Award dialog */}
+      {awardToast && <div className={styles.toast}>{awardToast}</div>}
 
       {awardTarget && (() => {
-        const t = awardTarget.task
+        const t  = awardTarget.task
         const isHw = t.kind === 'HOMEWORK'
-        const base = isHw ? (hwOnTime ? (t.pointValue ?? 20) : (t.latePointValue ?? t.pointValue ?? 10)) : (t.pointValue ?? 0)
+        const base   = isHw ? (hwOnTime ? (t.pointValue ?? 20) : (t.latePointValue ?? t.pointValue ?? 10)) : (t.pointValue ?? 0)
         const bonus1 = isHw && hwSelfChecked && t.bonusValue > 0 ? t.bonusValue : 0
-        const bonus2 = isHw && hwNoReminder && t.noReminderBonus > 0 ? t.noReminderBonus : 0
-        const hwTotal = base + bonus1 + bonus2
+        const bonus2 = isHw && hwNoReminder  && t.noReminderBonus > 0 ? t.noReminderBonus : 0
         return (
           <Modal title="Schválit úkol" onClose={() => !awarding && setAwardTarget(null)}>
             <div className={styles.awardDialog}>
-              <div className={styles.awardPtsBadge}>⭐ {isHw ? hwTotal : t.pointValue}</div>
+              <div className={styles.awardPtsBadge}>⭐ {isHw ? base + bonus1 + bonus2 : t.pointValue}</div>
               <p className={styles.awardMsg}>
                 Označit <strong>„{t.title}"</strong> jako splněný pro{' '}
                 <strong>{awardTarget.child?.name ?? 'dítě'}</strong>?
@@ -821,12 +595,12 @@ export default function Dashboard() {
                 </div>
               )}
               <div className={styles.awardActions}>
-                <button className={styles.awardCancel} onClick={() => { setAwardTarget(null); setHwOnTime(true); setHwSelfChecked(false); setHwNoReminder(false) }} disabled={awarding}>
-                  Zrušit
-                </button>
-                <button className={styles.awardCancel} onClick={() => { handleRejectTask(awardTarget.task); setAwardTarget(null) }} disabled={awarding}>
-                  ✗ Zamítnout
-                </button>
+                <button className={styles.awardCancel}
+                  onClick={() => { setAwardTarget(null); setHwOnTime(true); setHwSelfChecked(false); setHwNoReminder(false) }}
+                  disabled={awarding}>Zrušit</button>
+                <button className={styles.awardCancel}
+                  onClick={() => { handleRejectTask(awardTarget.task); setAwardTarget(null) }}
+                  disabled={awarding}>✗ Zamítnout</button>
                 <button className={styles.awardConfirm} onClick={handleAwardConfirm} disabled={awarding}>
                   {awarding ? 'Schvaluji…' : '✓ Schválit'}
                 </button>
@@ -838,24 +612,26 @@ export default function Dashboard() {
 
       {goalModal && (
         <Modal title="Nový rodinný cíl" onClose={() => setGoalModal(false)}>
-          <form onSubmit={handleCreateGoal} style={{ display:'flex', flexDirection:'column', gap:14 }}>
+          <form onSubmit={handleCreateGoal} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
             <div>
-              <label style={{ display:'block', marginBottom:4, fontWeight:600, fontSize:14 }}>Název cíle *</label>
+              <label style={{ display: 'block', marginBottom: 4, fontWeight: 600, fontSize: 14 }}>Název cíle *</label>
               <input value={goalName} onChange={e => setGoalName(e.target.value)}
-                placeholder="Výlet do ZOO" required style={{ width:'100%', padding:'8px 10px', borderRadius:8, border:'1px solid #ddd', fontSize:14 }} />
+                placeholder="Výlet do ZOO" required
+                style={{ width: '100%', padding: '8px 10px', borderRadius: 8, border: '1px solid #ddd', fontSize: 14 }} />
             </div>
             <div>
-              <label style={{ display:'block', marginBottom:4, fontWeight:600, fontSize:14 }}>Cílové body *</label>
+              <label style={{ display: 'block', marginBottom: 4, fontWeight: 600, fontSize: 14 }}>Cílové body *</label>
               <input type="number" min="1" value={goalTarget} onChange={e => setGoalTarget(e.target.value)}
-                placeholder="500" required style={{ width:'100%', padding:'8px 10px', borderRadius:8, border:'1px solid #ddd', fontSize:14 }} />
+                placeholder="500" required
+                style={{ width: '100%', padding: '8px 10px', borderRadius: 8, border: '1px solid #ddd', fontSize: 14 }} />
             </div>
-            <div style={{ display:'flex', gap:10, justifyContent:'flex-end' }}>
+            <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
               <button type="button" onClick={() => setGoalModal(false)}
-                style={{ padding:'8px 18px', borderRadius:8, border:'1px solid #ddd', background:'#f5f5f5', cursor:'pointer' }}>
+                style={{ padding: '8px 18px', borderRadius: 8, border: '1px solid #ddd', background: '#f5f5f5', cursor: 'pointer' }}>
                 Zrušit
               </button>
               <button type="submit"
-                style={{ padding:'8px 18px', borderRadius:8, border:'none', background:'#667eea', color:'#fff', cursor:'pointer', fontWeight:700 }}>
+                style={{ padding: '8px 18px', borderRadius: 8, border: 'none', background: '#667eea', color: '#fff', cursor: 'pointer', fontWeight: 700 }}>
                 Vytvořit
               </button>
             </div>

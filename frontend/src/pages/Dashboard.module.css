@@ -127,6 +127,11 @@
   box-shadow: 0 2px 8px rgba(0,0,0,0.05);
 }
 
+.statCardAlert {
+  border-left: 3px solid #f97316;
+  background: #fff8f4;
+}
+
 .statIcon { font-size: 32px; }
 
 .statValue {
@@ -143,6 +148,35 @@
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
+
+/* ── Quick Nav ── */
+.quickNav {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.quickCard {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #fff;
+  border-radius: 14px;
+  padding: 14px 16px;
+  text-decoration: none;
+  color: inherit;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  transition: box-shadow 0.15s, transform 0.12s;
+}
+.quickCard:hover { box-shadow: 0 4px 16px rgba(102,126,234,0.18); transform: translateY(-1px); }
+
+.quickIcon { font-size: 24px; flex-shrink: 0; }
+
+.quickLabel { font-size: 14px; font-weight: 700; color: #1a1a2e; }
+.quickDesc  { font-size: 11px; color: #888; margin-top: 1px; }
+
+.quickArrow { font-size: 20px; color: #bbb; margin-left: auto; line-height: 1; }
 
 /* ── Grid ── */
 .grid {
@@ -194,6 +228,20 @@
 }
 
 .btnAdd:hover { opacity: 0.85; }
+
+.btnLink {
+  padding: 5px 12px;
+  background: #f0f0f8;
+  color: #667eea;
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background 0.15s;
+}
+.btnLink:hover { background: #e4e4f4; }
 
 .empty { font-size: 14px; color: #bbb; text-align: center; padding: 24px 0; }
 
@@ -519,10 +567,40 @@
 .pendingPts   { white-space: nowrap; color: #888; font-size: 12px; }
 .pendingDue   { white-space: nowrap; color: #888; font-size: 12px; }
 
+/* ── Bonus checkboxes ── */
+.bonusCheck {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: #444;
+  cursor: pointer;
+}
+
+/* ── Toast ── */
+.toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #1a1a2e;
+  color: #fff;
+  padding: 12px 24px;
+  border-radius: 40px;
+  font-size: 14px;
+  font-weight: 600;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.25);
+  z-index: 1000;
+  white-space: nowrap;
+  animation: fadeIn 0.2s ease;
+}
+@keyframes fadeIn { from { opacity: 0; transform: translateX(-50%) translateY(8px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }
+
 /* ── Responsive ── */
 @media (max-width: 900px) {
-  .stats { grid-template-columns: repeat(2, 1fr); }
-  .grid  { grid-template-columns: 1fr; }
+  .stats    { grid-template-columns: repeat(2, 1fr); }
+  .quickNav { grid-template-columns: repeat(2, 1fr); }
+  .grid     { grid-template-columns: 1fr; }
   .panelFull { grid-column: auto; }
 }
 
