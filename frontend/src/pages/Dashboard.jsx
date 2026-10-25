@@ -20,6 +20,7 @@ import styles from './Dashboard.module.css'
 const STATUS_CYCLE = { UNASSIGNED: 'ASSIGNED', ASSIGNED: 'PENDING_APPROVAL', COMPLETED: 'UNASSIGNED', REJECTED: 'ASSIGNED' }
 const STATUS_LABEL = { UNASSIGNED: 'Unassigned', ASSIGNED: 'Assigned', PENDING_APPROVAL: 'Pending Approval', COMPLETED: 'Completed', REJECTED: 'Rejected' }
 const STATUS_CLASS = { UNASSIGNED: styles.tagGray, ASSIGNED: styles.tagBlue, PENDING_APPROVAL: styles.tagOrange, COMPLETED: styles.tagGreen, REJECTED: styles.tagRed }
+const KIND_LABEL   = { ROUTINE: 'Rutina', HOMEWORK: 'Domácí úkol', QUEST: 'Výzva', TASK: 'Úkol' }
 
 function ChildAvatar({ child }) {
   const src = getAvatarSrc(child.avatar)
@@ -57,8 +58,11 @@ export default function Dashboard() {
   const [awardToast,         setAwardToast]         = useState(null)
   const [returnTaskId,       setReturnTaskId]       = useState(null)  // taskId with step-picker open
   const [returnSteps,        setReturnSteps]        = useState([])    // selected positions
-  const [batchConfirm,       setBatchConfirm]       = useState(false)
-  const [batchApproving,     setBatchApproving]     = useState(false)
+  const [batchConfirm,         setBatchConfirm]         = useState(false)
+  const [batchApproving,       setBatchApproving]       = useState(false)
+  const [pendingSelected,      setPendingSelected]      = useState(() => new Set())
+  const [pendingBulkConfirm,   setPendingBulkConfirm]   = useState(false)
+  const [pendingBulkApproving, setPendingBulkApproving] = useState(false)
 
   const familyId = user?.familyId
 
@@ -208,6 +212,20 @@ export default function Dashboard() {
     } catch { /* ignore */ }
   }
 
+  async function handleBulkApprovePending() {
+    setPendingBulkApproving(true)
+    try {
+      const ids = [...pendingSelected]
+      const results = await approveBatch(ids)
+      setPendingSelected(new Set())
+      setPendingBulkConfirm(false)
+      const total = results.reduce((s, r) => s + (r.awardedPoints ?? 0), 0)
+      setAwardToast(`✅ Schváleno ${results.length} úkolů · +${total} bodů`)
+      setTimeout(() => setAwardToast(null), 5000)
+      if (familyId) await refetchFamily(familyId)
+    } catch { /**/ } finally { setPendingBulkApproving(false) }
+  }
+
   async function handleApproveBatch(routineTasks) {
     setBatchApproving(true)
     try {
@@ -321,6 +339,93 @@ export default function Dashboard() {
         </section>
 
         <div className={styles.grid}>
+          {/* Pending Approvals Table */}
+          {(() => {
+            const pending = tasks.filter(t => t.status === 'PENDING_APPROVAL')
+            if (!pending.length) return null
+            const allSelected = pending.every(t => pendingSelected.has(t.taskId))
+            const selectedCount = pending.filter(t => pendingSelected.has(t.taskId)).length
+            return (
+              <section className={`${styles.panel} ${styles.panelFull} ${styles.pendingPanel}`}>
+                <div className={styles.panelHeader}>
+                  <h2>⏳ Čekají na schválení ({pending.length})</h2>
+                  <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                    {selectedCount > 0 && (
+                      !pendingBulkConfirm
+                        ? <button className={styles.btnAdd} style={{ background: '#f97316' }}
+                            onClick={() => setPendingBulkConfirm(true)}>
+                            ✅ Schválit vybrané ({selectedCount})
+                          </button>
+                        : <>
+                            <span style={{ fontSize: 12 }}>Opravdu schválit {selectedCount}?</span>
+                            <button className={styles.btnAdd} style={{ background: '#16a34a' }}
+                              disabled={pendingBulkApproving}
+                              onClick={handleBulkApprovePending}>
+                              {pendingBulkApproving ? '…' : 'Ano ✓'}
+                            </button>
+                            <button className={styles.btnAdd} style={{ background: '#6b7280' }}
+                              onClick={() => setPendingBulkConfirm(false)}>Ne</button>
+                          </>
+                    )}
+                  </div>
+                </div>
+                <div className={styles.tableWrap}>
+                  <table className={styles.pendingTable}>
+                    <thead>
+                      <tr>
+                        <th className={styles.checkCell}>
+                          <input type="checkbox" checked={allSelected}
+                            onChange={e => setPendingSelected(
+                              e.target.checked ? new Set(pending.map(t => t.taskId)) : new Set()
+                            )} />
+                        </th>
+                        <th>Dítě</th>
+                        <th>Úkol</th>
+                        <th>Typ</th>
+                        <th>Body</th>
+                        <th>Termín</th>
+                        <th></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {pending.map(task => {
+                        const child = children.find(c => c.id === task.assignedTo)
+                        const isSelected = pendingSelected.has(task.taskId)
+                        const kindClass = task.kind === 'ROUTINE' ? styles.tagBlue
+                          : task.kind === 'HOMEWORK' ? styles.tagOrange : styles.tagGray
+                        return (
+                          <tr key={task.taskId}
+                            className={`${styles.pendingRow} ${isSelected ? styles.pendingRowSelected : ''}`}>
+                            <td className={styles.checkCell}>
+                              <input type="checkbox" checked={isSelected}
+                                onChange={e => {
+                                  const next = new Set(pendingSelected)
+                                  e.target.checked ? next.add(task.taskId) : next.delete(task.taskId)
+                                  setPendingSelected(next)
+                                }} />
+                            </td>
+                            <td className={styles.pendingChild}>{child?.name ?? '—'}</td>
+                            <td className={styles.pendingTitle}>{task.title}</td>
+                            <td><span className={`${styles.tag} ${kindClass}`}>{KIND_LABEL[task.kind] ?? task.kind}</span></td>
+                            <td className={styles.pendingPts}>⭐ {task.pointValue}</td>
+                            <td className={styles.pendingDue}>{task.dueDate ?? '—'}</td>
+                            <td>
+                              <button className={`${styles.tag} ${styles.tagGreen} ${styles.tagBtn}`}
+                                onClick={() => {
+                                  const ch = children.find(c => c.id === task.assignedTo) ?? null
+                                  setAwardTarget({ task, child: ch })
+                                }}>✓ Schválit</button>
+                            </td>
+                          </tr>
+                        )
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+            )
+          })()}
+
           {/* Children */}
           <section className={styles.panel}>
             <div className={styles.panelHeader}>

@@ -477,6 +477,48 @@
 .awardConfirm:hover    { opacity: 0.88; }
 .awardConfirm:disabled { opacity: 0.5; cursor: not-allowed; }
 
+/* ── Pending Approvals Table ── */
+.pendingPanel { border-left: 3px solid #f97316; }
+
+.tableWrap { overflow-x: auto; }
+
+.pendingTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.pendingTable thead th {
+  padding: 8px 12px;
+  text-align: left;
+  font-size: 11px;
+  font-weight: 700;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 2px solid #f0f0f8;
+  white-space: nowrap;
+}
+
+.checkCell { width: 36px; padding-left: 4px !important; }
+
+.pendingRow { transition: background 0.12s; }
+.pendingRow:hover { background: #f9f9fc; }
+.pendingRowSelected { background: #fff8f0 !important; }
+
+.pendingTable td {
+  padding: 10px 12px;
+  border-bottom: 1px solid #f0f0f8;
+  vertical-align: middle;
+}
+
+.pendingTable tbody tr:last-child td { border-bottom: none; }
+
+.pendingChild { font-weight: 600; color: #1a1a2e; white-space: nowrap; }
+.pendingTitle { color: #1a1a2e; }
+.pendingPts   { white-space: nowrap; color: #888; font-size: 12px; }
+.pendingDue   { white-space: nowrap; color: #888; font-size: 12px; }
+
 /* ── Responsive ── */
 @media (max-width: 900px) {
   .stats { grid-template-columns: repeat(2, 1fr); }
