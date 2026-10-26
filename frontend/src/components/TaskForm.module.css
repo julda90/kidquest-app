@@ -1,0 +1,136 @@
+.form { display: flex; flex-direction: column; gap: 16px; }
+
+/* ── Type picker ── */
+.typeGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.typeChip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 10px 6px;
+  background: #f5f5fb;
+  border: 2px solid transparent;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+.typeChip:hover { background: #eeeef8; }
+.typeChipActive { background: #eef0fd; border-color: #667eea; }
+
+.typeIcon  { font-size: 20px; line-height: 1; }
+.typeLabel { font-size: 11px; font-weight: 600; color: #444; text-align: center; }
+.typeChipActive .typeLabel { color: #667eea; }
+
+/* ── Title ── */
+.titleWrap { position: relative; }
+
+.titleInput {
+  width: 100%;
+  padding: 12px 14px;
+  border: 2px solid #e8e8f0;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  color: #1a1a2e;
+  background: #fafafa;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  font-family: inherit;
+  box-sizing: border-box;
+}
+.titleInput:focus { border-color: #667eea; box-shadow: 0 0 0 3px rgba(102,126,234,0.12); background: #fff; }
+.inputError { border-color: #ff4d6d !important; }
+
+/* ── Add description button ── */
+.addDescBtn {
+  background: none;
+  border: none;
+  font-size: 13px;
+  color: #667eea;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+  text-align: left;
+}
+.addDescBtn:hover { text-decoration: underline; }
+
+/* ── Section label ── */
+.sectionLabel {
+  font-size: 11px;
+  font-weight: 700;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 8px;
+}
+
+/* ── Child chips ── */
+.section { display: flex; flex-direction: column; }
+
+.childChips { display: flex; flex-wrap: wrap; gap: 8px; }
+
+.childChip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  background: #f5f5fb;
+  border: 2px solid transparent;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #444;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+.childChip:hover { background: #eeeef8; }
+.childChipActive { background: #eef0fd; border-color: #667eea; color: #667eea; }
+
+.childChipIcon { font-size: 15px; }
+
+/* ── Row layouts ── */
+.row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.row3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+
+/* ── Bonus section ── */
+.bonusSection {
+  background: #fffbeb;
+  border: 1.5px solid #fde68a;
+  border-radius: 12px;
+  padding: 14px;
+}
+.bonusSectionTitle {
+  font-size: 12px;
+  font-weight: 700;
+  color: #b45309;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 12px;
+}
+
+/* ── Quest section ── */
+.questSection {
+  background: #f0fdf4;
+  border: 1.5px solid #bbf7d0;
+  border-radius: 12px;
+  padding: 14px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.smallInput {
+  width: 72px;
+  padding: 8px 10px;
+  border: 2px solid #e8e8f0;
+  border-radius: 8px;
+  font-size: 14px;
+  text-align: center;
+  outline: none;
+  font-family: inherit;
+}
+.smallInput:focus { border-color: #667eea; }

@@ -260,7 +260,7 @@ export default function Tasks() {
       )}
 
       {modal && modal.type !== 'catalog' && (
-        <Modal title={modal.item ? 'Edit Task' : 'New Task'} onClose={() => setModal(null)}>
+        <Modal title={modal.item ? 'Upravit úkol' : 'Nový úkol'} onClose={() => setModal(null)}>
           <TaskForm initial={modal.item ?? {}} children={children} families={families}
             onSubmit={handleSave} onCancel={() => setModal(null)} />
         </Modal>
