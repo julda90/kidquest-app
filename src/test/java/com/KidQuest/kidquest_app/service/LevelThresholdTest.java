@@ -19,6 +19,8 @@ class LevelThresholdTest {
         svc = new ProgressService(mock(com.KidQuest.kidquest_app.repository.PointTransactionRepository.class),
                 mock(com.KidQuest.kidquest_app.repository.ChildBadgeRepository.class),
                 mock(com.KidQuest.kidquest_app.repository.RewardRedemptionRepository.class),
+                mock(com.KidQuest.kidquest_app.repository.FamilyGoalRepository.class),
+                mock(com.KidQuest.kidquest_app.repository.TaskRepository.class),
                 java.time.Clock.systemDefaultZone(),
                 new ObjectMapper());
         svc.loadLevels();
