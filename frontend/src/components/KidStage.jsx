@@ -1,6 +1,6 @@
 import s from './KidStage.module.css'
 
-export default function KidStage({ imageSrc, badge, top, left, right, bottom }) {
+export default function KidStage({ imageSrc, badge, top, left, right, bottom, tiles }) {
   return (
     <section className={s.stage}>
       <div className={`${s.panel} ${s.top}`}>{top}</div>
@@ -12,9 +12,10 @@ export default function KidStage({ imageSrc, badge, top, left, right, bottom }) 
             {badge && <div className={s.badge}>{badge}</div>}
           </figure>
         )}
+        {tiles && <div className={s.tiles}>{tiles}</div>}
         {bottom && <div className={`${s.panel} ${s.bottom}`}>{bottom}</div>}
       </div>
-      <aside className={`${s.panel} ${s.right}`}>{right}</aside>
+      {right != null && <aside className={`${s.panel} ${s.right}`}>{right}</aside>}
     </section>
   )
 }

@@ -534,84 +534,89 @@ export default function KidView() {
       </>
     )
 
-    const left = (
+    const left = rd ? (() => {
+      const allDone    = rd.steps.length > 0 && rd.steps.every(s => s.doneAt)
+      const isApproved = rd.status === 'COMPLETED'
+      const isPending  = rd.status === 'PENDING_APPROVAL'
+      const isLocked   = rd.locked
+      const canAct     = !isPending && !isApproved && (!isLocked || rd.onTimeEligible)
+      const doneCntR   = rd.steps.filter(s => s.doneAt).length
+      return (
+        <div className={styles.morningBand}>
+          <div className={styles.morningHeader}>
+            <span className={styles.morningTitle}>{MORNING_TITLE[theme]} — {doneCntR}/{rd.steps.length}</span>
+            {streak > 0 && <span className={styles.streakBadge}>🔥 {streak} {streak === 1 ? 'den' : streak < 5 ? 'dny' : 'dní'}</span>}
+            <span className={styles.routineDeadline}>⏰ do {rd.deadline}</span>
+          </div>
+          {isApproved && <div className={styles.routineApproved}>✅ Schváleno! Skvělá práce!</div>}
+          {isPending  && <div className={styles.routinePending}>🎉 Čeká na rodiče…</div>}
+          {isLocked && !rd.onTimeEligible && <div className={styles.routineLocked}>⏰ Termín vypršel</div>}
+          {routineError && <div className={styles.routineLocked} style={{ fontSize: 12 }}>⚠️ {routineError}</div>}
+          <div className={styles.morningSteps}>
+            {rd.steps.map((s, i) => {
+              const done       = !!s.doneAt
+              const returned   = s.returned
+              const isCur      = !done && rd.steps.slice(0, i).every(x => x.doneAt)
+              const isToggling = togglingStep === s.position
+              return (
+                <div key={s.id} className={styles.step}>
+                  {i > 0 && <span className={styles.stepArrow}>›</span>}
+                  <div
+                    className={[
+                      styles.stepIco,
+                      done ? styles.stepDone : '',
+                      isCur && canAct ? `${styles.stepCur} ${styles.stepCurAnim}` : '',
+                      returned ? styles.stepReturned : '',
+                    ].join(' ')}
+                    onClick={() => canAct && !isToggling && handleToggleStep(s.position)}
+                    style={{ cursor: canAct ? 'pointer' : 'default', opacity: isToggling ? 0.5 : 1 }}
+                  >{s.icon}</div>
+                  <span className={styles.stepLabel}>{s.label}</span>
+                  {returned && <span style={{ fontSize: 10, color: '#f97316' }}>!</span>}
+                </div>
+              )
+            })}
+          </div>
+          {canAct && allDone && !isPending && !isApproved && (
+            <button className={styles.routineSubmitBtn} onClick={handleSubmitRoutine} disabled={submittingRoutine}>
+              {submittingRoutine ? '…' : '🚀 Odeslat rodičům!'}
+            </button>
+          )}
+        </div>
+      )
+    })() : null
+
+    const tiles = (
       <>
-        {rd && (() => {
-          const allDone    = rd.steps.length > 0 && rd.steps.every(s => s.doneAt)
-          const isApproved = rd.status === 'COMPLETED'
-          const isPending  = rd.status === 'PENDING_APPROVAL'
-          const isLocked   = rd.locked
-          const canAct     = !isPending && !isApproved && (!isLocked || rd.onTimeEligible)
-          const doneCntR   = rd.steps.filter(s => s.doneAt).length
-          return (
-            <div className={styles.morningBand}>
-              <div className={styles.morningHeader}>
-                <span className={styles.morningTitle}>{MORNING_TITLE[theme]} — {doneCntR}/{rd.steps.length}</span>
-                {streak > 0 && <span className={styles.streakBadge}>🔥 {streak} {streak === 1 ? 'den' : streak < 5 ? 'dny' : 'dní'}</span>}
-                <span className={styles.routineDeadline}>⏰ do {rd.deadline}</span>
-              </div>
-              {isApproved && <div className={styles.routineApproved}>✅ Schváleno! Skvělá práce!</div>}
-              {isPending  && <div className={styles.routinePending}>🎉 Čeká na rodiče…</div>}
-              {isLocked && !rd.onTimeEligible && <div className={styles.routineLocked}>⏰ Termín vypršel</div>}
-              {routineError && <div className={styles.routineLocked} style={{ fontSize: 12 }}>⚠️ {routineError}</div>}
-              <div className={styles.morningSteps}>
-                {rd.steps.map((s, i) => {
-                  const done       = !!s.doneAt
-                  const returned   = s.returned
-                  const isCur      = !done && rd.steps.slice(0, i).every(x => x.doneAt)
-                  const isToggling = togglingStep === s.position
-                  return (
-                    <div key={s.id} className={styles.step}>
-                      {i > 0 && <span className={styles.stepArrow}>›</span>}
-                      <div
-                        className={[
-                          styles.stepIco,
-                          done ? styles.stepDone : '',
-                          isCur && canAct ? `${styles.stepCur} ${styles.stepCurAnim}` : '',
-                          returned ? styles.stepReturned : '',
-                        ].join(' ')}
-                        onClick={() => canAct && !isToggling && handleToggleStep(s.position)}
-                        style={{ cursor: canAct ? 'pointer' : 'default', opacity: isToggling ? 0.5 : 1 }}
-                      >{s.icon}</div>
-                      <span className={styles.stepLabel}>{s.label}</span>
-                      {returned && <span style={{ fontSize: 10, color: '#f97316' }}>!</span>}
-                    </div>
-                  )
-                })}
-              </div>
-              {canAct && allDone && !isPending && !isApproved && (
-                <button className={styles.routineSubmitBtn} onClick={handleSubmitRoutine} disabled={submittingRoutine}>
-                  {submittingRoutine ? '…' : '🚀 Odeslat rodičům!'}
-                </button>
-              )}
-            </div>
-          )
-        })()}
-        <div className={stg.small}>{TASK_HEADING[theme]}</div>
+        <div className={stg.small} style={{ gridColumn: '1 / -1' }}>{TASK_HEADING[theme]}</div>
         {tasks.length === 0
-          ? <div className={stg.card}>Pro dnešek hotovo! 🎉</div>
+          ? <div className={stg.card} style={{ gridColumn: '1 / -1' }}>Pro dnešek hotovo! 🎉</div>
           : tasks.map(task => {
               const isPending_t    = task.status === 'PENDING_APPROVAL'
               const isSubmitting_t = submitting === task.taskId
               return (
-                <div key={task.taskId} className={stg.row} style={{ flexWrap: 'wrap' }}>
-                  <span>📋</span>
-                  <span style={{ flex: 1, minWidth: 0, fontWeight: 700, color: '#fff', fontSize: 13, lineHeight: 1.3 }}>
-                    {task.title}
-                    {task.kind === 'HOMEWORK' && <span className={stg.small}> · zkontroluj sám</span>}
-                  </span>
-                  <span className={stg.small}>
-                    {task.kind === 'HOMEWORK'
-                      ? `${ptIcon} ${task.pointValue}${task.bonusValue > 0 ? ` +🔍${task.bonusValue}` : ''}`
-                      : `${ptIcon} ${task.pointValue}`}
-                  </span>
-                  <button
-                    className={`${styles.taskBtn} ${isPending_t ? styles.btnWait : styles.btnGo}`}
-                    onClick={() => handleSubmitTask(task)}
-                    disabled={isPending_t || isSubmitting_t}
-                  >
-                    {isSubmitting_t ? '…' : isPending_t ? 'Čeká ✋' : 'Hotovo!'}
-                  </button>
+                <div key={task.taskId} className={stg.card}>
+                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
+                    <span style={{ fontSize: 22, lineHeight: 1, flexShrink: 0 }}>📋</span>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontWeight: 700, fontSize: 14, color: '#fff', lineHeight: 1.3 }}>{task.title}</div>
+                      {task.kind === 'HOMEWORK' && <div className={stg.small}>zkontroluj sám 🔍</div>}
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 6 }}>
+                    <span className={stg.small}>
+                      {task.kind === 'HOMEWORK'
+                        ? `${ptIcon} ${task.pointValue}${task.bonusValue > 0 ? ` +🔍${task.bonusValue}` : ''}`
+                        : `${ptIcon} ${task.pointValue}`}
+                    </span>
+                    <button
+                      className={`${styles.taskBtn} ${isPending_t ? styles.btnWait : styles.btnGo}`}
+                      onClick={() => handleSubmitTask(task)}
+                      disabled={isPending_t || isSubmitting_t}
+                    >
+                      {isSubmitting_t ? '…' : isPending_t ? 'Čeká ✋' : 'Hotovo!'}
+                    </button>
+                  </div>
                 </div>
               )
             })
@@ -660,31 +665,17 @@ export default function KidView() {
             🎁 Otevřít pokladnici!
           </button>
         )}
+        {familyGoal && !familyGoal.reachedAt && (
+          <div className={stg.card}>
+            <div className={stg.h3}>{familyGoal.name}</div>
+            <div className={stg.track} style={{ marginTop: 4 }}><div className={stg.fill} style={{ width: `${familyGoal.progressPct ?? 0}%` }} /></div>
+            <div className={stg.small}>⭐ {familyGoal.currentProgress} / {familyGoal.targetPoints}</div>
+          </div>
+        )}
       </>
     )
 
-    const bottom = familyGoal && !familyGoal.reachedAt ? (
-      <div className={stg.card}>
-        <div className={stg.h3}>{familyGoal.name}</div>
-        <div className={stg.track} style={{ marginTop: 4 }}><div className={stg.fill} style={{ width: `${familyGoal.progressPct ?? 0}%` }} /></div>
-        <div className={stg.small}>⭐ {familyGoal.currentProgress} / {familyGoal.targetPoints} · Splňte ranní rutinu a přibude +50</div>
-      </div>
-    ) : rewards.length > 0 ? (
-      <>
-        <div className={stg.small}>{REWARD_HEADING[theme]}</div>
-        <div className={styles.rewardsRow}>
-          {rewards.slice(0, 6).map(r => (
-            <div key={r.id} className={`${styles.rewardChip} ${totalPts >= r.pointCost ? styles.rewardLit : ''}`}>
-              <div className={styles.rewardIco}>🎁</div>
-              <div className={styles.rewardName}>{r.name}</div>
-              <div className={styles.rewardPts}>{ptIcon} {r.pointCost}</div>
-            </div>
-          ))}
-        </div>
-      </>
-    ) : null
-
-    return { top, left, right, bottom }
+    return { top, left, right, tiles }
   }
 
   // ── Section: Mapa ────────────────────────────────────────────────────────
@@ -947,27 +938,26 @@ export default function KidView() {
       </>
     )
 
-    const left = (
+    const tiles = (
       <>
-        {canAffordList.length > 0 && (
+        {canAffordList.length === 0 && savingList.length === 0 ? (
+          <div className={stg.card} style={{ gridColumn: '1 / -1' }}>Žádné odměny zatím nevytvořil rodič.</div>
+        ) : (
           <>
-            <div className={stg.small}>Na dosah</div>
+            {canAffordList.length > 0 && (
+              <div className={`${stg.small}`} style={{ gridColumn: '1 / -1' }}>Na dosah 🎁</div>
+            )}
             {canAffordList.map(r => rewardRow(r, true))}
-          </>
-        )}
-        {savingList.length > 0 && (
-          <>
-            <div className={stg.small} style={{ marginTop: canAffordList.length ? 8 : 0 }}>Šetřím na</div>
+            {savingList.length > 0 && (
+              <div className={stg.small} style={{ gridColumn: '1 / -1', marginTop: canAffordList.length ? 4 : 0 }}>Šetřím na</div>
+            )}
             {savingList.map(r => rewardRow(r, false))}
           </>
-        )}
-        {canAffordList.length === 0 && savingList.length === 0 && (
-          <div className={stg.card}>Žádné odměny zatím nevytvořil rodič.</div>
         )}
       </>
     )
 
-    const right = (
+    const left = (
       <>
         {recentRedemptions.length > 0 ? (
           <>
@@ -1004,18 +994,17 @@ export default function KidView() {
             ))}
           </>
         )}
+        {nearestUnreached && (
+          <div className={stg.card} style={{ marginTop: 8 }}>
+            <div className={stg.h3}>Šetříš na: {nearestUnreached.name}</div>
+            <div className={stg.track} style={{ marginTop: 4 }}><div className={stg.fill} style={{ width: `${nearestBarPct}%` }} /></div>
+            <div className={stg.small}>{totalPts} / {nearestUnreached.pointCost} {ptIcon}</div>
+          </div>
+        )}
       </>
     )
 
-    const bottom = nearestUnreached ? (
-      <div className={stg.card}>
-        <div className={stg.h3}>Šetříš na: {nearestUnreached.name}</div>
-        <div className={stg.track} style={{ marginTop: 4 }}><div className={stg.fill} style={{ width: `${nearestBarPct}%` }} /></div>
-        <div className={stg.small}>{totalPts} / {nearestUnreached.pointCost} {ptIcon}</div>
-      </div>
-    ) : null
-
-    return { top, left, right, bottom }
+    return { top, left, tiles }
   }
 
   // ── Section: Trofeje ─────────────────────────────────────────────────────
