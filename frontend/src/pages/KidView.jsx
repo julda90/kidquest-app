@@ -1066,7 +1066,6 @@ export default function KidView() {
 
   const vars = { ...THEME_VARS[theme] }
   if (landscapeSrc) {
-    vars['--kbg']    = `url(${landscapeSrc}) center/cover no-repeat`
     vars['--kcard']  = 'rgba(0,0,0,0.72)'
     vars['--kcardb'] = 'rgba(255,255,255,0.20)'
     vars['--ksb']    = 'rgba(0,0,0,0.62)'
@@ -1119,6 +1118,15 @@ export default function KidView() {
           </button>
         </div>
 
+        {landscapeSrc && (
+          <div className={styles.heroPanel}>
+            <img src={landscapeSrc} className={styles.heroImg} alt="" />
+            {avatarSrc && (
+              <img src={avatarSrc} className={styles.heroAvatarFloat} alt="" />
+            )}
+          </div>
+        )}
+
         <div className={styles.scrollArea}>
           {activeNav === 0 && renderVyzvy()}
           {activeNav === 1 && renderMapa()}
@@ -1126,11 +1134,6 @@ export default function KidView() {
           {activeNav === 3 && renderTrofeje()}
           {activeNav === 4 && renderJa()}
         </div>
-        {(activeNav === 1 || activeNav === 4) && avatarSrc && landscapeSrc && (
-          <div className={styles.landscapeHero}>
-            <img src={avatarSrc} alt="" />
-          </div>
-        )}
       </main>
       {chestToast && <div className={styles.chestToast}>{chestToast}</div>}
 
