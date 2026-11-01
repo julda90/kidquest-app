@@ -1118,21 +1118,23 @@ export default function KidView() {
           </button>
         </div>
 
-        {landscapeSrc && (
-          <div className={styles.heroPanel}>
-            <img src={landscapeSrc} className={styles.heroImg} alt="" />
-            {avatarSrc && (
-              <img src={avatarSrc} className={styles.heroAvatarFloat} alt="" />
-            )}
+        <div className={styles.bodyRow}>
+          <div className={styles.scrollArea}>
+            {activeNav === 0 && renderVyzvy()}
+            {activeNav === 1 && renderMapa()}
+            {activeNav === 2 && renderOdmeny()}
+            {activeNav === 3 && renderTrofeje()}
+            {activeNav === 4 && renderJa()}
           </div>
-        )}
 
-        <div className={styles.scrollArea}>
-          {activeNav === 0 && renderVyzvy()}
-          {activeNav === 1 && renderMapa()}
-          {activeNav === 2 && renderOdmeny()}
-          {activeNav === 3 && renderTrofeje()}
-          {activeNav === 4 && renderJa()}
+          {landscapeSrc && (
+            <div className={styles.heroPanel}>
+              <img src={landscapeSrc} className={styles.heroImg} alt="" />
+              {avatarSrc && (
+                <img src={avatarSrc} className={styles.heroAvatarFloat} alt="" />
+              )}
+            </div>
+          )}
         </div>
       </main>
       {chestToast && <div className={styles.chestToast}>{chestToast}</div>}

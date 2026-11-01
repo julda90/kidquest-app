@@ -449,36 +449,59 @@
   border: 1px solid rgba(255,255,255,0.14);
 }
 
-/* ── Dedicated landscape image strip ── */
-.heroPanel {
-  position: relative;
-  height: 220px;
-  flex-shrink: 0;
+/* ── Body row: content left + hero image right ── */
+.bodyRow {
+  flex: 1;
+  display: flex;
+  min-height: 0;
   overflow: hidden;
-  z-index: 1;
+}
+
+/* ── Hero image panel (right column) ── */
+.heroPanel {
+  width: 38%;
+  min-width: 240px;
+  max-width: 460px;
+  flex-shrink: 0;
+  position: relative;
+  overflow: hidden;
+  border-left: 1px solid rgba(255, 255, 255, 0.10);
 }
 
 .heroImg {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  object-position: center 30%;
+  object-position: center;
   display: block;
 }
 
 .heroAvatarFloat {
   position: absolute;
-  right: 6%;
   bottom: 0;
-  height: 95%;
+  left: 50%;
+  transform: translateX(-50%);
+  height: 68%;
   width: auto;
   object-fit: contain;
-  filter: drop-shadow(0 4px 20px rgba(0,0,0,0.65));
+  filter: drop-shadow(0 6px 24px rgba(0,0,0,0.70));
   pointer-events: none;
 }
 
-@media (max-width: 640px) {
-  .heroPanel { height: 140px; }
+@media (max-width: 760px) {
+  .bodyRow { flex-direction: column-reverse; }
+  .heroPanel {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    height: 160px;
+    border-left: none;
+    border-bottom: 1px solid rgba(255,255,255,0.10);
+  }
+  .heroAvatarFloat {
+    height: 90%;
+    bottom: 0;
+  }
 }
 
 /* ── Mapa section ── */
