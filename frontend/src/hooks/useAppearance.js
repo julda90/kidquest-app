@@ -30,5 +30,6 @@ export function useAppearance(child, progress) {
     avatarSrc:    nearestSrc(avatarData,    avIdx, 'avatar'),
     landscapeSrc: nearestSrc(landscapeData, laIdx, 'landscape'),
     thumbSrc:     nearestSrc(landscapeData, laIdx, 'thumb'),
+    combinedSrc:  nearestSrc(landscapeData, laIdx, 'combined'),
   }
 }

@@ -283,7 +283,7 @@ export default function KidView() {
   const streak   = progress?.streakDays ?? 0
 
   const theme        = child ? (THEME_MAP[child.avatar] || 'frozen') : 'frozen'
-  const { avatarSrc, landscapeSrc } = useAppearance(child, progress)
+  const { avatarSrc, landscapeSrc, combinedSrc } = useAppearance(child, progress)
   const particleType = theme === 'frozen' ? 'snow' : theme === 'unicorn' ? 'sparkle' : 'pixel'
   const ageGroup     = (child?.age != null && child.age < 5) ? 'preschool' : 'school'
   const steps        = child ? MORNING_STEPS[theme][ageGroup] : []
@@ -1127,10 +1127,10 @@ export default function KidView() {
             {activeNav === 4 && renderJa()}
           </div>
 
-          {activeNav === 1 && landscapeSrc && (
+          {activeNav === 1 && (combinedSrc || landscapeSrc) && (
             <div className={styles.heroPanel}>
-              <img src={landscapeSrc} className={styles.heroImg} alt="" />
-              {avatarSrc && (
+              <img src={combinedSrc || landscapeSrc} className={styles.heroImg} alt="" />
+              {!combinedSrc && avatarSrc && (
                 <img src={avatarSrc} className={styles.heroAvatarFloat} alt="" />
               )}
             </div>
