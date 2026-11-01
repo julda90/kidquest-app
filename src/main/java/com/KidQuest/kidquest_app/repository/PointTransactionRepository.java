@@ -114,4 +114,11 @@ public interface PointTransactionRepository extends JpaRepository<PointTransacti
     /** Count TASK transactions where associated task has kind=ROUTINE */
     @Query("SELECT COUNT(t) FROM PointTransaction t WHERE t.child.id = :childId AND t.type = 'TASK' AND t.task.kind = 'ROUTINE'")
     long countRoutineTaskTransactions(UUID childId);
+
+    /** Count TASK transactions in specific calendar months (1=Jan … 12=Dec) */
+    @Query(value = "SELECT COUNT(*) FROM point_transaction " +
+                   "WHERE child_id = :childId AND type = 'TASK' " +
+                   "AND EXTRACT(MONTH FROM created_at) IN :months",
+           nativeQuery = true)
+    long countTasksInMonths(UUID childId, List<Integer> months);
 }

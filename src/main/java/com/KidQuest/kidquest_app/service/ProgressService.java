@@ -7,8 +7,10 @@ import com.KidQuest.kidquest_app.model.Child;
 import com.KidQuest.kidquest_app.model.ChildBadge;
 import com.KidQuest.kidquest_app.model.TransactionType;
 import com.KidQuest.kidquest_app.repository.ChildBadgeRepository;
+import com.KidQuest.kidquest_app.repository.FamilyGoalRepository;
 import com.KidQuest.kidquest_app.repository.PointTransactionRepository;
 import com.KidQuest.kidquest_app.repository.RewardRedemptionRepository;
+import com.KidQuest.kidquest_app.repository.TaskRepository;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.PostConstruct;
@@ -42,17 +44,23 @@ public class ProgressService {
     private final PointTransactionRepository pointTransactionRepository;
     private final ChildBadgeRepository childBadgeRepository;
     private final RewardRedemptionRepository redemptionRepository;
+    private final FamilyGoalRepository familyGoalRepository;
+    private final TaskRepository taskRepository;
     private final Clock clock;
     private final ObjectMapper objectMapper;
 
     public ProgressService(PointTransactionRepository pointTransactionRepository,
                            ChildBadgeRepository childBadgeRepository,
                            RewardRedemptionRepository redemptionRepository,
+                           FamilyGoalRepository familyGoalRepository,
+                           TaskRepository taskRepository,
                            Clock clock,
                            ObjectMapper objectMapper) {
         this.pointTransactionRepository = pointTransactionRepository;
         this.childBadgeRepository = childBadgeRepository;
         this.redemptionRepository = redemptionRepository;
+        this.familyGoalRepository = familyGoalRepository;
+        this.taskRepository = taskRepository;
         this.clock = clock;
         this.objectMapper = objectMapper;
     }
@@ -219,14 +227,28 @@ public class ProgressService {
     }
 
     // ── Badge targets ─────────────────────────────────────────────────────────
-    private static final Map<Badge, Integer> BADGE_TARGETS = Map.of(
-        Badge.STREAK_7,      7,
-        Badge.STREAK_30,    30,
-        Badge.FIRST_REWARD,  1,
-        Badge.EARLY_BIRD,   10,
-        Badge.TEAM_PLAYER,  50,
-        Badge.SHERLOCK,     10,
-        Badge.SELF_STARTER, 10
+    private static final Map<Badge, Integer> BADGE_TARGETS = Map.ofEntries(
+        Map.entry(Badge.STREAK_7,              7),
+        Map.entry(Badge.STREAK_14,            14),
+        Map.entry(Badge.STREAK_30,            30),
+        Map.entry(Badge.STREAK_60,            60),
+        Map.entry(Badge.FIRST_REWARD,          1),
+        Map.entry(Badge.EARLY_BIRD,           10),
+        Map.entry(Badge.ROUTINE_STREAK_14,    14),
+        Map.entry(Badge.ROUTINE_30_ONTIME,    30),
+        Map.entry(Badge.TEAM_PLAYER,          50),
+        Map.entry(Badge.TASK_100,            100),
+        Map.entry(Badge.TASK_250,            250),
+        Map.entry(Badge.TASK_500,            500),
+        Map.entry(Badge.SHERLOCK,             10),
+        Map.entry(Badge.SELF_STARTER,         10),
+        Map.entry(Badge.HOMEWORK_NO_REMIND_10,10),
+        Map.entry(Badge.VARIETY_ALL,           8),
+        Map.entry(Badge.FAMILY_5,              5),
+        Map.entry(Badge.FAMILY_20,            20),
+        Map.entry(Badge.COLLECTOR_5,           5),
+        Map.entry(Badge.XMAS_15,             15),
+        Map.entry(Badge.SUMMER_30,           30)
     );
 
     public ProgressResponse buildResponse(Child child) {
@@ -240,21 +262,39 @@ public class ProgressService {
         int bestDay     = pointTransactionRepository.maxTasksInAnyDay(childId);
         int longestStr  = longestStreak(childId);
         int totalRed    = (int) redemptionRepository.findByChildId(childId).size();
-        long selfCheckCount  = pointTransactionRepository.countBonusByChildIdAndBonusKind(childId, "SELF_CHECK");
-        long noReminderCount = pointTransactionRepository.countBonusByChildIdAndBonusKind(childId, "NO_REMINDER");
+        long selfCheckCount   = pointTransactionRepository.countBonusByChildIdAndBonusKind(childId, "SELF_CHECK");
+        long noReminderCount  = pointTransactionRepository.countBonusByChildIdAndBonusKind(childId, "NO_REMINDER");
         long routineApprovals = pointTransactionRepository.countRoutineTaskTransactions(childId);
+        long completedFamilyGoals = familyGoalRepository.countCompletedByFamilyId(child.getFamily().getId());
+        long distinctKinds        = taskRepository.countDistinctNonRoutineKindsByChildId(childId);
+        long tasksInDecember      = pointTransactionRepository.countTasksInMonths(childId, List.of(12));
+        long tasksInSummer        = pointTransactionRepository.countTasksInMonths(childId, List.of(7, 8));
 
         // Load earned badges into a map for quick lookup
         Map<Badge, ChildBadge> earnedMap = childBadgeRepository.findByChildId(childId)
                 .stream().collect(Collectors.toMap(cb -> cb.getBadge(), cb -> cb));
 
         // Auto-award milestone badges
-        awardIfMet(child, earnedMap, Badge.STREAK_7,      si.days() >= 7);
-        awardIfMet(child, earnedMap, Badge.STREAK_30,    si.days() >= 30);
-        awardIfMet(child, earnedMap, Badge.FIRST_REWARD, totalRed >= 1);
-        awardIfMet(child, earnedMap, Badge.EARLY_BIRD,   routineApprovals >= 10);
-        awardIfMet(child, earnedMap, Badge.TEAM_PLAYER,  totalTasks >= 50);
-        awardIfMet(child, earnedMap, Badge.SELF_STARTER, noReminderCount >= 10);
+        awardIfMet(child, earnedMap, Badge.STREAK_7,             si.days() >= 7);
+        awardIfMet(child, earnedMap, Badge.STREAK_14,            si.days() >= 14);
+        awardIfMet(child, earnedMap, Badge.STREAK_30,            si.days() >= 30);
+        awardIfMet(child, earnedMap, Badge.STREAK_60,            si.days() >= 60);
+        awardIfMet(child, earnedMap, Badge.FIRST_REWARD,         totalRed >= 1);
+        awardIfMet(child, earnedMap, Badge.COLLECTOR_5,          totalRed >= 5);
+        awardIfMet(child, earnedMap, Badge.EARLY_BIRD,           routineApprovals >= 10);
+        awardIfMet(child, earnedMap, Badge.ROUTINE_STREAK_14,    routineApprovals >= 14);
+        awardIfMet(child, earnedMap, Badge.ROUTINE_30_ONTIME,    routineApprovals >= 30);
+        awardIfMet(child, earnedMap, Badge.TEAM_PLAYER,          totalTasks >= 50);
+        awardIfMet(child, earnedMap, Badge.TASK_100,             totalTasks >= 100);
+        awardIfMet(child, earnedMap, Badge.TASK_250,             totalTasks >= 250);
+        awardIfMet(child, earnedMap, Badge.TASK_500,             totalTasks >= 500);
+        awardIfMet(child, earnedMap, Badge.SELF_STARTER,         noReminderCount >= 10);
+        awardIfMet(child, earnedMap, Badge.HOMEWORK_NO_REMIND_10, noReminderCount >= 10);
+        awardIfMet(child, earnedMap, Badge.VARIETY_ALL,          distinctKinds >= 8);
+        awardIfMet(child, earnedMap, Badge.FAMILY_5,             completedFamilyGoals >= 5);
+        awardIfMet(child, earnedMap, Badge.FAMILY_20,            completedFamilyGoals >= 20);
+        awardIfMet(child, earnedMap, Badge.XMAS_15,              tasksInDecember >= 15);
+        awardIfMet(child, earnedMap, Badge.SUMMER_30,            tasksInSummer >= 30);
 
         // Build rich badge info for all badges
         List<BadgeInfoResponse> badgeInfo = Arrays.stream(Badge.values()).map(b -> {
@@ -267,12 +307,19 @@ public class ProgressService {
             if (target != null) {
                 bi.setTarget(target);
                 int cur = switch (b) {
-                    case STREAK_7, STREAK_30     -> si.days();
-                    case FIRST_REWARD            -> totalRed;
-                    case EARLY_BIRD              -> (int) routineApprovals;
-                    case TEAM_PLAYER             -> totalTasks;
-                    case SHERLOCK                -> (int) selfCheckCount;
-                    case SELF_STARTER            -> (int) noReminderCount;
+                    case STREAK_7, STREAK_14, STREAK_30, STREAK_60 -> si.days();
+                    case FIRST_REWARD, COLLECTOR_5                 -> totalRed;
+                    case EARLY_BIRD, ROUTINE_STREAK_14,
+                         ROUTINE_30_ONTIME                         -> (int) routineApprovals;
+                    case TEAM_PLAYER, TASK_100,
+                         TASK_250, TASK_500                        -> totalTasks;
+                    case SHERLOCK                                   -> (int) selfCheckCount;
+                    case SELF_STARTER,
+                         HOMEWORK_NO_REMIND_10                     -> (int) noReminderCount;
+                    case VARIETY_ALL                               -> (int) distinctKinds;
+                    case FAMILY_5, FAMILY_20                       -> (int) completedFamilyGoals;
+                    case XMAS_15                                   -> (int) tasksInDecember;
+                    case SUMMER_30                                 -> (int) tasksInSummer;
                     default -> 0;
                 };
                 bi.setCurrent(Math.min(cur, target));

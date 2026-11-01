@@ -218,18 +218,59 @@ const MAP_STAGE_ICO = {
   minecraft: ['🌲', '🕳️', '⛏️', '💰', '💎', '🔥', '🏯', '🌋', '🪨', '🌌', '🏙️', '🐉'],
 }
 
+const BADGE_TIER = {
+  COMMON:    'common',
+  RARE:      'rare',
+  LEGENDARY: 'legendary',
+}
+
 const BADGE_META = {
-  LUMBERJACK:   { i: '🪵', n: 'Dřevorubec' },
-  SHERLOCK:     { i: '🔍', n: 'Detektiv chyb' },
-  SELF_STARTER: { i: '🚀', n: 'Samostatný' },
-  HEAD_WAITER:  { i: '🍽️', n: 'Vrchní číšník' },
-  TIDY:        { i: '🧹', n: 'Uklízeč' },
-  LAUNDRY_PRO: { i: '🧺', n: 'Prací mistr' },
-  STREAK_7:    { i: '🔥', n: '7 dní v řadě' },
-  STREAK_30:   { i: '💥', n: '30 dní v řadě' },
-  EARLY_BIRD:  { i: '🐦', n: 'Pilná včelka (10 úkolů)' },
-  FIRST_REWARD:{ i: '🎁', n: 'První odměna' },
-  TEAM_PLAYER: { i: '👥', n: 'Týmový hráč (50 úkolů)' },
+  // ── Existing ──────────────────────────────────────────────────────────────
+  LUMBERJACK:           { i: '🪵', n: 'Dřevorubec',            tier: BADGE_TIER.COMMON },
+  SHERLOCK:             { i: '🔍', n: 'Detektiv chyb',          tier: BADGE_TIER.COMMON },
+  SELF_STARTER:         { i: '🚀', n: 'Samostatný',             tier: BADGE_TIER.COMMON },
+  HEAD_WAITER:          { i: '🍽️', n: 'Vrchní číšník',         tier: BADGE_TIER.COMMON },
+  TIDY:                 { i: '🧹', n: 'Uklízeč',               tier: BADGE_TIER.COMMON },
+  LAUNDRY_PRO:          { i: '🧺', n: 'Prací mistr',            tier: BADGE_TIER.COMMON },
+  STREAK_7:             { i: '🔥', n: '7 dní v řadě',           tier: BADGE_TIER.COMMON },
+  STREAK_30:            { i: '💥', n: '30 dní v řadě',          tier: BADGE_TIER.RARE },
+  EARLY_BIRD:           { i: '🐦', n: 'Pilná včelka',           tier: BADGE_TIER.COMMON },
+  FIRST_REWARD:         { i: '🎁', n: 'První odměna',           tier: BADGE_TIER.COMMON },
+  TEAM_PLAYER:          { i: '👥', n: 'Týmový hráč',            tier: BADGE_TIER.COMMON },
+  // ── Task milestones ───────────────────────────────────────────────────────
+  TASK_100:             { i: '⚡', n: 'Ostřílený pomocník',     tier: BADGE_TIER.COMMON },
+  TASK_250:             { i: '🏠', n: 'Mistr domácnosti',       tier: BADGE_TIER.RARE },
+  TASK_500:             { i: '🏆', n: 'Legenda rodiny',         tier: BADGE_TIER.LEGENDARY, reward: 'Výběr rodinného výletu' },
+  // ── Morning routine ───────────────────────────────────────────────────────
+  ROUTINE_STREAK_14:    { i: '🌅', n: 'Ranní šampion',          tier: BADGE_TIER.RARE },
+  ROUTINE_30_ONTIME:    { i: '⏰', n: 'Nikdy nepozde',          tier: BADGE_TIER.RARE },
+  // ── Homework ──────────────────────────────────────────────────────────────
+  HOMEWORK_CLEAN_5:     { i: '✨', n: 'Bezchybný',              tier: BADGE_TIER.COMMON },
+  HOMEWORK_NO_REMIND_10:{ i: '⚡📚', n: 'Blesková škola',       tier: BADGE_TIER.RARE },
+  HOMEWORK_PERFECT_20:  { i: '🎓', n: 'Profesorský klobouk',    tier: BADGE_TIER.LEGENDARY, reward: 'Rodič splní 1 přání' },
+  // ── Variety ───────────────────────────────────────────────────────────────
+  VARIETY_WEEK:         { i: '🌈', n: 'Všeuměl',               tier: BADGE_TIER.COMMON },
+  VARIETY_ALL:          { i: '🔧', n: 'Švýcarský nůž',          tier: BADGE_TIER.RARE },
+  // ── Family goals ──────────────────────────────────────────────────────────
+  FAMILY_5:             { i: '🤝', n: 'Sourozenci v akci',      tier: BADGE_TIER.COMMON },
+  FAMILY_20:            { i: '👨‍👩‍👧‍👦', n: 'Rodinná jednota',   tier: BADGE_TIER.RARE },
+  FAMILY_CAPTAIN:       { i: '🚩', n: 'Kapitán týmu',           tier: BADGE_TIER.RARE },
+  // ── Extended streaks ──────────────────────────────────────────────────────
+  STREAK_14:            { i: '🛡️', n: 'Neporazitelný',         tier: BADGE_TIER.RARE },
+  STREAK_60:            { i: '🔥💎', n: 'Strážce ohně',         tier: BADGE_TIER.LEGENDARY, reward: 'Prodloužená večerka o 30 min (víkend, 1 měsíc)' },
+  // ── Savings & rewards ─────────────────────────────────────────────────────
+  SAVER_1000:           { i: '🐷', n: 'Spořivec',               tier: BADGE_TIER.RARE },
+  MEGA_REWARD:          { i: '💎', n: 'Velký sen',              tier: BADGE_TIER.RARE },
+  COLLECTOR_5:          { i: '🗝️', n: 'Sběratel',              tier: BADGE_TIER.RARE },
+  // ── Seasonal ──────────────────────────────────────────────────────────────
+  XMAS_15:              { i: '🎄', n: 'Vánoční elf',            tier: BADGE_TIER.COMMON },
+  EASTER_10:            { i: '🐣', n: 'Velkonočně pilný',       tier: BADGE_TIER.COMMON },
+  BIRTHDAY:             { i: '🎂', n: 'Narozeninový hrdina',    tier: BADGE_TIER.COMMON },
+  SUMMER_30:            { i: '☀️', n: 'Letní bojovník',         tier: BADGE_TIER.RARE },
+  // ── Complex legendary ─────────────────────────────────────────────────────
+  PET_GUARDIAN:         { i: '🐾', n: 'Správce zvířat',         tier: BADGE_TIER.LEGENDARY, reward: 'Pořízení mazlíčka' },
+  GAME_DAY:             { i: '🎮', n: 'Hra bez hranic',         tier: BADGE_TIER.LEGENDARY, reward: 'Herní den bez omezení obrazovek' },
+  CHEF:                 { i: '👨‍🍳', n: 'Šéfkuchař',            tier: BADGE_TIER.LEGENDARY, reward: 'Dítě navrhne menu na víkend' },
 }
 
 const SKINS = [
@@ -975,16 +1016,56 @@ export default function KidView() {
   // ── Section: Trofeje ─────────────────────────────────────────────────────
   function renderTrofeje() {
     const badgeInfo = progress?.badgeInfo ?? []
-    const sortedBadges = [...badgeInfo].sort((a, b) => {
+
+    const byTier = { common: [], rare: [], legendary: [] }
+    for (const b of badgeInfo) {
+      const meta = BADGE_META[b.badge]
+      const tier = meta?.tier ?? BADGE_TIER.COMMON
+      byTier[tier].push(b)
+    }
+
+    const sortGroup = arr => [...arr].sort((a, b) => {
       if (a.earned && !b.earned) return -1
       if (!a.earned && b.earned) return 1
       if (a.target && b.target) {
-        const pctA = (a.current ?? 0) / a.target
-        const pctB = (b.current ?? 0) / b.target
-        return pctB - pctA
+        return (b.current ?? 0) / b.target - (a.current ?? 0) / a.target
       }
       return 0
     })
+
+    function BadgeCard({ b }) {
+      const meta = BADGE_META[b.badge] ?? { i: '🏅', n: b.badge, tier: BADGE_TIER.COMMON }
+      const tier = meta.tier ?? BADGE_TIER.COMMON
+      const pct  = b.target ? Math.min((b.current ?? 0) / b.target * 100, 100) : 0
+      const isLockedLegendary = tier === BADGE_TIER.LEGENDARY && !b.earned
+      return (
+        <div className={`${styles.badgeCard} ${b.earned ? styles.badgeEarned : ''} ${styles['badge_' + tier]}`}>
+          <div className={`${styles.badgeIco} ${isLockedLegendary ? styles.badgeIcoBlur : ''}`}>
+            {isLockedLegendary ? '🏅' : meta.i}
+          </div>
+          <div className={`${styles.badgeName} ${isLockedLegendary ? styles.badgeNameHidden : ''}`}>
+            {isLockedLegendary ? '??? Tajný odznak' : meta.n}
+          </div>
+          {b.earned
+            ? <>
+                <div className={styles.badgeDone}>Získáno ✓</div>
+                {meta.reward && <div className={styles.badgeReward}>🎁 {meta.reward}</div>}
+              </>
+            : isLockedLegendary
+              ? <div className={styles.badgeLock}>Tajemná výzva</div>
+              : b.target && (
+                  <div className={styles.badgeProgress}>
+                    <div className={styles.badgeBar}>
+                      <div className={styles.badgeFill} style={{ width: `${pct}%` }} />
+                    </div>
+                    <span className={styles.badgeCount}>{b.current ?? 0}/{b.target}</span>
+                  </div>
+                )
+          }
+        </div>
+      )
+    }
+
     return (
       <>
         {/* 3 record cards */}
@@ -1005,31 +1086,34 @@ export default function KidView() {
 
         <div className={styles.sectionHead}>{TROPHY_HEADING[theme]}</div>
 
-        {sortedBadges.length === 0
+        {badgeInfo.length === 0
           ? <p className={styles.emptyTasks}>Zatím žádné odznaky. Splň úkoly a získej je! 💪</p>
-          : <div className={styles.badgeGrid}>
-              {sortedBadges.map(b => {
-                const meta = BADGE_META[b.badge] ?? { i: '🏅', n: b.badge }
-                const pct  = b.target ? Math.min((b.current ?? 0) / b.target * 100, 100) : 0
-                return (
-                  <div key={b.badge} className={`${styles.badgeCard} ${b.earned ? styles.badgeEarned : ''}`}>
-                    <div className={styles.badgeIco}>{meta.i}</div>
-                    <div className={styles.badgeName}>{meta.n}</div>
-                    {b.earned
-                      ? <div className={styles.badgeDone}>Získáno ✓</div>
-                      : b.target && (
-                          <div className={styles.badgeProgress}>
-                            <div className={styles.badgeBar}>
-                              <div className={styles.badgeFill} style={{ width: `${pct}%` }} />
-                            </div>
-                            <span className={styles.badgeCount}>{b.current ?? 0}/{b.target}</span>
-                          </div>
-                        )
-                    }
+          : <>
+              {byTier.common.length > 0 && (
+                <>
+                  <div className={styles.tierHead}>🥇 Běžné odznaky</div>
+                  <div className={styles.badgeGrid}>
+                    {sortGroup(byTier.common).map(b => <BadgeCard key={b.badge} b={b} />)}
                   </div>
-                )
-              })}
-            </div>
+                </>
+              )}
+              {byTier.rare.length > 0 && (
+                <>
+                  <div className={`${styles.tierHead} ${styles.tierHeadRare}`}>💜 Vzácné odznaky</div>
+                  <div className={styles.badgeGrid}>
+                    {sortGroup(byTier.rare).map(b => <BadgeCard key={b.badge} b={b} />)}
+                  </div>
+                </>
+              )}
+              {byTier.legendary.length > 0 && (
+                <>
+                  <div className={`${styles.tierHead} ${styles.tierHeadLegendary}`}>🌟 Velké sny</div>
+                  <div className={styles.badgeGrid}>
+                    {sortGroup(byTier.legendary).map(b => <BadgeCard key={b.badge} b={b} />)}
+                  </div>
+                </>
+              )}
+            </>
         }
       </>
     )

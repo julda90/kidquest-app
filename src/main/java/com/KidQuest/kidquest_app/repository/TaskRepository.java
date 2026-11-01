@@ -4,6 +4,7 @@ import com.KidQuest.kidquest_app.model.Task;
 import com.KidQuest.kidquest_app.model.TaskKind;
 import com.KidQuest.kidquest_app.model.TaskStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -32,4 +33,8 @@ public interface TaskRepository extends JpaRepository<Task, UUID> {
     Optional<Task> findByRoutineIdAndAssignedToIdAndDueDateAndDeletedAtIsNull(UUID routineId, UUID childId, LocalDate dueDate);
 
     List<Task> findByRoutineIdAndAssignedToId(UUID routineId, UUID childId);
+
+    @Query("SELECT COUNT(DISTINCT t.kind) FROM Task t WHERE t.assignedTo.id = :childId " +
+           "AND t.status = 'COMPLETED' AND t.kind <> 'ROUTINE'")
+    long countDistinctNonRoutineKindsByChildId(UUID childId);
 }

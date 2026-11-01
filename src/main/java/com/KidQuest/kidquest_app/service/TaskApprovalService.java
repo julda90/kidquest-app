@@ -273,6 +273,9 @@ public class TaskApprovalService {
         long routineApprovals = pointTransactionRepository.countRoutineTaskTransactions(childId);
         checkAndAwardBadge(child, Badge.EARLY_BIRD, routineApprovals, 10, earned);
 
+        long distinctKinds = taskRepository.countDistinctNonRoutineKindsByChildId(childId);
+        checkAndAwardBadge(child, Badge.VARIETY_ALL, distinctKinds, 8, earned);
+
         return earned;
     }
 
