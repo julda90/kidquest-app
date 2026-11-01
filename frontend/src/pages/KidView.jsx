@@ -1358,8 +1358,6 @@ export default function KidView() {
         {activeNav <= 2
           ? <KidStage
               imageSrc={activeNav === 1 ? (combinedSrc || landscapeSrc) : null}
-              avatarSrc={activeNav === 1 ? avatarSrc : null}
-              showAvatarOverlay={!combinedSrc}
               {...(activeNav === 0 ? renderVyzvy() : activeNav === 1 ? renderMapa() : renderOdmeny())}
             />
           : <div className={styles.scrollArea}>
