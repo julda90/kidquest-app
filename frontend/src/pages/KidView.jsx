@@ -793,7 +793,11 @@ export default function KidView() {
     )
 
     const bottom = (
-      <div className={stg.thumbGrid}>
+      <>
+        <div className={stg.small} style={{ marginBottom: 4 }}>
+          Krajiny 1–{level} · {level < maxLevel ? 'posuň pro další' : 'všechny odemčeny'}
+        </div>
+        <div className={stg.thumbGrid}>
         {Array.from({ length: maxLevel }, (_, i) => {
           const lvlNum  = i + 1
           const unlocked = lvlNum <= level
@@ -829,7 +833,8 @@ export default function KidView() {
             </button>
           )
         })}
-      </div>
+        </div>
+      </>
     )
 
     const badge = `${stageIco[level - 1] ?? ''} ${stages[level - 1] ?? ''}`
@@ -1352,8 +1357,8 @@ export default function KidView() {
 
         {activeNav <= 2
           ? <KidStage
-              imageSrc={combinedSrc || landscapeSrc}
-              avatarSrc={avatarSrc}
+              imageSrc={activeNav === 1 ? (combinedSrc || landscapeSrc) : null}
+              avatarSrc={activeNav === 1 ? avatarSrc : null}
               showAvatarOverlay={!combinedSrc}
               {...(activeNav === 0 ? renderVyzvy() : activeNav === 1 ? renderMapa() : renderOdmeny())}
             />
