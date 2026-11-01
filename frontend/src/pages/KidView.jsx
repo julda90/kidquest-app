@@ -10,7 +10,10 @@ import { redeemReward, getRedemptionsByChild, cancelRedemption } from '../api/re
 import { getLevelName } from '../constants/levels'
 import { getLevelData } from '../constants/themes'
 import { useAppearance } from '../hooks/useAppearance'
+import { getActiveGoal } from '../api/families'
+import KidStage from '../components/KidStage'
 import styles from './KidView.module.css'
+import stg from '../components/KidStage.module.css'
 
 // ── Theme mapping ─────────────────────────────────────────────────────────────
 const THEME_MAP = { elsa: 'frozen', unicorn: 'unicorn', minecraft: 'minecraft' }
@@ -243,6 +246,13 @@ const SKINS = [
 
 const TX_ICONS = { TASK: '📝', BONUS: '🔍', STREAK: '🔥', CHEST: '🧰', REDEEM: '🎁', MANUAL: '✋' }
 
+const REDEMPTION_STATUS_CZ = {
+  REQUESTED: 'Čeká na schválení',
+  APPROVED:  'Schváleno ✓',
+  DELIVERED: 'Hotovo! 🎉',
+  CANCELLED: 'Zrušeno',
+}
+
 // ── Main KidView page ─────────────────────────────────────────────────────────
 export default function KidView() {
   const { logout }  = useAuth()
@@ -272,6 +282,7 @@ export default function KidView() {
   const [submitting,      setSubmitting]      = useState(null)
   const [confirmRedeemId, setConfirmRedeemId] = useState(null)
   const [showFreshStart,  setShowFreshStart]  = useState(false)
+  const [familyGoal,      setFamilyGoal]      = useState(null)
 
   const { tab }   = useParams()
   const activeNav = TAB_SEGS.includes(tab) ? TAB_SEGS.indexOf(tab) : 0
@@ -325,6 +336,7 @@ export default function KidView() {
         getOpenQuests(fIdToUse),
       ])
       setChild(c)
+      try { setFamilyGoal(await getActiveGoal(fIdToUse)) } catch { setFamilyGoal(null) }
       setRoutineData(todayRes.routine ?? null)
       setTasks(todayRes.tasks ?? [])
       setRewards(rwArr
@@ -362,7 +374,7 @@ export default function KidView() {
   function backToPicker() {
     try { localStorage.removeItem('kid_selectedChildId') } catch { /**/ }
     setChild(null); setTasks([]); setRewards([]); setTransactions([])
-    setProgress(null); setRedemptions([]); setOpenQuestTemplates([]); setRoutineData(null)
+    setProgress(null); setRedemptions([]); setOpenQuestTemplates([]); setRoutineData(null); setFamilyGoal(null)
     navigate('/kid', { replace: true })
   }
 
@@ -454,34 +466,53 @@ export default function KidView() {
   // ── Section: Výzvy ───────────────────────────────────────────────────────
   function renderVyzvy() {
     const rd = routineData
-    return (
+    const doneCnt = tasks.filter(t => t.status !== 'ASSIGNED').length
+    const totalCnt = tasks.length
+    const barPct = totalCnt > 0 ? Math.round(doneCnt / totalCnt * 100) : 0
+    const todayStr = todayKey()
+    const todayPts_ = transactions
+      .filter(tx => tx.createdAt?.startsWith(todayStr) && tx.amount > 0)
+      .reduce((sum, tx) => sum + tx.amount, 0)
+
+    const top = (
       <>
-        {/* Dynamic routine band */}
+        <div>
+          <div className={stg.small}>{czDate()}</div>
+          <div className={stg.h2}>Dnešní výzvy</div>
+        </div>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div className={stg.track}><div className={stg.fill} style={{ width: `${barPct}%` }} /></div>
+          <div className={stg.small} style={{ marginTop: 4 }}>
+            {doneCnt} ze {totalCnt} hotovo · 🔥 série {streak} {streak === 1 ? 'den' : streak < 5 ? 'dny' : 'dní'} · žolík {progress?.jokerUsedThisWeek ? 'použitý' : 'volný'}
+          </div>
+        </div>
+        <div style={{ textAlign: 'right' }}>
+          <div className={stg.h2}>+{todayPts_}</div>
+          <div className={stg.small}>dnes {ptIcon}</div>
+        </div>
+      </>
+    )
+
+    const left = (
+      <>
         {rd && (() => {
-          const allDone = rd.steps.length > 0 && rd.steps.every(s => s.doneAt)
+          const allDone    = rd.steps.length > 0 && rd.steps.every(s => s.doneAt)
           const isApproved = rd.status === 'COMPLETED'
           const isPending  = rd.status === 'PENDING_APPROVAL'
           const isLocked   = rd.locked
           const canAct     = !isPending && !isApproved && (!isLocked || rd.onTimeEligible)
-          const doneCnt    = rd.steps.filter(s => s.doneAt).length
-          const mTtl       = `${MORNING_TITLE[theme]} — Dnes: ${doneCnt}/${rd.steps.length}`
+          const doneCntR   = rd.steps.filter(s => s.doneAt).length
           return (
             <div className={styles.morningBand}>
               <div className={styles.morningHeader}>
-                <span className={styles.morningTitle}>{mTtl}</span>
-                {streak > 0 && (
-                  <span className={styles.streakBadge}>
-                    🔥 {streak} {streak === 1 ? 'den' : streak < 5 ? 'dny' : 'dní'} v řadě!
-                  </span>
-                )}
+                <span className={styles.morningTitle}>{MORNING_TITLE[theme]} — {doneCntR}/{rd.steps.length}</span>
+                {streak > 0 && <span className={styles.streakBadge}>🔥 {streak} {streak === 1 ? 'den' : streak < 5 ? 'dny' : 'dní'}</span>}
                 <span className={styles.routineDeadline}>⏰ do {rd.deadline}</span>
               </div>
-
               {isApproved && <div className={styles.routineApproved}>✅ Schváleno! Skvělá práce!</div>}
-              {isPending  && <div className={styles.routinePending}>🎉 Odesláno – čeká na rodiče…</div>}
+              {isPending  && <div className={styles.routinePending}>🎉 Čeká na rodiče…</div>}
               {isLocked && !rd.onTimeEligible && <div className={styles.routineLocked}>⏰ Termín vypršel</div>}
               {routineError && <div className={styles.routineLocked} style={{ fontSize: 12 }}>⚠️ {routineError}</div>}
-
               <div className={styles.morningSteps}>
                 {rd.steps.map((s, i) => {
                   const done       = !!s.doneAt
@@ -507,184 +538,262 @@ export default function KidView() {
                   )
                 })}
               </div>
-
               {canAct && allDone && !isPending && !isApproved && (
-                <button
-                  className={styles.routineSubmitBtn}
-                  onClick={handleSubmitRoutine}
-                  disabled={submittingRoutine}
-                >
+                <button className={styles.routineSubmitBtn} onClick={handleSubmitRoutine} disabled={submittingRoutine}>
                   {submittingRoutine ? '…' : '🚀 Odeslat rodičům!'}
                 </button>
               )}
             </div>
           )
         })()}
-
-
-        {/* Tasks */}
-        <div className={styles.sectionHead}>{TASK_HEADING[theme]}</div>
+        <div className={stg.small}>{TASK_HEADING[theme]}</div>
         {tasks.length === 0
-          ? <p className={styles.emptyTasks}>Žádné úkoly na dnes. Skvělá práce! 🎉</p>
-          : <div className={styles.tasksGrid}>
-              {tasks.map(task => {
-                const isPending    = task.status === 'PENDING_APPROVAL'
-                const isSubmitting = submitting === task.taskId
-                return (
-                  <div key={task.taskId} className={styles.taskCard}>
-                    <span className={styles.taskIco}>📋</span>
-                    <span className={styles.taskName}>{task.title}</span>
-                    {task.kind === 'HOMEWORK' && (
-                      <span className={styles.taskHint}>Udělej ho včas, zkontroluj a oprav sám.</span>
-                    )}
-                    <div className={styles.taskBot}>
-                      <span className={styles.taskPts}>
-                        {task.kind === 'HOMEWORK'
-                          ? `${ptIcon} ${task.pointValue}${task.bonusValue > 0 ? ` + 🔍${task.bonusValue}` : ''}${task.noReminderBonus > 0 ? ` + ${task.noReminderBonus}` : ''}`
-                          : `${ptIcon} ${task.pointValue}`}
-                      </span>
-                      <button
-                        className={`${styles.taskBtn} ${isPending ? styles.btnWait : styles.btnGo}`}
-                        onClick={() => handleSubmitTask(task)}
-                        disabled={isPending || isSubmitting}
-                      >
-                        {isSubmitting ? '…' : isPending ? 'Čeká…' : 'Splněno!'}
-                      </button>
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
+          ? <div className={stg.card}>Pro dnešek hotovo! 🎉</div>
+          : tasks.map(task => {
+              const isPending_t    = task.status === 'PENDING_APPROVAL'
+              const isSubmitting_t = submitting === task.taskId
+              return (
+                <div key={task.taskId} className={stg.row} style={{ flexWrap: 'wrap' }}>
+                  <span>📋</span>
+                  <span style={{ flex: 1, minWidth: 0, fontWeight: 700, color: '#fff', fontSize: 13, lineHeight: 1.3 }}>
+                    {task.title}
+                    {task.kind === 'HOMEWORK' && <span className={stg.small}> · zkontroluj sám</span>}
+                  </span>
+                  <span className={stg.small}>
+                    {task.kind === 'HOMEWORK'
+                      ? `${ptIcon} ${task.pointValue}${task.bonusValue > 0 ? ` +🔍${task.bonusValue}` : ''}`
+                      : `${ptIcon} ${task.pointValue}`}
+                  </span>
+                  <button
+                    className={`${styles.taskBtn} ${isPending_t ? styles.btnWait : styles.btnGo}`}
+                    onClick={() => handleSubmitTask(task)}
+                    disabled={isPending_t || isSubmitting_t}
+                  >
+                    {isSubmitting_t ? '…' : isPending_t ? 'Čeká ✋' : 'Hotovo!'}
+                  </button>
+                </div>
+              )
+            })
         }
+      </>
+    )
 
-        {/* Rewards strip */}
-        <div className={styles.sectionHead}>{REWARD_HEADING[theme]}</div>
-        <div className={styles.rewardsRow}>
-          {rewards.map(r => (
-            <div key={r.id} className={`${styles.rewardChip} ${totalPts >= r.pointCost ? styles.rewardLit : ''}`}>
-              <div className={styles.rewardIco}>🎁</div>
-              <div className={styles.rewardName}>{r.name}</div>
-              <div className={styles.rewardPts}>
-                {totalPts >= r.pointCost ? `${ptIcon} Můžeš si ji vzít!` : `${ptIcon} ${r.pointCost}`}
-              </div>
-            </div>
-          ))}
+    const right = (
+      <>
+        <div className={stg.small}>
+          {theme === 'frozen' ? '🌟 Vedlejší výzvy' : theme === 'unicorn' ? '🌟 Speciální kouzla' : '🌟 Vedlejší questy'}
         </div>
-
-        {/* Open quests */}
-        {openQuestTemplates.length > 0 && (
-          <>
-            <div className={styles.sectionHead}>
-              {theme === 'frozen' ? '🌟 Vedlejší výzvy' : theme === 'unicorn' ? '🌟 Speciální kouzla' : '🌟 Vedlejší questy'}
-            </div>
-            <div className={styles.tasksGrid}>
-              {openQuestTemplates.map(qt => {
-                const alreadyClaimed = tasks.some(t => t.templateId === qt.taskId)
-                const isClaiming = claiming === qt.taskId
-                return (
-                  <div key={qt.taskId} className={styles.taskCard}>
-                    <span className={styles.taskIco}>🌟</span>
-                    <span className={styles.taskName}>{qt.title}</span>
-                    {qt.description && <span style={{ fontSize: '10px', color: 'var(--kdim)', lineHeight: 1.3 }}>{qt.description}</span>}
-                    <div className={styles.taskBot}>
-                      <span className={styles.taskPts}>{ptIcon} {qt.pointValue}</span>
-                      <button
-                        className={`${styles.taskBtn} ${alreadyClaimed ? styles.btnWait : styles.btnGo}`}
-                        onClick={() => !alreadyClaimed && handleClaimQuest(qt)}
-                        disabled={alreadyClaimed || isClaiming}
-                      >
-                        {isClaiming ? '…' : alreadyClaimed ? 'Vzato ✓' : 'Vzít quest!'}
-                      </button>
-                    </div>
+        {openQuestTemplates.length === 0
+          ? <div className={stg.card} style={{ color: 'rgba(255,255,255,0.45)', fontSize: 12 }}>Žádné vedlejší questy.</div>
+          : openQuestTemplates.map(qt => {
+              const alreadyClaimed = tasks.some(t => t.templateId === qt.taskId)
+              const isClaiming_q   = claiming === qt.taskId
+              return (
+                <div key={qt.taskId} className={stg.row} style={{ flexWrap: 'wrap', gap: 8 }}>
+                  <span>🌟</span>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontWeight: 700, fontSize: 13, color: '#fff' }}>{qt.title}</div>
+                    <div className={stg.small}>{ptIcon} {qt.pointValue}</div>
                   </div>
-                )
-              })}
-            </div>
-          </>
+                  <button
+                    className={`${styles.taskBtn} ${alreadyClaimed ? styles.btnWait : styles.btnGo}`}
+                    onClick={() => !alreadyClaimed && handleClaimQuest(qt)}
+                    disabled={alreadyClaimed || isClaiming_q}
+                  >
+                    {isClaiming_q ? '…' : alreadyClaimed ? 'Vzato ✓' : 'Beru!'}
+                  </button>
+                </div>
+              )
+            })
+        }
+        {progress?.chestAvailable && (
+          <button className={styles.chestBtn} onClick={async () => {
+            try {
+              const res = await openChest(child.id)
+              const prog = await getProgress(child.id)
+              setProgress(prog)
+              setChestToast(`🎁 Pokladnice! +${res.awardedPoints} bodů`)
+              setTimeout(() => setChestToast(null), 4000)
+            } catch { /**/ }
+          }}>
+            🎁 Otevřít pokladnici!
+          </button>
         )}
       </>
     )
+
+    const bottom = familyGoal && !familyGoal.reachedAt ? (
+      <div className={stg.card}>
+        <div className={stg.h3}>{familyGoal.name}</div>
+        <div className={stg.track} style={{ marginTop: 4 }}><div className={stg.fill} style={{ width: `${familyGoal.progressPct ?? 0}%` }} /></div>
+        <div className={stg.small}>⭐ {familyGoal.currentProgress} / {familyGoal.targetPoints} · Splňte ranní rutinu a přibude +50</div>
+      </div>
+    ) : rewards.length > 0 ? (
+      <>
+        <div className={stg.small}>{REWARD_HEADING[theme]}</div>
+        <div className={styles.rewardsRow}>
+          {rewards.slice(0, 6).map(r => (
+            <div key={r.id} className={`${styles.rewardChip} ${totalPts >= r.pointCost ? styles.rewardLit : ''}`}>
+              <div className={styles.rewardIco}>🎁</div>
+              <div className={styles.rewardName}>{r.name}</div>
+              <div className={styles.rewardPts}>{ptIcon} {r.pointCost}</div>
+            </div>
+          ))}
+        </div>
+      </>
+    ) : null
+
+    return { top, left, right, bottom }
   }
 
   // ── Section: Mapa ────────────────────────────────────────────────────────
   function renderMapa() {
-    const level         = progress?.level ?? 1
-    const xpPct         = progress?.progressPct ?? 0
-    const xp            = progress?.xp ?? 0
-    const maxLevel      = progress?.maxLevel ?? 12
-    const prestigeStars = progress?.prestigeStars ?? 0
-    const stages        = MAP_STAGES[theme] ?? MAP_STAGES.frozen
-    const stageIco      = MAP_STAGE_ICO[theme] ?? MAP_STAGE_ICO.frozen
-    const lvlWidth      = 100 / maxLevel
+    const level              = progress?.level ?? 1
+    const xpPct              = progress?.progressPct ?? 0
+    const xp                 = progress?.xp ?? 0
+    const maxLevel           = progress?.maxLevel ?? 12
+    const prestigeStars      = progress?.prestigeStars ?? 0
+    const stages             = MAP_STAGES[theme] ?? MAP_STAGES.frozen
+    const stageIco           = MAP_STAGE_ICO[theme] ?? MAP_STAGE_ICO.frozen
+    const isMaxLevel         = level >= maxLevel && prestigeStars > 0
+    const xpRemaining        = Math.max((progress?.nextThreshold ?? xp) - xp, 0)
+    const selectedLandscapeLevel = progress?.selectedLandscapeLevel ?? level
 
-    const avatarPct = Math.min(((level - 1) + (xpPct / 100)) * lvlWidth, 98)
-    const isMaxLevel = level >= maxLevel && prestigeStars > 0
-
-    // Fire level-up overlay when level increases
     if (prevLevelRef.current !== null && prevLevelRef.current < level) {
       setLevelUpAnim(true)
       setTimeout(() => setLevelUpAnim(false), 4000)
     }
     prevLevelRef.current = level
 
-    return (
-      <div className={styles.mapPanel}>
-        {/* Level title + prestige */}
-        <div className={styles.xpMapHeader}>
-          <span className={styles.xpMapLvl}>
-            Úroveň {level}: {progress?.levelName ?? ''}
-            {prestigeStars > 0 && <span className={styles.prestigeStars}>{' '}{'⭐'.repeat(Math.min(prestigeStars, 5))}</span>}
-          </span>
-          <span className={styles.xpMapXp}>{ptIcon} {xp} XP</span>
-        </div>
+    const nextLevelData = level < maxLevel ? getLevelData(child?.avatar, level + 1) : null
 
-        {/* Scrollable stage track */}
-        <div className={styles.xpMapScroll}>
-          <div className={styles.xpMapTrack} style={{ width: `${maxLevel * 120}px` }}>
-            <div className={styles.xpMapFill} style={{ width: `${avatarPct}%` }} />
-
-            {stages.slice(0, maxLevel).map((name, i) => {
-              const posX = (i / maxLevel * 100).toFixed(1)
-              const done = i < level - 1 || (i === level - 1 && xpPct >= 100)
-              const locked = i >= level
-              return (
-                <div key={i} className={styles.xpMapNode} style={{ left: `${posX}%` }}>
-                  <div className={[
-                    styles.xpMapNodeDot,
-                    done ? styles.xpMapNodeDone : i === level - 1 ? styles.xpMapNodeCur : '',
-                    locked ? styles.xpMapNodeLocked : '',
-                  ].join(' ')}>
-                    {locked ? '🔒' : stageIco[i]}
-                  </div>
-                  <div className={styles.xpMapNodeLabel}>{name}</div>
-                </div>
-              )
-            })}
-
-            <div className={styles.xpMapAvatar} style={{ left: `${avatarPct}%` }}>
-              {avatarSrc
-                ? <img src={avatarSrc} style={{ width: 40, height: 40, objectFit: 'cover', borderRadius: '50%', display: 'block' }} alt="" />
-                : THEME_AVATAR[theme]}
-            </div>
+    const top = (
+      <>
+        <div>
+          <div className={stg.small}>Úroveň {level}</div>
+          <div className={stg.h2}>
+            {progress?.levelName ?? ''}
+            {prestigeStars > 0 && <span> {'⭐'.repeat(Math.min(prestigeStars, 5))}</span>}
           </div>
         </div>
-
-        {/* XP progress bar */}
-        <div className={styles.xpProgressRow}>
-          <div className={styles.xpProgressBar}>
-            <div className={styles.xpProgressFill} style={{ width: `${xpPct}%` }} />
-          </div>
-          <span className={styles.xpProgressLabel}>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div className={stg.track}><div className={stg.fill} style={{ width: `${xpPct}%` }} /></div>
+          <div className={stg.small} style={{ marginTop: 4 }}>
             {isMaxLevel
               ? `⭐ Prestiž ${prestigeStars} — ${Math.round(xpPct)}% k další hvězdě`
-              : `${progress?.currentThreshold} → ${progress?.nextThreshold} XP (${Math.round(xpPct)}%)`}
-          </span>
+              : `${progress?.currentThreshold} → ${progress?.nextThreshold} XP · ještě ${xpRemaining} XP do ${stages[level] ?? 'max'}`}
+          </div>
         </div>
-        {isMaxLevel && prestigeStars >= 1 && (
-          <div className={styles.xpMaxLabel}>⚡ Maximální úroveň! Prestiž {'⭐'.repeat(prestigeStars)}</div>
+        <div style={{ textAlign: 'right' }}>
+          <div className={stg.h2}>{xp} XP</div>
+          <div className={stg.small}>{ptIcon}</div>
+        </div>
+      </>
+    )
+
+    const left = (
+      <>
+        <div className={stg.small}>Trasa</div>
+        {stages.slice(0, maxLevel).map((name, i) => {
+          const done  = i < level - 1
+          const isCur = i === level - 1
+          const locked = i >= level
+          return (
+            <div
+              key={i}
+              className={`${stg.row} ${isCur ? stg.stageCur : ''}`}
+              style={{ opacity: locked ? 0.4 : 1, outline: isCur ? '2px solid var(--kacc)' : 'none', outlineOffset: '-2px' }}
+            >
+              <span style={{ fontSize: 18, lineHeight: 1, flexShrink: 0 }}>{locked ? '🔒' : stageIco[i]}</span>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontWeight: 700, fontSize: 13, color: '#fff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{name}</div>
+                <div className={stg.small}>Úroveň {i + 1}</div>
+              </div>
+              {done  && <span style={{ color: 'var(--kacc)', fontSize: 16, flexShrink: 0 }}>✓</span>}
+              {isCur && <span style={{ color: 'var(--kacc)', fontSize: 11, fontWeight: 800, flexShrink: 0 }}>◄</span>}
+            </div>
+          )
+        })}
+      </>
+    )
+
+    const right = (
+      <>
+        {nextLevelData ? (
+          <div className={stg.card}>
+            <div className={stg.small}>Další zastávka</div>
+            {nextLevelData.thumb && (
+              <img
+                src={nextLevelData.thumb}
+                alt=""
+                style={{ width: '100%', borderRadius: 10, filter: 'blur(3px) grayscale(0.5)', aspectRatio: '16/9', objectFit: 'cover' }}
+              />
+            )}
+            <div style={{ fontWeight: 700, fontSize: 14, color: '#fff' }}>{stages[level] ?? `Úroveň ${level + 1}`}</div>
+            {nextLevelData.avatarChange && (
+              <div className={stg.small}>Ještě {xpRemaining} XP. Odemkneš: {nextLevelData.avatarChange}</div>
+            )}
+          </div>
+        ) : (
+          <div className={stg.card}>
+            <div className={stg.small}>Maximální úroveň!</div>
+            {prestigeStars > 0 && <div style={{ fontSize: 24 }}>{'⭐'.repeat(prestigeStars)}</div>}
+          </div>
         )}
+        {familyGoal && !familyGoal.reachedAt && (
+          <div className={stg.card}>
+            <div className={stg.small}>🎯 Rodinný cíl</div>
+            <div className={stg.h3}>{familyGoal.name}</div>
+            <div className={stg.track}><div className={stg.fill} style={{ width: `${familyGoal.progressPct ?? 0}%` }} /></div>
+            <div className={stg.small}>⭐ {familyGoal.currentProgress} / {familyGoal.targetPoints}</div>
+          </div>
+        )}
+      </>
+    )
+
+    const bottom = (
+      <div className={stg.thumbGrid}>
+        {Array.from({ length: maxLevel }, (_, i) => {
+          const lvlNum  = i + 1
+          const unlocked = lvlNum <= level
+          const active   = selectedLandscapeLevel === lvlNum
+          const td       = getLevelData(child?.avatar, lvlNum)
+          return (
+            <button
+              key={lvlNum}
+              onClick={async () => {
+                if (!unlocked) return
+                try {
+                  await updateAppearance(child.id, { landscapeLevel: lvlNum })
+                  setProgress(prev => ({ ...prev, selectedLandscapeLevel: lvlNum }))
+                } catch { /**/ }
+              }}
+              style={{
+                background: 'transparent', padding: 0, cursor: unlocked ? 'pointer' : 'default',
+                border: active ? '2px solid var(--kacc)' : '2px solid rgba(255,255,255,0.12)',
+                borderRadius: 8, position: 'relative', aspectRatio: '16/9', overflow: 'hidden',
+              }}
+            >
+              {td?.thumb
+                ? <img
+                    src={td.thumb} alt=""
+                    style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block',
+                      filter: unlocked ? 'none' : 'blur(2px) grayscale(0.8)' }}
+                  />
+                : <span style={{ fontSize: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>{stageIco[i]}</span>
+              }
+              {!unlocked && (
+                <span style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12 }}>🔒</span>
+              )}
+            </button>
+          )
+        })}
       </div>
     )
+
+    const badge = `${stageIco[level - 1] ?? ''} ${stages[level - 1] ?? ''}`
+
+    return { top, left, right, bottom, badge }
   }
 
   async function handleRedeem(reward) {
@@ -704,24 +813,15 @@ export default function KidView() {
   }
 
   // ── Section: Odměny ───────────────────────────────────────────────────────
-  const REDEMPTION_STATUS_CZ = {
-    REQUESTED: 'Čeká na schválení',
-    APPROVED:  'Schváleno ✓',
-    DELIVERED: 'Hotovo! 🎉',
-    CANCELLED: 'Zrušeno',
-  }
-
   function renderOdmeny() {
     const activeByRewardId = Object.fromEntries(
       redemptions
         .filter(r => r.status === 'REQUESTED' || r.status === 'APPROVED')
         .map(r => [r.rewardId, r])
     )
-
-    // Weekly limit: ISO week Monday at midnight
     const now = new Date()
-    const dayOfWeek = now.getDay() === 0 ? 6 : now.getDay() - 1 // Mon=0
-    const weekStart = new Date(now); weekStart.setDate(now.getDate() - dayOfWeek); weekStart.setHours(0,0,0,0)
+    const dayOfWeek = now.getDay() === 0 ? 6 : now.getDay() - 1
+    const weekStart = new Date(now); weekStart.setDate(now.getDate() - dayOfWeek); weekStart.setHours(0, 0, 0, 0)
     function weeklyUsed(rewardId) {
       return redemptions.filter(r =>
         r.rewardId === rewardId &&
@@ -734,88 +834,142 @@ export default function KidView() {
       .filter(r => new Date(r.createdAt) > thirtyDaysAgo)
       .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
 
-    return (
-      <>
-        <div className={styles.odmenyHeader}>
-          <span className={styles.odmenyTotal}>{ptIcon} {totalPts}</span>
-          <span className={styles.odmenyTotalLbl}>bodů celkem</span>
-        </div>
-        <div className={styles.odmenyGrid}>
-          {rewards.map(r => {
-            const canAfford     = totalPts >= r.pointCost
-            const barPct        = Math.min(totalPts / r.pointCost * 100, 100)
-            const need          = Math.max(r.pointCost - totalPts, 0)
-            const existing      = activeByRewardId[r.id]
-            const isLoading     = redeeming === r.id
-            const confirming    = confirmRedeemId === r.id
-            const weeklyAtLimit = r.weeklyLimit != null && weeklyUsed(r.id) >= r.weeklyLimit
-            return (
-              <div key={r.id} className={`${styles.odmenyCard} ${canAfford && !weeklyAtLimit ? styles.odmenyDone : ''}`}>
-                {weeklyAtLimit && <div className={styles.odmenyPendingBadge}>Znovu od pondělí 🔄</div>}
-                {!weeklyAtLimit && existing?.status === 'APPROVED' && <div className={styles.odmenyDoneBadge}>SCHVÁLENO!</div>}
-                {!weeklyAtLimit && existing?.status === 'REQUESTED' && <div className={styles.odmenyPendingBadge}>Čeká na rodiče…</div>}
-                <div className={styles.odmenyIco}>{r.icon || '🎁'}</div>
-                <div className={styles.odmenyName}>{r.name}</div>
-                {r.description && <div className={styles.odmenyDesc}>{r.description}</div>}
-                <div className={styles.odmenyBar}>
-                  <div className={styles.odmenyFill} style={{ width: `${barPct}%` }} />
-                </div>
-                <div className={styles.odmenyInfo}>
-                  <span>{ptIcon} {Math.min(totalPts, r.pointCost)} / {r.pointCost}</span>
-                  {!canAfford && <span className={styles.odmenyNeed}>ještě {need} {ptIcon}</span>}
-                </div>
-                {canAfford && !existing && !confirming && !weeklyAtLimit && (
-                  <button className={styles.redeemBtn}
-                    onClick={() => setConfirmRedeemId(r.id)}>
-                    🎁 Chci tuhle odměnu!
-                  </button>
-                )}
-                {canAfford && !existing && confirming && !weeklyAtLimit && (
-                  <div className={styles.confirmRow}>
-                    <span className={styles.confirmText}>Opravdu chceš?</span>
-                    <button className={styles.confirmYes} disabled={isLoading}
-                      onClick={() => { handleRedeem(r); setConfirmRedeemId(null) }}>
-                      {isLoading ? '…' : 'Ano! 🎁'}
-                    </button>
-                    <button className={styles.confirmNo}
-                      onClick={() => setConfirmRedeemId(null)}>
-                      Ne
-                    </button>
-                  </div>
-                )}
-                {existing?.status === 'REQUESTED' && (
-                  <button className={styles.cancelRedeemBtn}
-                    onClick={() => handleCancelRedemption(existing.id)}>
-                    Zrušit žádost
-                  </button>
-                )}
-              </div>
-            )
-          })}
-          {rewards.length === 0 && <p className={styles.emptyTasks}>Žádné odměny zatím nevytvořil rodič.</p>}
-        </div>
+    const canAffordList    = rewards.filter(r => totalPts >= r.pointCost && !(r.weeklyLimit != null && weeklyUsed(r.id) >= r.weeklyLimit))
+    const savingList       = rewards.filter(r => totalPts < r.pointCost).slice(0, 3)
+    const bigDreams        = [...rewards].sort((a, b) => b.pointCost - a.pointCost).slice(0, 2)
+    const nearestUnreached = rewards.find(r => totalPts < r.pointCost)
+    const nearestBarPct    = nearestUnreached ? Math.min(totalPts / nearestUnreached.pointCost * 100, 100) : 100
+    const affordableCount  = canAffordList.length
 
-        {recentRedemptions.length > 0 && (
-          <>
-            <div className={styles.sectionHead} style={{ marginTop: 24 }}>📋 Moje žádosti (30 dní)</div>
-            <div className={styles.zadostiList}>
-              {recentRedemptions.map(red => (
-                <div key={red.id} className={styles.zadostiItem}>
-                  <span className={styles.zadostiIco}>{red.rewardIcon || '🎁'}</span>
-                  <div className={styles.zadostiInfo}>
-                    <div className={styles.zadostiName}>{red.rewardName}</div>
-                    <div className={styles.zadostiDate}>{czShortDate(red.createdAt)}</div>
-                  </div>
-                  <span className={`${styles.zadostiStatus} ${styles['zadosti_' + red.status]}`}>
-                    {REDEMPTION_STATUS_CZ[red.status] ?? red.status}
-                  </span>
-                </div>
-              ))}
+    function rewardRow(r, canAfford) {
+      const existing      = activeByRewardId[r.id]
+      const isLoading     = redeeming === r.id
+      const confirming    = confirmRedeemId === r.id
+      const weeklyAtLimit = r.weeklyLimit != null && weeklyUsed(r.id) >= r.weeklyLimit
+      return (
+        <div key={r.id} className={stg.card} style={{ border: canAfford && !weeklyAtLimit ? '1px solid rgba(100,255,100,0.35)' : undefined }}>
+          {weeklyAtLimit && <div className={styles.odmenyPendingBadge}>Znovu od pondělí 🔄</div>}
+          {!weeklyAtLimit && existing?.status === 'APPROVED'  && <div className={styles.odmenyDoneBadge}>SCHVÁLENO!</div>}
+          {!weeklyAtLimit && existing?.status === 'REQUESTED' && <div className={styles.odmenyPendingBadge}>Čeká na rodiče…</div>}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span style={{ fontSize: 22 }}>{r.icon || '🎁'}</span>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontWeight: 700, fontSize: 14, color: '#fff' }}>{r.name}</div>
+              <div className={stg.small}>{ptIcon} {r.pointCost}{canAfford && !weeklyAtLimit ? ' · můžeš!' : ''}</div>
             </div>
+          </div>
+          {canAfford && !existing && !confirming && !weeklyAtLimit && (
+            <button className={styles.redeemBtn} onClick={() => setConfirmRedeemId(r.id)}>🎁 Chci!</button>
+          )}
+          {canAfford && !existing && confirming && !weeklyAtLimit && (
+            <div className={styles.confirmRow}>
+              <span className={styles.confirmText}>Opravdu chceš?</span>
+              <button className={styles.confirmYes} disabled={isLoading}
+                onClick={() => { handleRedeem(r); setConfirmRedeemId(null) }}>
+                {isLoading ? '…' : 'Ano! 🎁'}
+              </button>
+              <button className={styles.confirmNo} onClick={() => setConfirmRedeemId(null)}>Ne</button>
+            </div>
+          )}
+          {existing?.status === 'REQUESTED' && (
+            <button className={styles.cancelRedeemBtn} onClick={() => handleCancelRedemption(existing.id)}>Zrušit žádost</button>
+          )}
+        </div>
+      )
+    }
+
+    const top = (
+      <>
+        <div>
+          <div className={stg.small}>Můžeš utratit</div>
+          <div className={stg.h2}>{ptIcon} {totalPts}</div>
+        </div>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          {nearestUnreached ? (
+            <>
+              <div className={stg.track}><div className={stg.fill} style={{ width: `${nearestBarPct}%` }} /></div>
+              <div className={stg.small} style={{ marginTop: 4 }}>Další odměna: {nearestUnreached.name} · ještě {nearestUnreached.pointCost - totalPts} {ptIcon}</div>
+            </>
+          ) : (
+            <div className={stg.small}>Máš dost na všechny odměny! 🎉</div>
+          )}
+        </div>
+        <div style={{ textAlign: 'right' }}>
+          <div className={stg.h2}>🎁 {affordableCount}</div>
+          <div className={stg.small}>k mání</div>
+        </div>
+      </>
+    )
+
+    const left = (
+      <>
+        {canAffordList.length > 0 && (
+          <>
+            <div className={stg.small}>Na dosah</div>
+            {canAffordList.map(r => rewardRow(r, true))}
+          </>
+        )}
+        {savingList.length > 0 && (
+          <>
+            <div className={stg.small} style={{ marginTop: canAffordList.length ? 8 : 0 }}>Šetřím na</div>
+            {savingList.map(r => rewardRow(r, false))}
+          </>
+        )}
+        {canAffordList.length === 0 && savingList.length === 0 && (
+          <div className={stg.card}>Žádné odměny zatím nevytvořil rodič.</div>
+        )}
+      </>
+    )
+
+    const right = (
+      <>
+        {recentRedemptions.length > 0 ? (
+          <>
+            <div className={stg.small}>Moje žádosti (30 dní)</div>
+            {recentRedemptions.slice(0, 8).map(red => (
+              <div key={red.id} className={stg.row}>
+                <span style={{ flexShrink: 0 }}>{red.rewardIcon || '🎁'}</span>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontWeight: 700, fontSize: 12, color: '#fff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{red.rewardName}</div>
+                  <div className={stg.small}>{czShortDate(red.createdAt)}</div>
+                </div>
+                <span className={`${styles.zadostiStatus} ${styles['zadosti_' + red.status]}`} style={{ fontSize: 11, flexShrink: 0 }}>
+                  {REDEMPTION_STATUS_CZ[red.status] ?? red.status}
+                </span>
+              </div>
+            ))}
+          </>
+        ) : (
+          <div className={stg.card} style={{ color: 'rgba(255,255,255,0.45)', fontSize: 12 }}>Žádné žádosti zatím.</div>
+        )}
+        {bigDreams.length > 0 && (
+          <>
+            <div className={stg.small} style={{ marginTop: 8 }}>Velké sny</div>
+            {bigDreams.map(r => (
+              <div key={r.id} className={stg.card} style={{ opacity: 0.7 }}>
+                <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                  <span style={{ fontSize: 22 }}>{r.icon || '🎁'}</span>
+                  <div>
+                    <div style={{ fontWeight: 700, fontSize: 13, color: '#fff' }}>{r.name}</div>
+                    <div className={stg.small}>{ptIcon} {r.pointCost}</div>
+                  </div>
+                </div>
+              </div>
+            ))}
           </>
         )}
       </>
     )
+
+    const bottom = nearestUnreached ? (
+      <div className={stg.card}>
+        <div className={stg.h3}>Šetříš na: {nearestUnreached.name}</div>
+        <div className={stg.track} style={{ marginTop: 4 }}><div className={stg.fill} style={{ width: `${nearestBarPct}%` }} /></div>
+        <div className={stg.small}>{totalPts} / {nearestUnreached.pointCost} {ptIcon}</div>
+      </div>
+    ) : null
+
+    return { top, left, right, bottom }
   }
 
   // ── Section: Trofeje ─────────────────────────────────────────────────────
@@ -1065,12 +1219,6 @@ export default function KidView() {
   }
 
   const vars = { ...THEME_VARS[theme] }
-  if (landscapeSrc && activeNav === 1) {
-    vars['--kcard']  = 'rgba(0,0,0,0.72)'
-    vars['--kcardb'] = 'rgba(255,255,255,0.20)'
-    vars['--ksb']    = 'rgba(0,0,0,0.62)'
-    vars['--ksbdiv'] = 'rgba(255,255,255,0.14)'
-  }
 
   return (
     <div className={styles.kidApp} style={vars}>
@@ -1118,24 +1266,18 @@ export default function KidView() {
           </button>
         </div>
 
-        <div className={styles.bodyRow}>
-          <div className={styles.scrollArea}>
-            {activeNav === 0 && renderVyzvy()}
-            {activeNav === 1 && renderMapa()}
-            {activeNav === 2 && renderOdmeny()}
-            {activeNav === 3 && renderTrofeje()}
-            {activeNav === 4 && renderJa()}
-          </div>
-
-          {activeNav === 1 && (combinedSrc || landscapeSrc) && (
-            <div className={styles.heroPanel}>
-              <img src={combinedSrc || landscapeSrc} className={styles.heroImg} alt="" />
-              {!combinedSrc && avatarSrc && (
-                <img src={avatarSrc} className={styles.heroAvatarFloat} alt="" />
-              )}
+        {activeNav <= 2
+          ? <KidStage
+              imageSrc={combinedSrc || landscapeSrc}
+              avatarSrc={avatarSrc}
+              showAvatarOverlay={!combinedSrc}
+              {...(activeNav === 0 ? renderVyzvy() : activeNav === 1 ? renderMapa() : renderOdmeny())}
+            />
+          : <div className={styles.scrollArea}>
+              {activeNav === 3 && renderTrofeje()}
+              {activeNav === 4 && renderJa()}
             </div>
-          )}
-        </div>
+        }
       </main>
       {chestToast && <div className={styles.chestToast}>{chestToast}</div>}
 

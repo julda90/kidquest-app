@@ -447,55 +447,8 @@
 }
 
 
-/* ── Body row (map tab: content left + image right) ── */
-.bodyRow {
-  flex: 1;
-  display: flex;
-  min-height: 0;
-  overflow: hidden;
-}
-
-.heroPanel {
-  width: 42%;
-  min-width: 260px;
-  max-width: 520px;
-  flex-shrink: 0;
-  position: relative;
-  overflow: hidden;
-  border-left: 1px solid rgba(255, 255, 255, 0.10);
-}
-
-.heroImg {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: center;
-  display: block;
-}
-
-.heroAvatarFloat {
-  position: absolute;
-  bottom: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  height: 65%;
-  width: auto;
-  object-fit: contain;
-  filter: drop-shadow(0 6px 24px rgba(0, 0, 0, 0.70));
-  pointer-events: none;
-}
-
-@media (max-width: 760px) {
-  .bodyRow { flex-direction: column; }
-  .heroPanel {
-    width: 100%;
-    max-width: 100%;
-    min-width: 0;
-    height: 180px;
-    border-left: none;
-    border-top: 1px solid rgba(255, 255, 255, 0.10);
-  }
-  .heroAvatarFloat { height: 90%; }
+@media (max-width: 1100px) {
+  .main { overflow-y: auto; overflow-x: hidden; }
 }
 
 /* ── Mapa section ── */
