@@ -1071,9 +1071,6 @@ export default function KidView() {
     vars['--ksb']    = 'rgba(0,0,0,0.62)'
     vars['--ksbdiv'] = 'rgba(255,255,255,0.14)'
   }
-  const mainBg = landscapeSrc && activeNav === 1
-    ? { background: `url(${landscapeSrc}) top left / cover no-repeat` }
-    : {}
 
   return (
     <div className={styles.kidApp} style={vars}>
@@ -1103,7 +1100,7 @@ export default function KidView() {
       </aside>
 
       {/* Main */}
-      <main className={styles.main} style={mainBg}>
+      <main className={styles.main}>
         <div className={styles.topbar}>
           <span className={styles.greeting}>Ahoj, {child.name}! 👋</span>
           <button className={styles.topXpBtn} onClick={() => navigate('/kid/map')} title="Mapa úrovní">
@@ -1121,12 +1118,23 @@ export default function KidView() {
           </button>
         </div>
 
-        <div className={styles.scrollArea}>
-          {activeNav === 0 && renderVyzvy()}
-          {activeNav === 1 && renderMapa()}
-          {activeNav === 2 && renderOdmeny()}
-          {activeNav === 3 && renderTrofeje()}
-          {activeNav === 4 && renderJa()}
+        <div className={styles.bodyRow}>
+          <div className={styles.scrollArea}>
+            {activeNav === 0 && renderVyzvy()}
+            {activeNav === 1 && renderMapa()}
+            {activeNav === 2 && renderOdmeny()}
+            {activeNav === 3 && renderTrofeje()}
+            {activeNav === 4 && renderJa()}
+          </div>
+
+          {activeNav === 1 && landscapeSrc && (
+            <div className={styles.heroPanel}>
+              <img src={landscapeSrc} className={styles.heroImg} alt="" />
+              {avatarSrc && (
+                <img src={avatarSrc} className={styles.heroAvatarFloat} alt="" />
+              )}
+            </div>
+          )}
         </div>
       </main>
       {chestToast && <div className={styles.chestToast}>{chestToast}</div>}
