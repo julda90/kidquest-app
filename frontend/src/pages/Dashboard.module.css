@@ -81,6 +81,8 @@
   justify-content: space-between;
   align-items: flex-start;
   margin-bottom: 32px;
+  flex-wrap: wrap;
+  gap: 12px;
 }
 
 .greeting {
@@ -105,6 +107,16 @@
   font-size: 13px;
   color: #555;
   box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  max-width: 260px;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.userBadge span:last-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
 }
 
 .userAvatar { font-size: 18px; }
@@ -206,6 +218,8 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: 20px;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
 .panelHeader h2 {
@@ -604,8 +618,17 @@
   .panelFull { grid-column: auto; }
 }
 
+/* Tablet: add bottom padding for the fixed mobile nav */
+@media (max-width: 768px) {
+  .main { padding-bottom: calc(56px + env(safe-area-inset-bottom, 0px) + 16px); }
+}
+
 @media (max-width: 600px) {
-  .sidebar { display: none; }
-  .main { padding: 20px; }
+  .main { padding: 16px 16px calc(56px + env(safe-area-inset-bottom, 0px) + 16px); }
   .stats { grid-template-columns: repeat(2, 1fr); }
+  .userBadge { display: none; }
+  .statCard { padding: 14px; gap: 12px; }
+  .statIcon { font-size: 24px; }
+  .statValue { font-size: 22px; }
+  .quickCard { padding: 10px 12px; gap: 8px; }
 }

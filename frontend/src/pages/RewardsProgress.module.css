@@ -95,7 +95,12 @@
 
 @keyframes spin { to { transform: rotate(360deg); } }
 
+@media (max-width: 768px) {
+  .main { padding-bottom: calc(56px + env(safe-area-inset-bottom, 0px) + 16px); }
+}
+
 @media (max-width: 600px) {
-  .main { padding: 16px; }
+  .main { padding: 16px 16px calc(56px + env(safe-area-inset-bottom, 0px) + 16px); }
   .roadWrap { border-radius: 12px; }
+  .rosterCard { padding: 8px 12px; }
 }

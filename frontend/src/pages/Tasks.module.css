@@ -6,6 +6,8 @@
   justify-content: space-between;
   align-items: flex-start;
   margin-bottom: 24px;
+  flex-wrap: wrap;
+  gap: 12px;
 }
 
 .title    { font-size: 24px; font-weight: 800; color: #1a1a2e; margin: 0 0 4px; }
@@ -272,8 +274,17 @@
 .awardConfirm:hover { opacity: 0.88; }
 .awardConfirm:disabled { opacity: 0.5; cursor: not-allowed; }
 
+@media (max-width: 768px) {
+  .main { padding-bottom: calc(56px + env(safe-area-inset-bottom, 0px) + 16px); }
+}
+
 @media (max-width: 700px) {
-  .main { padding: 20px; }
+  .main { padding: 16px 16px calc(56px + env(safe-area-inset-bottom, 0px) + 16px); }
   .assignee { display: none; }
   .tabs { display: none; }
+  .taskCard { gap: 10px; padding: 12px 14px; }
+  .taskRight { gap: 6px; }
+  .taskMeta { gap: 6px; }
+  .filters { gap: 8px; }
+  .childSelect { margin-left: 0; }
 }

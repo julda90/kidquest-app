@@ -6,6 +6,8 @@
   justify-content: space-between;
   align-items: flex-start;
   margin-bottom: 28px;
+  flex-wrap: wrap;
+  gap: 12px;
 }
 
 .title    { font-size: 24px; font-weight: 800; color: #1a1a2e; margin: 0 0 4px; }
@@ -285,7 +287,11 @@
 
 @keyframes spin { to { transform: rotate(360deg); } }
 
+@media (max-width: 768px) {
+  .main { padding-bottom: calc(56px + env(safe-area-inset-bottom, 0px) + 16px); }
+}
+
 @media (max-width: 600px) {
-  .main { padding: 20px; }
+  .main { padding: 16px 16px calc(56px + env(safe-area-inset-bottom, 0px) + 16px); }
   .grid { grid-template-columns: 1fr 1fr; }
 }

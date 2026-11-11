@@ -57,6 +57,69 @@
 
 .logoutBtn:hover { background: rgba(255,77,109,0.15); color: #ff4d6d; }
 
-@media (max-width: 600px) {
+@media (max-width: 768px) {
   .sidebar { display: none; }
+}
+
+/* ── Mobile bottom navigation bar ── */
+.mobileNav {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .mobileNav {
+    display: flex;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 56px;
+    background: #1a1a2e;
+    border-top: 1px solid rgba(255,255,255,0.10);
+    z-index: 100;
+    align-items: stretch;
+    justify-content: space-around;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+}
+
+.mobileNavItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  flex: 1;
+  color: rgba(255,255,255,0.55);
+  text-decoration: none;
+  padding: 6px 2px 4px;
+  transition: color 0.15s, background 0.15s;
+}
+
+.mobileNavBtn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.mobileNavItem:hover { color: #fff; background: rgba(255,255,255,0.07); }
+.mobileNavActive { color: #fff !important; background: rgba(102,126,234,0.22) !important; }
+
+.mobileNavIcon  { font-size: 19px; line-height: 1; flex-shrink: 0; }
+.mobileNavLabel {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+/* Very small screens: icons only, no labels */
+@media (max-width: 380px) {
+  .mobileNavLabel { display: none; }
+  .mobileNav { height: 48px; }
+  .mobileNavIcon { font-size: 22px; }
 }

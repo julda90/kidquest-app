@@ -451,6 +451,28 @@
   .main { overflow-y: auto; overflow-x: hidden; }
 }
 
+/* ── Phone: fix topbar overflow ── */
+@media (max-width: 500px) {
+  .topbar { padding: 0 10px; gap: 6px; }
+  .greeting {
+    font-size: 14px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-width: 0;
+  }
+  .topXpTrack { display: none; }
+  .topXpBtn { gap: 4px; padding: 4px 8px; }
+  .topXpPts { font-size: 11px; }
+  .topXpLvl { font-size: 10px; }
+  .switchTopBtn { display: none; }
+}
+
+/* ── Phone: meLayout left column ── */
+@media (max-width: 480px) {
+  .scrollArea { padding: 10px 12px 20px; }
+}
+
 /* ── Mapa section ── */
 .mapHeader {
   display: flex; align-items: baseline; gap: 12px; margin-bottom: 20px; flex-wrap: wrap;
