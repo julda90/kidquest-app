@@ -285,10 +285,7 @@ public class TaskApprovalService {
 
     private void checkAndAwardBadge(Child child, Badge badge, long count, int threshold, List<Badge> earned) {
         if (count >= threshold && !childBadgeRepository.existsByChildIdAndBadge(child.getId(), badge)) {
-            ChildBadge cb = new ChildBadge();
-            cb.setChild(child);
-            cb.setBadge(badge);
-            childBadgeRepository.save(cb);
+            progressService.grantBadge(child, badge);
             earned.add(badge);
         }
     }

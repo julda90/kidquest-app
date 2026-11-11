@@ -666,8 +666,11 @@
 .badgeCard {
   background: var(--kcard); border: 1.5px solid var(--kcardb); border-radius: var(--kr);
   padding: 12px 8px; display: flex; flex-direction: column; align-items: center; gap: 5px;
-  opacity: 0.55; transition: opacity 0.2s;
+  opacity: 0.55; transition: opacity 0.2s, transform 0.12s;
+  cursor: pointer;
 }
+.badgeCard:hover { transform: translateY(-2px); }
+.badgeCard:focus-visible { outline: 2px solid var(--kpts); outline-offset: 2px; }
 .badgeEarned { opacity: 1; border-color: var(--kpts); box-shadow: 0 0 10px var(--kglow); }
 .badgeIco { font-size: 28px; }
 .badgeName { font-size: 9.5px; font-weight: 700; color: var(--kdim); text-align: center; line-height: 1.3; }
@@ -1321,6 +1324,78 @@
 .levelUpName  { font-family: 'Fredoka One','Segoe UI',sans-serif; font-size: 26px; color: #fff; margin-bottom: 4px; }
 .levelUpLevel { font-size: 18px; color: rgba(255,255,255,0.85); margin-bottom: 20px; }
 .levelUpHint  { font-size: 13px; color: rgba(255,255,255,0.60); }
+
+/* ── Badge earned celebration ── */
+.badgeCelebrateCard {
+  text-align: center;
+  padding: 34px 40px 30px;
+  max-width: 340px;
+  border-radius: 28px;
+  background: rgba(20, 8, 40, 0.92);
+  border: 2px solid rgba(255,255,255,0.18);
+  box-shadow: 0 0 48px rgba(0,0,0,0.5);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  animation: popInBig 0.5s cubic-bezier(0.34,1.56,0.64,1);
+}
+.badgeCelebrate_common    { border-color: #f59e0b; box-shadow: 0 0 44px rgba(245,158,11,0.55); }
+.badgeCelebrate_rare      { border-color: #a855f7; box-shadow: 0 0 44px rgba(168,85,247,0.55); }
+.badgeCelebrate_legendary {
+  border-color: transparent;
+  background:
+    linear-gradient(rgba(20,8,40,0.94), rgba(20,8,40,0.94)) padding-box,
+    linear-gradient(135deg,#f59e0b,#ef4444,#8b5cf6,#f59e0b) border-box;
+  background-size: 200% 200%;
+  animation: popInBig 0.5s cubic-bezier(0.34,1.56,0.64,1), legendaryBorder 3s linear infinite 0.5s;
+  box-shadow: 0 0 60px rgba(245,158,11,0.6);
+}
+.badgeCelebrateTier {
+  font-family: 'Fredoka One','Segoe UI',sans-serif;
+  font-size: 13px; letter-spacing: 0.03em;
+  color: rgba(255,255,255,0.72); margin-bottom: 12px;
+}
+.badgeCelebrateIcon {
+  font-size: 72px; line-height: 1; margin-bottom: 12px;
+  filter: drop-shadow(0 4px 16px rgba(0,0,0,0.45));
+  animation: badgePop 0.6s cubic-bezier(0.34,1.8,0.64,1) 0.12s both;
+}
+@keyframes badgePop {
+  from { transform: scale(0.2) rotate(-18deg); opacity: 0; }
+  to   { transform: scale(1) rotate(0); opacity: 1; }
+}
+.badgeCelebrateName {
+  font-family: 'Fredoka One','Segoe UI',sans-serif;
+  font-size: 26px; color: #fff; margin-bottom: 10px;
+}
+.badgeCelebrateBounty {
+  font-family: 'Fredoka One','Segoe UI',sans-serif;
+  font-size: 24px; color: #ffd700; margin-bottom: 6px;
+}
+.badgeCelebrateReward {
+  font-size: 13px; color: #ffd700; line-height: 1.4; margin-bottom: 8px;
+}
+.badgeCelebrateHint { font-size: 12px; color: rgba(255,255,255,0.55); margin-top: 10px; }
+
+/* ── Badge detail (tap a badge to learn what it's for) ── */
+.badgeDetailDesc {
+  font-size: 14px; color: rgba(255,255,255,0.84); line-height: 1.5; margin: 2px 0 12px;
+}
+.badgeDetailStatus {
+  font-family: 'Fredoka One','Segoe UI',sans-serif;
+  font-size: 14px; color: var(--kpts); margin-bottom: 6px;
+}
+.badgeDetailBounty { font-size: 13px; color: #ffd700; margin-bottom: 4px; }
+.badgeDetailClose {
+  margin-top: 16px; font-family: 'Fredoka One','Segoe UI',sans-serif; font-size: 14px;
+  padding: 9px 26px; border-radius: 12px; border: none; cursor: pointer;
+  background: var(--kbtng); color: #fff; box-shadow: 0 2px 10px rgba(0,0,0,0.25);
+  transition: opacity 0.15s;
+}
+.badgeDetailClose:hover { opacity: 0.88; }
+
+@media (prefers-reduced-motion: reduce) {
+  .badgeCelebrateCard, .badgeCelebrateIcon, .badgeCelebrate_legendary { animation: none; }
+}
 
 /* ── Prestige stars ── */
 .prestigeStars { font-size: 16px; }

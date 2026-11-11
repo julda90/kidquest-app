@@ -226,51 +226,63 @@ const BADGE_TIER = {
 
 const BADGE_META = {
   // ── Existing ──────────────────────────────────────────────────────────────
-  LUMBERJACK:           { i: '🪵', n: 'Dřevorubec',            tier: BADGE_TIER.COMMON },
-  SHERLOCK:             { i: '🔍', n: 'Detektiv chyb',          tier: BADGE_TIER.COMMON },
-  SELF_STARTER:         { i: '🚀', n: 'Samostatný',             tier: BADGE_TIER.COMMON },
-  HEAD_WAITER:          { i: '🍽️', n: 'Vrchní číšník',         tier: BADGE_TIER.COMMON },
-  TIDY:                 { i: '🧹', n: 'Uklízeč',               tier: BADGE_TIER.COMMON },
-  LAUNDRY_PRO:          { i: '🧺', n: 'Prací mistr',            tier: BADGE_TIER.COMMON },
-  STREAK_7:             { i: '🔥', n: '7 dní v řadě',           tier: BADGE_TIER.COMMON },
-  STREAK_30:            { i: '💥', n: '30 dní v řadě',          tier: BADGE_TIER.RARE },
-  EARLY_BIRD:           { i: '🐦', n: 'Pilná včelka',           tier: BADGE_TIER.COMMON },
-  FIRST_REWARD:         { i: '🎁', n: 'První odměna',           tier: BADGE_TIER.COMMON },
-  TEAM_PLAYER:          { i: '👥', n: 'Týmový hráč',            tier: BADGE_TIER.COMMON },
+  LUMBERJACK:           { i: '🪵', n: 'Dřevorubec',            tier: BADGE_TIER.COMMON, desc: 'Za 10 úkolů se dřevem. Učí pomáhat s topením a nebát se práce venku.' },
+  SHERLOCK:             { i: '🔍', n: 'Detektiv chyb',          tier: BADGE_TIER.COMMON, desc: 'Za 10× zkontrolováno nanečisto. Vede k pečlivosti a hledání vlastních chyb.' },
+  SELF_STARTER:         { i: '🚀', n: 'Samostatný',             tier: BADGE_TIER.COMMON, desc: 'Za 10 úkolů bez připomínání. Podporuje samostatnost a vlastní iniciativu.' },
+  HEAD_WAITER:          { i: '🍽️', n: 'Vrchní číšník',         tier: BADGE_TIER.COMMON, desc: 'Za 20× prostřený stůl. Učí pomáhat při společném jídle.' },
+  TIDY:                 { i: '🧹', n: 'Uklízeč',               tier: BADGE_TIER.COMMON, desc: 'Za 20× uklizený pokoj. Buduje návyk pořádku kolem sebe.' },
+  LAUNDRY_PRO:          { i: '🧺', n: 'Prací mistr',            tier: BADGE_TIER.COMMON, desc: 'Za 20 úkolů s prádlem. Učí starat se o vlastní oblečení.' },
+  STREAK_7:             { i: '🔥', n: '7 dní v řadě',           tier: BADGE_TIER.COMMON, desc: 'Za 7 dní v řadě. Odměňuje každodenní vytrvalost.' },
+  STREAK_30:            { i: '💥', n: '30 dní v řadě',          tier: BADGE_TIER.RARE, desc: 'Za 30 dní v řadě. Oceňuje opravdu dlouhou vytrvalost.' },
+  EARLY_BIRD:           { i: '🐦', n: 'Pilná včelka',           tier: BADGE_TIER.COMMON, desc: 'Za 10 ranních rutin. Podporuje klidné a včasné ráno.' },
+  FIRST_REWARD:         { i: '🎁', n: 'První odměna',           tier: BADGE_TIER.COMMON, desc: 'Za první vybranou odměnu. Učí šetřit a dojít si za cílem.' },
+  TEAM_PLAYER:          { i: '👥', n: 'Týmový hráč',            tier: BADGE_TIER.COMMON, desc: 'Za 50 splněných úkolů. Oceňuje ochotu zapojit se a pomáhat rodině.' },
   // ── Task milestones ───────────────────────────────────────────────────────
-  TASK_100:             { i: '⚡', n: 'Ostřílený pomocník',     tier: BADGE_TIER.COMMON },
-  TASK_250:             { i: '🏠', n: 'Mistr domácnosti',       tier: BADGE_TIER.RARE },
-  TASK_500:             { i: '🏆', n: 'Legenda rodiny',         tier: BADGE_TIER.LEGENDARY, reward: 'Výběr rodinného výletu' },
+  TASK_100:             { i: '⚡', n: 'Ostřílený pomocník',     tier: BADGE_TIER.COMMON, desc: 'Za 100 úkolů. Odměňuje vytrvalé a spolehlivé pomáhání.' },
+  TASK_250:             { i: '🏠', n: 'Mistr domácnosti',       tier: BADGE_TIER.RARE, desc: 'Za 250 úkolů. Z pomocníka se stává mistr domácnosti.' },
+  TASK_500:             { i: '🏆', n: 'Legenda rodiny',         tier: BADGE_TIER.LEGENDARY, reward: 'Výběr rodinného výletu', desc: 'Za 500 úkolů. Legenda, která drží celou rodinu v chodu.' },
   // ── Morning routine ───────────────────────────────────────────────────────
-  ROUTINE_STREAK_14:    { i: '🌅', n: 'Ranní šampion',          tier: BADGE_TIER.RARE },
-  ROUTINE_30_ONTIME:    { i: '⏰', n: 'Nikdy nepozde',          tier: BADGE_TIER.RARE },
+  ROUTINE_STREAK_14:    { i: '🌅', n: 'Ranní šampion',          tier: BADGE_TIER.RARE, desc: 'Za 14 ranních rutin. Buduje pevný a klidný ranní návyk.' },
+  ROUTINE_30_ONTIME:    { i: '⏰', n: 'Nikdy nepozde',          tier: BADGE_TIER.RARE, desc: 'Za 30 rutin včas. Učí spolehlivost a hospodaření s časem.' },
   // ── Homework ──────────────────────────────────────────────────────────────
-  HOMEWORK_CLEAN_5:     { i: '✨', n: 'Bezchybný',              tier: BADGE_TIER.COMMON },
-  HOMEWORK_NO_REMIND_10:{ i: '⚡📚', n: 'Blesková škola',       tier: BADGE_TIER.RARE },
-  HOMEWORK_PERFECT_20:  { i: '🎓', n: 'Profesorský klobouk',    tier: BADGE_TIER.LEGENDARY, reward: 'Rodič splní 1 přání' },
+  HOMEWORK_CLEAN_5:     { i: '✨', n: 'Bezchybný',              tier: BADGE_TIER.COMMON, desc: 'Za 5 úkolů bez chyby. Podporuje pečlivou přípravu do školy.' },
+  HOMEWORK_NO_REMIND_10:{ i: '⚡📚', n: 'Blesková škola',       tier: BADGE_TIER.RARE, desc: 'Za 10 úkolů bez připomínání. Učí převzít odpovědnost za školu.' },
+  HOMEWORK_PERFECT_20:  { i: '🎓', n: 'Profesorský klobouk',    tier: BADGE_TIER.LEGENDARY, reward: 'Rodič splní 1 přání', desc: 'Za 20 dokonalých úkolů. Vrchol školní samostatnosti a pečlivosti.' },
   // ── Variety ───────────────────────────────────────────────────────────────
-  VARIETY_WEEK:         { i: '🌈', n: 'Všeuměl',               tier: BADGE_TIER.COMMON },
-  VARIETY_ALL:          { i: '🔧', n: 'Švýcarský nůž',          tier: BADGE_TIER.RARE },
+  VARIETY_WEEK:         { i: '🌈', n: 'Všeuměl',               tier: BADGE_TIER.COMMON, desc: 'Za 5 různých druhů úkolů za týden. Podporuje všestrannost.' },
+  VARIETY_ALL:          { i: '🔧', n: 'Švýcarský nůž',          tier: BADGE_TIER.RARE, desc: 'Za zvládnutí všech druhů úkolů. Opravdový všeuměl doma.' },
   // ── Family goals ──────────────────────────────────────────────────────────
-  FAMILY_5:             { i: '🤝', n: 'Sourozenci v akci',      tier: BADGE_TIER.COMMON },
-  FAMILY_20:            { i: '👨‍👩‍👧‍👦', n: 'Rodinná jednota',   tier: BADGE_TIER.RARE },
-  FAMILY_CAPTAIN:       { i: '🚩', n: 'Kapitán týmu',           tier: BADGE_TIER.RARE },
+  FAMILY_5:             { i: '🤝', n: 'Sourozenci v akci',      tier: BADGE_TIER.COMMON, desc: 'Za 5 splněných rodinných cílů. Učí táhnout za jeden provaz.' },
+  FAMILY_20:            { i: '👨‍👩‍👧‍👦', n: 'Rodinná jednota',   tier: BADGE_TIER.RARE, desc: 'Za 20 rodinných cílů. Oceňuje pevné rodinné pouto.' },
+  FAMILY_CAPTAIN:       { i: '🚩', n: 'Kapitán týmu',           tier: BADGE_TIER.RARE, desc: 'Za největší přínos k rodinnému cíli. Učí vést a strhnout ostatní.' },
   // ── Extended streaks ──────────────────────────────────────────────────────
-  STREAK_14:            { i: '🛡️', n: 'Neporazitelný',         tier: BADGE_TIER.RARE },
-  STREAK_60:            { i: '🔥💎', n: 'Strážce ohně',         tier: BADGE_TIER.LEGENDARY, reward: 'Prodloužená večerka o 30 min (víkend, 1 měsíc)' },
+  STREAK_14:            { i: '🛡️', n: 'Neporazitelný',         tier: BADGE_TIER.RARE, desc: 'Za 14 dní v řadě. Odměňuje pevnou a stálou vytrvalost.' },
+  STREAK_60:            { i: '🔥💎', n: 'Strážce ohně',         tier: BADGE_TIER.LEGENDARY, reward: 'Prodloužená večerka o 30 min (víkend, 1 měsíc)', desc: 'Za 60 dní v řadě. Nezdolný strážce série.' },
   // ── Savings & rewards ─────────────────────────────────────────────────────
-  SAVER_1000:           { i: '🐷', n: 'Spořivec',               tier: BADGE_TIER.RARE },
-  MEGA_REWARD:          { i: '💎', n: 'Velký sen',              tier: BADGE_TIER.RARE },
-  COLLECTOR_5:          { i: '🗝️', n: 'Sběratel',              tier: BADGE_TIER.RARE },
+  SAVER_1000:           { i: '🐷', n: 'Spořivec',               tier: BADGE_TIER.RARE, desc: 'Za našetřených 1000 bodů. Učí trpělivost a plánování.' },
+  MEGA_REWARD:          { i: '💎', n: 'Velký sen',              tier: BADGE_TIER.RARE, desc: 'Za vybranou velkou odměnu. Odměňuje míření za velkým snem.' },
+  COLLECTOR_5:          { i: '🗝️', n: 'Sběratel',              tier: BADGE_TIER.RARE, desc: 'Za 5 vybraných odměn. Radost z vlastní zasloužené odměny.' },
   // ── Seasonal ──────────────────────────────────────────────────────────────
-  XMAS_15:              { i: '🎄', n: 'Vánoční elf',            tier: BADGE_TIER.COMMON },
-  EASTER_10:            { i: '🐣', n: 'Velkonočně pilný',       tier: BADGE_TIER.COMMON },
-  BIRTHDAY:             { i: '🎂', n: 'Narozeninový hrdina',    tier: BADGE_TIER.COMMON },
-  SUMMER_30:            { i: '☀️', n: 'Letní bojovník',         tier: BADGE_TIER.RARE },
+  XMAS_15:              { i: '🎄', n: 'Vánoční elf',            tier: BADGE_TIER.COMMON, desc: 'Za 15 úkolů v prosinci. Pomoc v adventním shonu.' },
+  EASTER_10:            { i: '🐣', n: 'Velkonočně pilný',       tier: BADGE_TIER.COMMON, desc: 'Za 10 úkolů o Velikonocích. Jarní pomoc doma.' },
+  BIRTHDAY:             { i: '🎂', n: 'Narozeninový hrdina',    tier: BADGE_TIER.COMMON, desc: 'Za tvé narozeniny. Malá oslava tvého dne!' },
+  SUMMER_30:            { i: '☀️', n: 'Letní bojovník',         tier: BADGE_TIER.RARE, desc: 'Za 30 úkolů o prázdninách. Udrží chuť pomáhat i přes léto.' },
   // ── Complex legendary ─────────────────────────────────────────────────────
-  PET_GUARDIAN:         { i: '🐾', n: 'Správce zvířat',         tier: BADGE_TIER.LEGENDARY, reward: 'Pořízení mazlíčka' },
-  GAME_DAY:             { i: '🎮', n: 'Hra bez hranic',         tier: BADGE_TIER.LEGENDARY, reward: 'Herní den bez omezení obrazovek' },
-  CHEF:                 { i: '👨‍🍳', n: 'Šéfkuchař',            tier: BADGE_TIER.LEGENDARY, reward: 'Dítě navrhne menu na víkend' },
+  PET_GUARDIAN:         { i: '🐾', n: 'Správce zvířat',         tier: BADGE_TIER.LEGENDARY, reward: 'Pořízení mazlíčka', desc: 'Za vytrvalou péči o zvířátko. Učí zodpovědnosti za někoho dalšího.' },
+  GAME_DAY:             { i: '🎮', n: 'Hra bez hranic',         tier: BADGE_TIER.LEGENDARY, reward: 'Herní den bez omezení obrazovek', desc: 'Za den strávený bez obrazovek. Oceňuje čas mimo displej.' },
+  CHEF:                 { i: '👨‍🍳', n: 'Šéfkuchař',            tier: BADGE_TIER.LEGENDARY, reward: 'Dítě navrhne menu na víkend', desc: 'Za opakovanou pomoc s vařením. Rozvíjí samostatnost v kuchyni.' },
+}
+
+// Points paid out when a badge is earned, by tier — mirrors ProgressService.badgeBounty on the backend.
+const BADGE_BOUNTY = {
+  [BADGE_TIER.COMMON]:    25,
+  [BADGE_TIER.RARE]:      75,
+  [BADGE_TIER.LEGENDARY]: 250,
+}
+const TIER_LABEL = {
+  [BADGE_TIER.COMMON]:    '🥇 Běžný odznak',
+  [BADGE_TIER.RARE]:      '💜 Vzácný odznak',
+  [BADGE_TIER.LEGENDARY]: '🌟 Legendární odznak',
 }
 
 const SKINS = [
@@ -330,6 +342,9 @@ export default function KidView() {
   const [redeeming,    setRedeeming]    = useState(null)
   const [chestToast,   setChestToast]   = useState(null)
   const [levelUpAnim,  setLevelUpAnim]  = useState(false)
+  const [badgeQueue,   setBadgeQueue]   = useState([])
+  const [badgeDetail,  setBadgeDetail]  = useState(null)
+  const earnedBadgesRef = useRef(null)
 
   const totalPts = progress?.balance ?? 0
   const streak   = progress?.streakDays ?? 0
@@ -364,6 +379,7 @@ export default function KidView() {
   async function selectChild(c, fId) {
     try {
       const fIdToUse = fId || familyId
+      earnedBadgesRef.current = null  // re-seed badge detection for the new child
       localStorage.setItem('kid_selectedChildId', c.id)
       const t = THEME_MAP[c.avatar] || 'frozen'
       const ag = (c.age != null && c.age < 5) ? 'preschool' : 'school'
@@ -414,6 +430,8 @@ export default function KidView() {
   // ── Back to picker (no logout) ────────────────────────────────────────────
   function backToPicker() {
     try { localStorage.removeItem('kid_selectedChildId') } catch { /**/ }
+    earnedBadgesRef.current = null
+    setBadgeQueue([])
     setChild(null); setTasks([]); setRewards([]); setTransactions([])
     setProgress(null); setRedemptions([]); setOpenQuestTemplates([]); setRoutineData(null); setFamilyGoal(null)
     navigate('/kid', { replace: true })
@@ -503,6 +521,20 @@ export default function KidView() {
       } catch { /**/ }
     }
   }, [child?.id, progress?.level]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Detect newly-earned badges and queue a celebration. The first progress load
+  // after picking a child seeds the baseline, so existing badges don't re-celebrate.
+  useEffect(() => {
+    if (!progress?.badgeInfo) return
+    const earnedNow = new Set(progress.badgeInfo.filter(b => b.earned).map(b => b.badge))
+    if (earnedBadgesRef.current === null) {
+      earnedBadgesRef.current = earnedNow
+      return
+    }
+    const fresh = [...earnedNow].filter(name => !earnedBadgesRef.current.has(name))
+    earnedBadgesRef.current = earnedNow
+    if (fresh.length) setBadgeQueue(q => [...q, ...fresh])
+  }, [progress])
 
   // ── Section: Výzvy ───────────────────────────────────────────────────────
   function renderVyzvy() {
@@ -1033,7 +1065,10 @@ export default function KidView() {
       const pct  = b.target ? Math.min((b.current ?? 0) / b.target * 100, 100) : 0
       const isLockedLegendary = tier === BADGE_TIER.LEGENDARY && !b.earned
       return (
-        <div className={`${styles.badgeCard} ${b.earned ? styles.badgeEarned : ''} ${styles['badge_' + tier]}`}>
+        <div className={`${styles.badgeCard} ${b.earned ? styles.badgeEarned : ''} ${styles['badge_' + tier]}`}
+          role="button" tabIndex={0}
+          onClick={() => setBadgeDetail({ meta, b, tier, locked: isLockedLegendary })}
+          onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setBadgeDetail({ meta, b, tier, locked: isLockedLegendary }) } }}>
           <div className={`${styles.badgeIco} ${isLockedLegendary ? styles.badgeIcoBlur : ''}`}>
             {isLockedLegendary ? '🏅' : meta.i}
           </div>
@@ -1368,6 +1403,52 @@ export default function KidView() {
           </div>
         </div>
       )}
+
+      {badgeQueue.length > 0 && (() => {
+        const name   = badgeQueue[0]
+        const meta   = BADGE_META[name] ?? { i: '🏅', n: name, tier: BADGE_TIER.COMMON }
+        const tier   = meta.tier ?? BADGE_TIER.COMMON
+        const bounty = BADGE_BOUNTY[tier] ?? BADGE_BOUNTY[BADGE_TIER.COMMON]
+        return (
+          <div className={styles.levelUpOverlay} onClick={() => setBadgeQueue(q => q.slice(1))}>
+            <div className={`${styles.badgeCelebrateCard} ${styles['badgeCelebrate_' + tier]}`}>
+              <div className={styles.badgeCelebrateTier}>{TIER_LABEL[tier] ?? '🏅 Odznak'}</div>
+              <div className={styles.badgeCelebrateIcon}>{meta.i}</div>
+              <div className={styles.badgeCelebrateName}>{meta.n}</div>
+              <div className={styles.badgeCelebrateBounty}>+{bounty} {ptIcon}</div>
+              {meta.reward && <div className={styles.badgeCelebrateReward}>🎁 {meta.reward}</div>}
+              <div className={styles.badgeCelebrateHint}>Klepni pro zavření</div>
+            </div>
+          </div>
+        )
+      })()}
+
+      {badgeDetail && (() => {
+        const { meta, b, tier, locked } = badgeDetail
+        const bounty = BADGE_BOUNTY[tier] ?? BADGE_BOUNTY[BADGE_TIER.COMMON]
+        return (
+          <div className={styles.levelUpOverlay} onClick={() => setBadgeDetail(null)}>
+            <div className={`${styles.badgeCelebrateCard} ${styles['badgeCelebrate_' + tier]}`} onClick={e => e.stopPropagation()}>
+              <div className={styles.badgeCelebrateTier}>{TIER_LABEL[tier] ?? '🏅 Odznak'}</div>
+              <div className={styles.badgeCelebrateIcon} style={locked ? { filter: 'blur(5px) grayscale(1)' } : undefined}>
+                {locked ? '🏅' : meta.i}
+              </div>
+              <div className={styles.badgeCelebrateName}>{locked ? '??? Tajný odznak' : meta.n}</div>
+              <div className={styles.badgeDetailDesc}>
+                {locked ? 'Tajemná výzva — odhalí se, až ji získáš.' : meta.desc}
+              </div>
+              {b.earned
+                ? <div className={styles.badgeDetailStatus}>✓ Získáno{b.earnedAt ? ` · ${czShortDate(b.earnedAt)}` : ''}</div>
+                : b.target != null
+                  ? <div className={styles.badgeDetailStatus}>{b.current ?? 0} / {b.target}</div>
+                  : null}
+              {!b.earned && <div className={styles.badgeDetailBounty}>Za získání: +{bounty} {ptIcon}</div>}
+              {meta.reward && !locked && <div className={styles.badgeCelebrateReward}>🎁 {meta.reward}</div>}
+              <button className={styles.badgeDetailClose} onClick={() => setBadgeDetail(null)}>Zavřít</button>
+            </div>
+          </div>
+        )
+      })()}
 
       {showFreshStart && (
         <div className={styles.freshStartOverlay}>

@@ -5,6 +5,7 @@ import com.KidQuest.kidquest_app.dto.response.ProgressResponse;
 import com.KidQuest.kidquest_app.model.Badge;
 import com.KidQuest.kidquest_app.model.Child;
 import com.KidQuest.kidquest_app.model.ChildBadge;
+import com.KidQuest.kidquest_app.model.PointTransaction;
 import com.KidQuest.kidquest_app.model.TransactionType;
 import com.KidQuest.kidquest_app.repository.ChildBadgeRepository;
 import com.KidQuest.kidquest_app.repository.FamilyGoalRepository;
@@ -34,6 +35,19 @@ public class ProgressService {
 
     public static final int CHEST_BONUS  = 25;
     public static final int STREAK_BONUS = 10;
+
+    // Points awarded when a badge is earned, by rarity tier.
+    public static final int BADGE_BOUNTY_COMMON    = 25;
+    public static final int BADGE_BOUNTY_RARE      = 75;
+    public static final int BADGE_BOUNTY_LEGENDARY = 250;
+
+    public static int badgeBounty(Badge badge) {
+        return switch (badge.tier()) {
+            case COMMON    -> BADGE_BOUNTY_COMMON;
+            case RARE      -> BADGE_BOUNTY_RARE;
+            case LEGENDARY -> BADGE_BOUNTY_LEGENDARY;
+        };
+    }
 
     // Loaded from catalog/levels.json at startup
     private int[] THRESHOLDS_STANDARD;
@@ -356,12 +370,32 @@ public class ProgressService {
 
     private void awardIfMet(Child child, Map<Badge, ChildBadge> earnedMap, Badge badge, boolean condition) {
         if (condition && !earnedMap.containsKey(badge)) {
-            ChildBadge cb = new ChildBadge();
-            cb.setChild(child);
-            cb.setBadge(badge);
-            ChildBadge saved = childBadgeRepository.save(cb);
-            earnedMap.put(badge, saved);
+            earnedMap.put(badge, grantBadge(child, badge));
         }
+    }
+
+    /**
+     * Record a newly-earned badge and pay out its rarity bounty as a BONUS
+     * transaction (counts toward both balance and XP). Callers must ensure the
+     * badge is not already earned.
+     */
+    public ChildBadge grantBadge(Child child, Badge badge) {
+        ChildBadge cb = new ChildBadge();
+        cb.setChild(child);
+        cb.setBadge(badge);
+        ChildBadge saved = childBadgeRepository.save(cb);
+
+        int bounty = badgeBounty(badge);
+        if (bounty > 0) {
+            PointTransaction tx = new PointTransaction();
+            tx.setChild(child);
+            tx.setAmount(bounty);
+            tx.setReason("🏅 Nový odznak");
+            tx.setType(TransactionType.BONUS);
+            tx.setBonusKind("BADGE");
+            pointTransactionRepository.save(tx);
+        }
+        return saved;
     }
 
     private int longestStreak(UUID childId) {
