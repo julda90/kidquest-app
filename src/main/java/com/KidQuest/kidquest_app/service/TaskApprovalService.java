@@ -125,13 +125,14 @@ public class TaskApprovalService {
         // Streak bonus — awarded on the first task of each new active day
         ProgressService.StreakInfo streakInfo = progressService.streak(childId, today);
         if (firstTaskToday && streakInfo.days() > 0) {
+            int streakBonus = ProgressService.streakBonus(streakInfo.days());
             PointTransaction streakTx = new PointTransaction();
             streakTx.setChild(child);
-            streakTx.setAmount(ProgressService.STREAK_BONUS);
+            streakTx.setAmount(streakBonus);
             streakTx.setReason("Série " + streakInfo.days() + " " + (streakInfo.days() == 1 ? "den" : "dní"));
             streakTx.setType(TransactionType.STREAK);
             pointTransactionRepository.save(streakTx);
-            awarded += ProgressService.STREAK_BONUS;
+            awarded += streakBonus;
         }
 
         // Level-up detection
@@ -270,8 +271,10 @@ public class TaskApprovalService {
         long noReminderCount = pointTransactionRepository.countBonusByChildIdAndBonusKind(childId, "NO_REMINDER");
         checkAndAwardBadge(child, Badge.SELF_STARTER, noReminderCount, 10, earned);
 
+        boolean young = child.getAge() != null && child.getAge() < 6;
         long routineApprovals = pointTransactionRepository.countRoutineTaskTransactions(childId);
-        checkAndAwardBadge(child, Badge.EARLY_BIRD, routineApprovals, 10, earned);
+        checkAndAwardBadge(child, Badge.EARLY_BIRD, routineApprovals,
+                ProgressService.badgeTarget(Badge.EARLY_BIRD, young), earned);
 
         long distinctKinds = taskRepository.countDistinctNonRoutineKindsByChildId(childId);
         checkAndAwardBadge(child, Badge.VARIETY_ALL, distinctKinds, 8, earned);

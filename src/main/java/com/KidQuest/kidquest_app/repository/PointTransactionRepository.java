@@ -69,6 +69,11 @@ public interface PointTransactionRepository extends JpaRepository<PointTransacti
     @Query("SELECT COUNT(t) FROM PointTransaction t WHERE t.child.id = :childId AND t.type = 'BONUS' AND t.bonusKind = :bonusKind")
     long countBonusByChildIdAndBonusKind(UUID childId, String bonusKind);
 
+    /** Count BONUS transactions of a given kind whose task is of a given kind (e.g. SELF_CHECK on HOMEWORK) */
+    @Query("SELECT COUNT(t) FROM PointTransaction t WHERE t.child.id = :childId AND t.type = 'BONUS' " +
+           "AND t.bonusKind = :bonusKind AND t.task.kind = :kind")
+    long countBonusByChildIdAndBonusKindAndTaskKind(UUID childId, String bonusKind, com.KidQuest.kidquest_app.model.TaskKind kind);
+
     /** Average daily TASK+BONUS points for a child over a period */
     @Query(value = "SELECT COALESCE(SUM(amount), 0) FROM point_transaction " +
                    "WHERE child_id = :childId AND type IN ('TASK', 'BONUS') AND created_at >= :since",

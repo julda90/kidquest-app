@@ -7,6 +7,7 @@ import com.KidQuest.kidquest_app.dto.response.ProgressResponse;
 import com.KidQuest.kidquest_app.dto.response.TaskResponse;
 import com.KidQuest.kidquest_app.dto.response.TodayResponse;
 import com.KidQuest.kidquest_app.exception.BadRequestException;
+import com.KidQuest.kidquest_app.model.Badge;
 import com.KidQuest.kidquest_app.model.Child;
 import com.KidQuest.kidquest_app.model.PointTransaction;
 import com.KidQuest.kidquest_app.model.TaskKind;
@@ -113,6 +114,20 @@ public class ChildController {
         resp.setRoutine(routine);
         resp.setTasks(tasks);
         return ResponseEntity.ok(resp);
+    }
+
+    /** List badges a parent may award by hand. */
+    @GetMapping("/badges/grantable")
+    public ResponseEntity<List<String>> grantableBadges() {
+        return ResponseEntity.ok(ProgressService.MANUAL_BADGES.stream().map(Badge::name).sorted().toList());
+    }
+
+    /** Parent manually awards a special badge to a child. */
+    @PostMapping("/{id}/badges/{badge}")
+    public ResponseEntity<Map<String, Object>> grantBadge(@PathVariable UUID id, @PathVariable Badge badge) {
+        Child child = childService.findById(id);
+        boolean granted = progressService.grantBadgeManually(child, badge);
+        return ResponseEntity.ok(Map.of("granted", granted, "badge", badge.name()));
     }
 
     @PostMapping("/{id}/chest/open")

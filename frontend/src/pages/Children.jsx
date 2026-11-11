@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { getMe } from '../api/users'
-import { getChildren, createChild, updateChild, deleteChild } from '../api/children'
+import { getChildren, createChild, updateChild, deleteChild, grantBadge } from '../api/children'
 import { getTasksByFamily } from '../api/tasks'
 import { getFamilies } from '../api/families'
 import { getTransactionsByChild, createPointTransaction } from '../api/pointTransactions'
@@ -21,6 +21,15 @@ const STATUS_DOT = {
   UNASSIGNED: styles.dotGray, ASSIGNED: styles.dotBlue,
   PENDING_APPROVAL: styles.dotOrange, COMPLETED: styles.dotGreen, REJECTED: styles.dotRed,
 }
+
+// Special badges a parent awards by hand (must match ProgressService.MANUAL_BADGES).
+const MANUAL_BADGES = [
+  { key: 'PET_GUARDIAN',   icon: '🐾', name: 'Strážce mazlíčka', desc: 'Za péči o zvíře — krmení, venčení, čištění. Buduje odpovědnost.' },
+  { key: 'GAME_DAY',       icon: '🎲', name: 'Herní mistr',       desc: 'Za zorganizování herního odpoledne pro celou rodinu.' },
+  { key: 'CHEF',           icon: '👨‍🍳', name: 'Šéfkuchař',        desc: 'Za samostatně připravené jídlo pro rodinu.' },
+  { key: 'BIRTHDAY',       icon: '🎂', name: 'Narozeniny',         desc: 'Dárkový odznak k narozeninám dítěte.' },
+  { key: 'FAMILY_CAPTAIN', icon: '⭐', name: 'Kapitán rodiny',     desc: 'Pro toho, kdo nejvíc přispěl do rodinného cíle.' },
+]
 
 export default function Children() {
   const { logout } = useAuth()
@@ -41,6 +50,9 @@ export default function Children() {
   const [adjustReason,  setAdjustReason]  = useState('')
   const [adjusting,     setAdjusting]     = useState(false)
   const [adjustError,   setAdjustError]   = useState('')
+  const [badgeTarget,   setBadgeTarget]   = useState(null) // child object
+  const [badgeBusy,     setBadgeBusy]     = useState('')    // badge key being granted
+  const [badgeResult,   setBadgeResult]   = useState({})    // { [key]: 'granted' | 'already' }
 
   const load = useCallback(async () => {
     try {
@@ -122,6 +134,25 @@ export default function Children() {
     }
   }
 
+  function openBadges(child) {
+    setBadgeTarget(child)
+    setBadgeBusy('')
+    setBadgeResult({})
+  }
+
+  async function handleGrantBadge(badgeKey) {
+    setBadgeBusy(badgeKey)
+    try {
+      const res = await grantBadge(badgeTarget.id, badgeKey)
+      setBadgeResult(r => ({ ...r, [badgeKey]: res.granted ? 'granted' : 'already' }))
+      if (res.granted) await refetch(familyId)
+    } catch {
+      setBadgeResult(r => ({ ...r, [badgeKey]: 'error' }))
+    } finally {
+      setBadgeBusy('')
+    }
+  }
+
   function handleLogout() { logout(); navigate('/login') }
 
   if (loading) return <div className={styles.center}><span className={styles.spinner} /></div>
@@ -153,6 +184,8 @@ export default function Children() {
                 return (
                   <div key={child.id} className={styles.card}>
                     <div className={styles.cardActions}>
+                      <button className={styles.iconBtn} title="Udělit odznak"
+                        onClick={() => openBadges(child)}>🏅</button>
                       <button className={styles.iconBtn} title="Edit"
                         onClick={() => setModal({ item: child })}>✏️</button>
                       <button className={styles.iconBtn} title="Delete"
@@ -219,6 +252,44 @@ export default function Children() {
           onConfirm={handleDelete}
           onCancel={() => setDeleteTarget(null)}
           loading={deleting} />
+      )}
+
+      {badgeTarget && (
+        <Modal title={`Udělit odznak — ${badgeTarget.name}`} onClose={() => setBadgeTarget(null)}>
+          <p className={styles.badgeIntro}>
+            Speciální odznaky za věci, které appka nepozná sama. Odznak přidá body podle vzácnosti a objeví se dítěti v Trofejích.
+          </p>
+          <div className={styles.badgeGrantList}>
+            {MANUAL_BADGES.map(b => {
+              const state = badgeResult[b.key]
+              return (
+                <div key={b.key} className={styles.badgeGrantRow}>
+                  <span className={styles.badgeGrantIcon}>{b.icon}</span>
+                  <div className={styles.badgeGrantText}>
+                    <div className={styles.badgeGrantName}>{b.name}</div>
+                    <div className={styles.badgeGrantDesc}>{b.desc}</div>
+                  </div>
+                  {state === 'granted'
+                    ? <span className={styles.badgeGrantDone}>✓ Uděleno</span>
+                    : state === 'already'
+                      ? <span className={styles.badgeGrantHas}>Už má</span>
+                      : state === 'error'
+                        ? <span className={styles.badgeGrantErr}>Chyba</span>
+                        : <button className={styles.badgeGrantBtn}
+                            disabled={badgeBusy === b.key}
+                            onClick={() => handleGrantBadge(b.key)}>
+                            {badgeBusy === b.key ? '…' : 'Udělit'}
+                          </button>
+                  }
+                </div>
+              )
+            })}
+          </div>
+          <div className={styles.adjustActions}>
+            <button type="button" className={styles.adjustCancel}
+              onClick={() => setBadgeTarget(null)}>Zavřít</button>
+          </div>
+        </Modal>
       )}
 
       {adjustTarget && (

@@ -8,3 +8,5 @@ export const getProgress    = (childId)          => apiFetch(`/api/children/${ch
 export const openChest      = (childId)          => apiFetch(`/api/children/${childId}/chest/open`, { method: 'POST' })
 export const updateAppearance = (childId, body) => apiFetch(`/api/children/${childId}/appearance`, { method: 'PUT', body: JSON.stringify(body) })
 export const getEarningRate = (familyId, days = 14) => apiFetch(`/api/children/family/${familyId}/earning-rate?days=${days}`)
+export const getGrantableBadges = ()            => apiFetch(`/api/children/badges/grantable`)
+export const grantBadge     = (childId, badge)  => apiFetch(`/api/children/${childId}/badges/${badge}`, { method: 'POST' })

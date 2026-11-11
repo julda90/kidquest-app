@@ -37,4 +37,9 @@ public interface TaskRepository extends JpaRepository<Task, UUID> {
     @Query("SELECT COUNT(DISTINCT t.kind) FROM Task t WHERE t.assignedTo.id = :childId " +
            "AND t.status = 'COMPLETED' AND t.kind <> 'ROUTINE'")
     long countDistinctNonRoutineKindsByChildId(UUID childId);
+
+    /** Distinct non-routine kinds completed since a date (for the VARIETY_WEEK badge) */
+    @Query("SELECT COUNT(DISTINCT t.kind) FROM Task t WHERE t.assignedTo.id = :childId " +
+           "AND t.status = 'COMPLETED' AND t.kind <> 'ROUTINE' AND t.approvedAt >= :since")
+    long countDistinctNonRoutineKindsByChildIdSince(UUID childId, LocalDateTime since);
 }

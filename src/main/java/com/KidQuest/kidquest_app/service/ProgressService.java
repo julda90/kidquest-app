@@ -2,10 +2,13 @@ package com.KidQuest.kidquest_app.service;
 
 import com.KidQuest.kidquest_app.dto.response.BadgeInfoResponse;
 import com.KidQuest.kidquest_app.dto.response.ProgressResponse;
+import com.KidQuest.kidquest_app.exception.BadRequestException;
 import com.KidQuest.kidquest_app.model.Badge;
 import com.KidQuest.kidquest_app.model.Child;
 import com.KidQuest.kidquest_app.model.ChildBadge;
 import com.KidQuest.kidquest_app.model.PointTransaction;
+import com.KidQuest.kidquest_app.model.RewardTier;
+import com.KidQuest.kidquest_app.model.TaskKind;
 import com.KidQuest.kidquest_app.model.TransactionType;
 import com.KidQuest.kidquest_app.repository.ChildBadgeRepository;
 import com.KidQuest.kidquest_app.repository.FamilyGoalRepository;
@@ -48,6 +51,23 @@ public class ProgressService {
             case LEGENDARY -> BADGE_BOUNTY_LEGENDARY;
         };
     }
+
+    /**
+     * Streak bonus paid on the first task of each active day. Scales with the
+     * current streak length so long, hard-won streaks feel more rewarding than
+     * a fresh 3-day one.
+     */
+    public static int streakBonus(int days) {
+        if (days >= 30) return 25;
+        if (days >= 14) return 15;
+        if (days >= 7)  return 10;
+        return 5;
+    }
+
+    // Badges a parent awards by hand — subjective or real-world achievements
+    // with no automatic condition.
+    public static final Set<Badge> MANUAL_BADGES = Set.of(
+            Badge.PET_GUARDIAN, Badge.GAME_DAY, Badge.CHEF, Badge.BIRTHDAY, Badge.FAMILY_CAPTAIN);
 
     // Loaded from catalog/levels.json at startup
     private int[] THRESHOLDS_STANDARD;
@@ -257,17 +277,43 @@ public class ProgressService {
         Map.entry(Badge.SHERLOCK,             10),
         Map.entry(Badge.SELF_STARTER,         10),
         Map.entry(Badge.HOMEWORK_NO_REMIND_10,10),
+        Map.entry(Badge.HOMEWORK_CLEAN_5,      5),
+        Map.entry(Badge.HOMEWORK_PERFECT_20,  20),
         Map.entry(Badge.VARIETY_ALL,           8),
+        Map.entry(Badge.VARIETY_WEEK,          5),
+        Map.entry(Badge.SAVER_1000,         1000),
+        Map.entry(Badge.MEGA_REWARD,           1),
         Map.entry(Badge.FAMILY_5,              5),
         Map.entry(Badge.FAMILY_20,            20),
         Map.entry(Badge.COLLECTOR_5,           5),
         Map.entry(Badge.XMAS_15,             15),
+        Map.entry(Badge.EASTER_10,            10),
         Map.entry(Badge.SUMMER_30,           30)
     );
+
+    // Lower milestone targets for young children (<6), mirroring how level
+    // thresholds scale by age. Only count-based milestones scale; streaks and
+    // seasonal badges stay age-neutral.
+    private static final Map<Badge, Integer> BADGE_TARGETS_YOUNG = Map.of(
+        Badge.TASK_100,     50,
+        Badge.TASK_250,    150,
+        Badge.TASK_500,    300,
+        Badge.TEAM_PLAYER,  25,
+        Badge.EARLY_BIRD,    5
+    );
+
+    /** Milestone target for a badge, scaled down for young children (&lt;6). */
+    public static Integer badgeTarget(Badge badge, boolean young) {
+        if (young && BADGE_TARGETS_YOUNG.containsKey(badge)) {
+            return BADGE_TARGETS_YOUNG.get(badge);
+        }
+        return BADGE_TARGETS.get(badge);
+    }
 
     public ProgressResponse buildResponse(Child child) {
         UUID childId = child.getId();
         LocalDate today = LocalDate.now(clock);
+        boolean young   = child.getAge() != null && child.getAge() < 6;
 
         int balance     = balance(childId);
         LevelInfo li    = level(child);
@@ -283,6 +329,14 @@ public class ProgressService {
         long distinctKinds        = taskRepository.countDistinctNonRoutineKindsByChildId(childId);
         long tasksInDecember      = pointTransactionRepository.countTasksInMonths(childId, List.of(12));
         long tasksInSummer        = pointTransactionRepository.countTasksInMonths(childId, List.of(7, 8));
+        long tasksInEaster        = pointTransactionRepository.countTasksInMonths(childId, List.of(3, 4));
+        long homeworkSelfCheck    = pointTransactionRepository
+                .countBonusByChildIdAndBonusKindAndTaskKind(childId, "SELF_CHECK", TaskKind.HOMEWORK);
+        long homeworkNoRemind     = pointTransactionRepository
+                .countBonusByChildIdAndBonusKindAndTaskKind(childId, "NO_REMINDER", TaskKind.HOMEWORK);
+        long megaRewards          = redemptionRepository.countRedeemedByChildIdAndTier(childId, RewardTier.MEGA);
+        long varietyWeek          = taskRepository
+                .countDistinctNonRoutineKindsByChildIdSince(childId, today.minusDays(7).atStartOfDay());
 
         // Load earned badges into a map for quick lookup
         Map<Badge, ChildBadge> earnedMap = childBadgeRepository.findByChildId(childId)
@@ -295,19 +349,25 @@ public class ProgressService {
         awardIfMet(child, earnedMap, Badge.STREAK_60,            si.days() >= 60);
         awardIfMet(child, earnedMap, Badge.FIRST_REWARD,         totalRed >= 1);
         awardIfMet(child, earnedMap, Badge.COLLECTOR_5,          totalRed >= 5);
-        awardIfMet(child, earnedMap, Badge.EARLY_BIRD,           routineApprovals >= 10);
+        awardIfMet(child, earnedMap, Badge.EARLY_BIRD,           routineApprovals >= badgeTarget(Badge.EARLY_BIRD, young));
         awardIfMet(child, earnedMap, Badge.ROUTINE_STREAK_14,    routineApprovals >= 14);
         awardIfMet(child, earnedMap, Badge.ROUTINE_30_ONTIME,    routineApprovals >= 30);
-        awardIfMet(child, earnedMap, Badge.TEAM_PLAYER,          totalTasks >= 50);
-        awardIfMet(child, earnedMap, Badge.TASK_100,             totalTasks >= 100);
-        awardIfMet(child, earnedMap, Badge.TASK_250,             totalTasks >= 250);
-        awardIfMet(child, earnedMap, Badge.TASK_500,             totalTasks >= 500);
+        awardIfMet(child, earnedMap, Badge.TEAM_PLAYER,          totalTasks >= badgeTarget(Badge.TEAM_PLAYER, young));
+        awardIfMet(child, earnedMap, Badge.TASK_100,             totalTasks >= badgeTarget(Badge.TASK_100, young));
+        awardIfMet(child, earnedMap, Badge.TASK_250,             totalTasks >= badgeTarget(Badge.TASK_250, young));
+        awardIfMet(child, earnedMap, Badge.TASK_500,             totalTasks >= badgeTarget(Badge.TASK_500, young));
         awardIfMet(child, earnedMap, Badge.SELF_STARTER,         noReminderCount >= 10);
-        awardIfMet(child, earnedMap, Badge.HOMEWORK_NO_REMIND_10, noReminderCount >= 10);
+        awardIfMet(child, earnedMap, Badge.HOMEWORK_NO_REMIND_10, homeworkNoRemind >= 10);
+        awardIfMet(child, earnedMap, Badge.HOMEWORK_CLEAN_5,     homeworkSelfCheck >= 5);
+        awardIfMet(child, earnedMap, Badge.HOMEWORK_PERFECT_20,  homeworkSelfCheck >= 20);
         awardIfMet(child, earnedMap, Badge.VARIETY_ALL,          distinctKinds >= 8);
+        awardIfMet(child, earnedMap, Badge.VARIETY_WEEK,         varietyWeek >= 5);
+        awardIfMet(child, earnedMap, Badge.SAVER_1000,           balance >= 1000);
+        awardIfMet(child, earnedMap, Badge.MEGA_REWARD,          megaRewards >= 1);
         awardIfMet(child, earnedMap, Badge.FAMILY_5,             completedFamilyGoals >= 5);
         awardIfMet(child, earnedMap, Badge.FAMILY_20,            completedFamilyGoals >= 20);
         awardIfMet(child, earnedMap, Badge.XMAS_15,              tasksInDecember >= 15);
+        awardIfMet(child, earnedMap, Badge.EASTER_10,            tasksInEaster >= 10);
         awardIfMet(child, earnedMap, Badge.SUMMER_30,            tasksInSummer >= 30);
 
         // Build rich badge info for all badges
@@ -317,7 +377,7 @@ public class ProgressService {
             ChildBadge cb = earnedMap.get(b);
             bi.setEarned(cb != null);
             if (cb != null) bi.setEarnedAt(cb.getEarnedAt());
-            Integer target = BADGE_TARGETS.get(b);
+            Integer target = badgeTarget(b, young);
             if (target != null) {
                 bi.setTarget(target);
                 int cur = switch (b) {
@@ -328,11 +388,16 @@ public class ProgressService {
                     case TEAM_PLAYER, TASK_100,
                          TASK_250, TASK_500                        -> totalTasks;
                     case SHERLOCK                                   -> (int) selfCheckCount;
-                    case SELF_STARTER,
-                         HOMEWORK_NO_REMIND_10                     -> (int) noReminderCount;
+                    case SELF_STARTER                              -> (int) noReminderCount;
+                    case HOMEWORK_NO_REMIND_10                     -> (int) homeworkNoRemind;
+                    case HOMEWORK_CLEAN_5, HOMEWORK_PERFECT_20     -> (int) homeworkSelfCheck;
                     case VARIETY_ALL                               -> (int) distinctKinds;
+                    case VARIETY_WEEK                              -> (int) varietyWeek;
+                    case SAVER_1000                                -> balance;
+                    case MEGA_REWARD                               -> (int) megaRewards;
                     case FAMILY_5, FAMILY_20                       -> (int) completedFamilyGoals;
                     case XMAS_15                                   -> (int) tasksInDecember;
+                    case EASTER_10                                 -> (int) tasksInEaster;
                     case SUMMER_30                                 -> (int) tasksInSummer;
                     default -> 0;
                 };
@@ -396,6 +461,21 @@ public class ProgressService {
             pointTransactionRepository.save(tx);
         }
         return saved;
+    }
+
+    /**
+     * Award a parent-grantable badge by hand. Rejects badges that have an
+     * automatic condition, and is a no-op (returns false) if already earned.
+     */
+    public boolean grantBadgeManually(Child child, Badge badge) {
+        if (!MANUAL_BADGES.contains(badge)) {
+            throw new BadRequestException("Odznak " + badge + " nelze udělit ručně.");
+        }
+        if (childBadgeRepository.existsByChildIdAndBadge(child.getId(), badge)) {
+            return false;
+        }
+        grantBadge(child, badge);
+        return true;
     }
 
     private int longestStreak(UUID childId) {

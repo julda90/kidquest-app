@@ -26,6 +26,11 @@ public interface RewardRedemptionRepository extends JpaRepository<RewardRedempti
     @Query("SELECT COALESCE(SUM(r.pointCost), 0) FROM RewardRedemption r WHERE r.child.id = :childId AND r.status = 'REQUESTED'")
     int sumPendingCostByChildId(UUID childId);
 
+    /** Count a child's actually-redeemed rewards of a given tier (for the MEGA_REWARD badge) */
+    @Query("SELECT COUNT(r) FROM RewardRedemption r WHERE r.child.id = :childId " +
+           "AND r.reward.tier = :tier AND r.status IN ('APPROVED', 'DELIVERED')")
+    long countRedeemedByChildIdAndTier(UUID childId, com.KidQuest.kidquest_app.model.RewardTier tier);
+
     boolean existsByRewardId(UUID rewardId);
 
     @Query("SELECT COUNT(r) FROM RewardRedemption r WHERE r.child.id = :childId AND r.reward.id = :rewardId " +
