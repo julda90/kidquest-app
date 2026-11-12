@@ -65,6 +65,7 @@ public class TaskService {
         task.setLatePointValue(taskRequest.getLatePointValue());
         task.setNoReminderBonus(taskRequest.getNoReminderBonus() != null ? taskRequest.getNoReminderBonus() : 0);
         task.setOpenQuest(Boolean.TRUE.equals(taskRequest.getOpenQuest()));
+        task.setTeamEffort(Boolean.TRUE.equals(taskRequest.getTeamEffort()));
         task.setDailyLimit(taskRequest.getDailyLimit() != null ? taskRequest.getDailyLimit() : 1);
         if (taskRequest.getAssignedToId() != null) {
             task.setAssignedTo(childService.findById(taskRequest.getAssignedToId()));
@@ -89,6 +90,7 @@ public class TaskService {
         existingTask.setLatePointValue(updatedTask.getLatePointValue());
         existingTask.setNoReminderBonus(updatedTask.getNoReminderBonus() != null ? updatedTask.getNoReminderBonus() : 0);
         existingTask.setOpenQuest(Boolean.TRUE.equals(updatedTask.getOpenQuest()));
+        existingTask.setTeamEffort(Boolean.TRUE.equals(updatedTask.getTeamEffort()));
         existingTask.setDailyLimit(updatedTask.getDailyLimit() != null ? updatedTask.getDailyLimit() : 1);
         if (updatedTask.getAssignedToId() != null) {
             existingTask.setAssignedTo(childService.findById(updatedTask.getAssignedToId()));
@@ -125,6 +127,7 @@ public class TaskService {
         response.setNoReminderBonus(task.getNoReminderBonus());
         response.setApprovedAt(task.getApprovedAt());
         response.setOpenQuest(task.isOpenQuest());
+        response.setTeamEffort(task.isTeamEffort());
         response.setTemplateId(task.getTemplateId());
         response.setDailyLimit(task.getDailyLimit());
         if (task.getKind() == TaskKind.ROUTINE) {
@@ -172,6 +175,7 @@ public class TaskService {
         claim.setLatePointValue(template.getLatePointValue());
         claim.setNoReminderBonus(template.getNoReminderBonus());
         claim.setKind(template.getKind());
+        claim.setTeamEffort(template.isTeamEffort());
         claim.setAssignedTo(child);
         claim.setStatus(TaskStatus.ASSIGNED);
         claim.setTemplateId(templateId);

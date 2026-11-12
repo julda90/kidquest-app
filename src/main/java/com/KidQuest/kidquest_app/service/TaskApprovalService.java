@@ -22,9 +22,13 @@ import java.util.UUID;
 @Service
 public class TaskApprovalService {
 
+    /** Extra points each participant earns on a team-effort task, on top of the base value. */
+    public static final int TEAM_BONUS = 20;
+
     private final TaskRepository taskRepository;
     private final PointTransactionRepository pointTransactionRepository;
     private final ChildBadgeRepository childBadgeRepository;
+    private final ChildRepository childRepository;
     private final FamilyGoalRepository familyGoalRepository;
     private final TaskService taskService;
     private final ProgressService progressService;
@@ -35,6 +39,7 @@ public class TaskApprovalService {
     public TaskApprovalService(TaskRepository taskRepository,
                                PointTransactionRepository pointTransactionRepository,
                                ChildBadgeRepository childBadgeRepository,
+                               ChildRepository childRepository,
                                FamilyGoalRepository familyGoalRepository,
                                TaskService taskService,
                                ProgressService progressService,
@@ -44,6 +49,7 @@ public class TaskApprovalService {
         this.taskRepository = taskRepository;
         this.pointTransactionRepository = pointTransactionRepository;
         this.childBadgeRepository = childBadgeRepository;
+        this.childRepository = childRepository;
         this.familyGoalRepository = familyGoalRepository;
         this.taskService = taskService;
         this.progressService = progressService;
@@ -133,6 +139,27 @@ public class TaskApprovalService {
             streakTx.setType(TransactionType.STREAK);
             pointTransactionRepository.save(streakTx);
             awarded += streakBonus;
+        }
+
+        // Team effort — each participating child earns the base value + a team bonus.
+        // The assignee already received the base, so they only need the team bonus on top.
+        if (task.isTeamEffort()
+                && request.getTeamParticipantIds() != null
+                && !request.getTeamParticipantIds().isEmpty()) {
+            UUID familyId = task.getFamily().getId();
+            java.util.Set<UUID> seen = new java.util.HashSet<>();
+            for (UUID pid : request.getTeamParticipantIds()) {
+                if (pid == null || !seen.add(pid)) continue;
+                if (pid.equals(childId)) {
+                    awardTeamBonus(child, task, TEAM_BONUS);
+                    awarded += TEAM_BONUS;
+                } else {
+                    Child helper = childRepository.findByIdAndDeletedAtIsNull(pid).orElse(null);
+                    if (helper == null || helper.getFamily() == null
+                            || !familyId.equals(helper.getFamily().getId())) continue;
+                    awardTeamBonus(helper, task, basePoints + TEAM_BONUS);
+                }
+            }
         }
 
         // Level-up detection
@@ -280,6 +307,17 @@ public class TaskApprovalService {
         checkAndAwardBadge(child, Badge.VARIETY_ALL, distinctKinds, 8, earned);
 
         return earned;
+    }
+
+    private void awardTeamBonus(Child child, Task task, int amount) {
+        PointTransaction tx = new PointTransaction();
+        tx.setChild(child);
+        tx.setAmount(amount);
+        tx.setReason("🤝 Týmová práce: " + task.getTitle());
+        tx.setType(TransactionType.BONUS);
+        tx.setBonusKind("TEAM");
+        tx.setTask(task);
+        pointTransactionRepository.save(tx);
     }
 
     private long countCompleted(UUID childId, List<TaskKind> kinds) {

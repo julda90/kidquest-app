@@ -84,6 +84,10 @@ public class Task {
     @Column(name = "no_reminder_bonus", nullable = false)
     private int noReminderBonus = 0;
 
+    /** When true, the task can be approved as a team effort: each participating child earns the base value + a team bonus. */
+    @Column(name = "team_effort", nullable = false)
+    private boolean teamEffort = false;
+
     @Column(name = "routine_id")
     private UUID routineId;
 

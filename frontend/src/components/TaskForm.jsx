@@ -41,6 +41,7 @@ export default function TaskForm({ initial = {}, children = [], families = [], o
   const [bonusValue,     setBonusValue]     = useState(initial.bonusValue     ?? '')
   const [latePointValue, setLatePointValue] = useState(initial.latePointValue ?? '')
   const [noReminderBonus,setNoReminderBonus]= useState(initial.noReminderBonus ?? '')
+  const [teamEffort,     setTeamEffort]     = useState(initial.teamEffort      ?? false)
   const [errors,         setErrors]         = useState({})
   const [serverError,    setServerError]    = useState('')
   const [loading,        setLoading]        = useState(false)
@@ -83,6 +84,7 @@ export default function TaskForm({ initial = {}, children = [], families = [], o
         bonusValue:     isHomework && bonusValue     !== '' ? Number(bonusValue)     : null,
         latePointValue: isHomework && latePointValue !== '' ? Number(latePointValue) : null,
         noReminderBonus:isHomework && noReminderBonus!== '' ? Number(noReminderBonus): null,
+        teamEffort:     !isQuest && teamEffort,
       })
     } catch (err) {
       setServerError(err.message || 'Uložení se nezdařilo.')
@@ -190,6 +192,14 @@ export default function TaskForm({ initial = {}, children = [], families = [], o
             </div>
           </div>
         </div>
+      )}
+
+      {/* Team effort */}
+      {!isQuest && (
+        <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, margin: '4px 0' }}>
+          <input type="checkbox" checked={teamEffort} onChange={e => setTeamEffort(e.target.checked)} />
+          🤝 Týmová práce — při schválení lze rozdělit mezi více dětí (každý účastník +{20} k základu)
+        </label>
       )}
 
       {/* Quest daily limit */}

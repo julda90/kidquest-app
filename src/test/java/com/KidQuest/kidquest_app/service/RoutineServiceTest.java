@@ -48,6 +48,7 @@ class RoutineServiceTest {
     // ── TaskApprovalService deps (for approve tests)
     @Mock PointTransactionRepository pointTransactionRepository;
     @Mock ChildBadgeRepository childBadgeRepository;
+    @Mock ChildRepository childRepository;
     @Mock FamilyGoalRepository familyGoalRepository;
     @Mock TaskService taskService;
     @Mock ProgressService progressService;
@@ -96,7 +97,7 @@ class RoutineServiceTest {
                 taskRepository, childService, familyService, clock);
 
         approvalService = new TaskApprovalService(taskRepository, pointTransactionRepository,
-                childBadgeRepository, familyGoalRepository, taskService, progressService,
+                childBadgeRepository, childRepository, familyGoalRepository, taskService, progressService,
                 routineRepository, taskStepRepository, clock);
 
         // common stubs

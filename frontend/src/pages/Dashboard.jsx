@@ -51,6 +51,7 @@ export default function Dashboard() {
   const [hwOnTime,      setHwOnTime]      = useState(true)
   const [hwSelfChecked, setHwSelfChecked] = useState(false)
   const [hwNoReminder,  setHwNoReminder]  = useState(false)
+  const [teamParticipants, setTeamParticipants] = useState([]) // childIds who participated
   const [awardToast,    setAwardToast]    = useState(null)
 
   const [returnTaskId,  setReturnTaskId]  = useState(null)
@@ -94,6 +95,15 @@ export default function Dashboard() {
   }, [])
 
   useEffect(() => { load() }, [load])
+
+  // Seed team-effort participants with the assignee when the award dialog opens
+  useEffect(() => {
+    if (awardTarget?.task?.teamEffort) {
+      setTeamParticipants(awardTarget.task.assignedTo ? [awardTarget.task.assignedTo] : [])
+    } else {
+      setTeamParticipants([])
+    }
+  }, [awardTarget])
 
   async function refetchFamily(fId) {
     localStorage.setItem('activeFamilyId', fId)
@@ -147,6 +157,7 @@ export default function Dashboard() {
         onTime:      isHw ? hwOnTime      : true,
         selfChecked: isHw ? hwSelfChecked : false,
         noReminder:  isHw ? hwNoReminder  : false,
+        teamParticipantIds: task.teamEffort ? teamParticipants : null,
       })
       setAwardTarget(null)
       setHwOnTime(true); setHwSelfChecked(false); setHwNoReminder(false)
@@ -566,14 +577,34 @@ export default function Dashboard() {
         const base   = isHw ? (hwOnTime ? (t.pointValue ?? 20) : (t.latePointValue ?? t.pointValue ?? 10)) : (t.pointValue ?? 0)
         const bonus1 = isHw && hwSelfChecked && t.bonusValue > 0 ? t.bonusValue : 0
         const bonus2 = isHw && hwNoReminder  && t.noReminderBonus > 0 ? t.noReminderBonus : 0
+        const TEAM_BONUS = 20
+        const teamBonusSelf = t.teamEffort && teamParticipants.includes(t.assignedTo) ? TEAM_BONUS : 0
+        const selfTotal = (isHw ? base + bonus1 + bonus2 : (t.pointValue ?? 0)) + teamBonusSelf
+        const toggleParticipant = (id) =>
+          setTeamParticipants(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id])
         return (
           <Modal title="Schválit úkol" onClose={() => !awarding && setAwardTarget(null)}>
             <div className={styles.awardDialog}>
-              <div className={styles.awardPtsBadge}>⭐ {isHw ? base + bonus1 + bonus2 : t.pointValue}</div>
+              <div className={styles.awardPtsBadge}>⭐ {selfTotal}</div>
               <p className={styles.awardMsg}>
                 Označit <strong>„{t.title}"</strong> jako splněný pro{' '}
                 <strong>{awardTarget.child?.name ?? 'dítě'}</strong>?
               </p>
+              {t.teamEffort && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6, margin: '8px 0', padding: 10, borderRadius: 10, background: '#f4f7ff' }}>
+                  <div style={{ fontSize: 13, fontWeight: 700 }}>🤝 Týmová práce — kdo se zapojil?</div>
+                  <div style={{ fontSize: 12, color: '#667085' }}>
+                    Každé vybrané dítě dostane {base} + {TEAM_BONUS} = {base + TEAM_BONUS} bodů.
+                  </div>
+                  {children.map(c => (
+                    <label key={c.id} className={styles.bonusCheck}>
+                      <input type="checkbox" checked={teamParticipants.includes(c.id)}
+                        onChange={() => toggleParticipant(c.id)} />
+                      {' '}{c.name}{c.id === t.assignedTo ? ' (udělal/a úkol)' : ''}
+                    </label>
+                  ))}
+                </div>
+              )}
               {isHw && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8, margin: '8px 0' }}>
                   <label className={styles.bonusCheck}>

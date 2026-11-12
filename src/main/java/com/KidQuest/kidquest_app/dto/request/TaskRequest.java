@@ -40,6 +40,8 @@ public class TaskRequest {
 
     private Boolean openQuest;
 
+    private Boolean teamEffort;
+
     private Integer dailyLimit;
 }
 

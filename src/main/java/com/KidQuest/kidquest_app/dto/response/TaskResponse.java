@@ -42,6 +42,7 @@ public class TaskResponse {
     private LocalDateTime approvedAt;
 
     private boolean openQuest;
+    private boolean teamEffort;
 
     private UUID templateId;
 
