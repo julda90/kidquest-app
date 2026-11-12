@@ -15,6 +15,7 @@ public class RoutineRequest {
     private String daysOfWeek; // e.g. "1,2,3,4,5"
     private Integer pointValue;
     private Boolean active;
+    private String part; // "MORNING" | "EVENING"
     private List<StepItem> steps;
 
     @Getter

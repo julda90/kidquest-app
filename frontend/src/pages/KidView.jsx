@@ -328,10 +328,10 @@ export default function KidView() {
   const [redemptions,  setRedemptions]  = useState([])
   const [openQuestTemplates, setOpenQuestTemplates] = useState([])
   const [claiming,     setClaiming]     = useState(null)
-  const [routineData,  setRoutineData]  = useState(null)
-  const [routineError, setRoutineError] = useState(null)
-  const [togglingStep, setTogglingStep] = useState(null)
-  const [submittingRoutine, setSubmittingRoutine] = useState(false)
+  const [routines,     setRoutines]     = useState([])          // today's routine tasks (morning + evening)
+  const [routineError, setRoutineError] = useState({})          // taskId → error message
+  const [togglingStep, setTogglingStep] = useState(null)        // { taskId, position } | null
+  const [submittingRoutine, setSubmittingRoutine] = useState(null) // taskId being submitted | null
   const [submitting,      setSubmitting]      = useState(null)
   const [confirmRedeemId, setConfirmRedeemId] = useState(null)
   const [showFreshStart,  setShowFreshStart]  = useState(false)
@@ -394,7 +394,7 @@ export default function KidView() {
       ])
       setChild(c)
       try { setFamilyGoal(await getActiveGoal(fIdToUse)) } catch { setFamilyGoal(null) }
-      setRoutineData(todayRes.routine ?? null)
+      setRoutines(todayRes.routines ?? (todayRes.routine ? [todayRes.routine] : []))
       setTasks(todayRes.tasks ?? [])
       setRewards(rwArr
         .filter(r => r.active && !r.archivedAt && (!r.childId || r.childId === c.id))
@@ -433,7 +433,7 @@ export default function KidView() {
     earnedBadgesRef.current = null
     setBadgeQueue([])
     setChild(null); setTasks([]); setRewards([]); setTransactions([])
-    setProgress(null); setRedemptions([]); setOpenQuestTemplates([]); setRoutineData(null); setFamilyGoal(null)
+    setProgress(null); setRedemptions([]); setOpenQuestTemplates([]); setRoutines([]); setRoutineError({}); setFamilyGoal(null)
     navigate('/kid', { replace: true })
   }
 
@@ -458,34 +458,35 @@ export default function KidView() {
   }
 
   // ── Toggle routine step (live API) ────────────────────────────────────────
-  async function handleToggleStep(position) {
-    if (!routineData || togglingStep !== null) return
-    setTogglingStep(position)
-    setRoutineError(null)
+  async function handleToggleStep(taskId, position) {
+    if (togglingStep !== null) return
+    setTogglingStep({ taskId, position })
+    setRoutineError(e => ({ ...e, [taskId]: null }))
     try {
-      const updated = await apiToggleStep(routineData.taskId, position)
-      setRoutineData(prev => ({
-        ...prev,
-        steps: prev.steps.map(s => s.position === position ? { ...s, doneAt: updated.doneAt, returned: false } : s),
-      }))
+      const updated = await apiToggleStep(taskId, position)
+      setRoutines(prev => prev.map(r => r.taskId === taskId
+        ? { ...r, steps: r.steps.map(s => s.position === position ? { ...s, doneAt: updated.doneAt, returned: false } : s) }
+        : r))
     } catch (err) {
       console.error('toggleStep failed:', err)
-      setRoutineError(err.message || 'Chyba')
+      setRoutineError(e => ({ ...e, [taskId]: err.message || 'Chyba' }))
       // Re-fetch to sync locked/status state
       try {
         const fresh = await getTodayTasks(child.id)
-        if (fresh.routine) setRoutineData(fresh.routine)
+        setRoutines(fresh.routines ?? (fresh.routine ? [fresh.routine] : []))
       } catch { /**/ }
     } finally { setTogglingStep(null) }
   }
 
-  async function handleSubmitRoutine() {
-    if (!routineData || submittingRoutine) return
-    setSubmittingRoutine(true)
+  async function handleSubmitRoutine(taskId) {
+    if (submittingRoutine) return
+    setSubmittingRoutine(taskId)
     try {
-      await submitRoutine(routineData.taskId)
-      setRoutineData(prev => ({ ...prev, status: 'PENDING_APPROVAL', submittedAt: new Date().toISOString() }))
-    } catch (e) { alert(e.message ?? 'Chyba při odesílání rutiny') } finally { setSubmittingRoutine(false) }
+      await submitRoutine(taskId)
+      setRoutines(prev => prev.map(r => r.taskId === taskId
+        ? { ...r, status: 'PENDING_APPROVAL', submittedAt: new Date().toISOString() }
+        : r))
+    } catch (e) { alert(e.message ?? 'Chyba při odesílání rutiny') } finally { setSubmittingRoutine(null) }
   }
 
   // ── Canvas ────────────────────────────────────────────────────────────────
@@ -538,7 +539,6 @@ export default function KidView() {
 
   // ── Section: Výzvy ───────────────────────────────────────────────────────
   function renderVyzvy() {
-    const rd = routineData
     const doneCnt = tasks.filter(t => t.status !== 'ASSIGNED').length
     const totalCnt = tasks.length
     const barPct = totalCnt > 0 ? Math.round(doneCnt / totalCnt * 100) : 0
@@ -566,30 +566,33 @@ export default function KidView() {
       </>
     )
 
-    const left = rd ? (() => {
+    const renderRoutineBand = (rd) => {
       const allDone    = rd.steps.length > 0 && rd.steps.every(s => s.doneAt)
       const isApproved = rd.status === 'COMPLETED'
       const isPending  = rd.status === 'PENDING_APPROVAL'
       const isLocked   = rd.locked
       const canAct     = !isPending && !isApproved && (!isLocked || rd.onTimeEligible)
       const doneCntR   = rd.steps.filter(s => s.doneAt).length
+      const isEvening  = rd.part === 'EVENING'
+      const title      = isEvening ? '🌙 Večerní rutina' : MORNING_TITLE[theme]
+      const err        = routineError[rd.taskId]
       return (
-        <div className={styles.morningBand}>
+        <div key={rd.taskId} className={styles.morningBand}>
           <div className={styles.morningHeader}>
-            <span className={styles.morningTitle}>{MORNING_TITLE[theme]} — {doneCntR}/{rd.steps.length}</span>
-            {streak > 0 && <span className={styles.streakBadge}>🔥 {streak} {streak === 1 ? 'den' : streak < 5 ? 'dny' : 'dní'}</span>}
+            <span className={styles.morningTitle}>{title} — {doneCntR}/{rd.steps.length}</span>
+            {streak > 0 && !isEvening && <span className={styles.streakBadge}>🔥 {streak} {streak === 1 ? 'den' : streak < 5 ? 'dny' : 'dní'}</span>}
             <span className={styles.routineDeadline}>⏰ do {rd.deadline}</span>
           </div>
           {isApproved && <div className={styles.routineApproved}>✅ Schváleno! Skvělá práce!</div>}
           {isPending  && <div className={styles.routinePending}>🎉 Čeká na rodiče…</div>}
           {isLocked && !rd.onTimeEligible && <div className={styles.routineLocked}>⏰ Termín vypršel</div>}
-          {routineError && <div className={styles.routineLocked} style={{ fontSize: 12 }}>⚠️ {routineError}</div>}
+          {err && <div className={styles.routineLocked} style={{ fontSize: 12 }}>⚠️ {err}</div>}
           <div className={styles.morningSteps}>
             {rd.steps.map((s, i) => {
               const done       = !!s.doneAt
               const returned   = s.returned
               const isCur      = !done && rd.steps.slice(0, i).every(x => x.doneAt)
-              const isToggling = togglingStep === s.position
+              const isToggling = togglingStep?.taskId === rd.taskId && togglingStep?.position === s.position
               return (
                 <div key={s.id} className={styles.step}>
                   {i > 0 && <span className={styles.stepArrow}>›</span>}
@@ -600,7 +603,7 @@ export default function KidView() {
                       isCur && canAct ? `${styles.stepCur} ${styles.stepCurAnim}` : '',
                       returned ? styles.stepReturned : '',
                     ].join(' ')}
-                    onClick={() => canAct && !isToggling && handleToggleStep(s.position)}
+                    onClick={() => canAct && !isToggling && handleToggleStep(rd.taskId, s.position)}
                     style={{ cursor: canAct ? 'pointer' : 'default', opacity: isToggling ? 0.5 : 1 }}
                   >{s.icon}</div>
                   <span className={styles.stepLabel}>{s.label}</span>
@@ -610,13 +613,15 @@ export default function KidView() {
             })}
           </div>
           {canAct && allDone && !isPending && !isApproved && (
-            <button className={styles.routineSubmitBtn} onClick={handleSubmitRoutine} disabled={submittingRoutine}>
-              {submittingRoutine ? '…' : '🚀 Odeslat rodičům!'}
+            <button className={styles.routineSubmitBtn} onClick={() => handleSubmitRoutine(rd.taskId)} disabled={submittingRoutine === rd.taskId}>
+              {submittingRoutine === rd.taskId ? '…' : '🚀 Odeslat rodičům!'}
             </button>
           )}
         </div>
       )
-    })() : null
+    }
+
+    const left = routines.length ? <>{routines.map(renderRoutineBand)}</> : null
 
     const tiles = (
       <>

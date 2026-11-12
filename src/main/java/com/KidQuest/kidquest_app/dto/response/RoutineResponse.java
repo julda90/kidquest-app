@@ -17,6 +17,7 @@ public class RoutineResponse {
     private String daysOfWeek;
     private int pointValue;
     private boolean active;
+    private String part;
     private List<StepItem> steps;
 
     @Getter

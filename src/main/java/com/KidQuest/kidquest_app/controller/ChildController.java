@@ -104,14 +104,18 @@ public class ChildController {
 
     @GetMapping("/{id}/today")
     public ResponseEntity<TodayResponse> getToday(@PathVariable UUID id) {
-        var routine = routineService.getOrCreateToday(id);
+        List<com.KidQuest.kidquest_app.dto.response.RoutineTaskResponse> routines = routineService.getOrCreateTodayAll(id);
         List<TaskResponse> tasks = taskService.findAllByAssignedToId(id).stream()
                 .filter(t -> t.getKind() != TaskKind.ROUTINE)
                 .filter(t -> "ASSIGNED".equals(t.getStatus() != null ? t.getStatus().name() : "") ||
                              "PENDING_APPROVAL".equals(t.getStatus() != null ? t.getStatus().name() : ""))
                 .toList();
         TodayResponse resp = new TodayResponse();
-        resp.setRoutine(routine);
+        resp.setRoutines(routines);
+        resp.setRoutine(routines.stream()
+                .filter(r -> "MORNING".equals(r.getPart()))
+                .findFirst()
+                .orElse(routines.isEmpty() ? null : routines.get(0)));
         resp.setTasks(tasks);
         return ResponseEntity.ok(resp);
     }

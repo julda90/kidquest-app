@@ -13,6 +13,7 @@ import java.util.UUID;
 public class RoutineTaskResponse {
     private UUID taskId;
     private String name;
+    private String part; // "MORNING" | "EVENING"
     private List<TaskStepResponse> steps;
     private TaskStatus status;
     private String deadline; // "HH:mm"

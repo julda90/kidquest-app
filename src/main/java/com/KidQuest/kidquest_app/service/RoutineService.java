@@ -54,25 +54,41 @@ public class RoutineService {
         this.clock = clock;
     }
 
-    /** Returns today's routine task for a child, creating the instance if needed. Returns null if no active routine today. */
+    /** Returns today's first active routine task for a child, creating the instance if needed. Returns null if none today. */
     public RoutineTaskResponse getOrCreateToday(UUID childId) {
         Child child = childService.findById(childId);
-
         ZonedDateTime nowPrague = ZonedDateTime.now(clock).withZoneSameInstant(PRAGUE);
         LocalDate today = nowPrague.toLocalDate();
-        int todayIso = today.getDayOfWeek().getValue(); // 1=Mon, 7=Sun
 
         Routine routine = routineRepository.findFirstByChildIdAndActive(childId, true).orElse(null);
         if (routine == null) return null;
+        return buildTodayForRoutine(child, routine, today, nowPrague);
+    }
 
+    /** Returns all of today's routine tasks for a child (morning + evening), sorted by deadline. */
+    public List<RoutineTaskResponse> getOrCreateTodayAll(UUID childId) {
+        Child child = childService.findById(childId);
+        ZonedDateTime nowPrague = ZonedDateTime.now(clock).withZoneSameInstant(PRAGUE);
+        LocalDate today = nowPrague.toLocalDate();
+
+        return routineRepository.findByChildIdAndActive(childId, true).stream()
+                .map(r -> buildTodayForRoutine(child, r, today, nowPrague))
+                .filter(java.util.Objects::nonNull)
+                .sorted(java.util.Comparator.comparing(RoutineTaskResponse::getDeadline)) // "HH:mm" sorts chronologically → morning first
+                .collect(Collectors.toList());
+    }
+
+    /** Build (creating if needed) today's task response for one routine, or null if today is not an active day. */
+    private RoutineTaskResponse buildTodayForRoutine(Child child, Routine routine, LocalDate today, ZonedDateTime nowPrague) {
+        int todayIso = today.getDayOfWeek().getValue(); // 1=Mon, 7=Sun
         boolean isActiveDay = Arrays.stream(routine.getDaysOfWeek().split(","))
                 .map(String::trim)
                 .anyMatch(d -> d.equals(String.valueOf(todayIso)));
         if (!isActiveDay) return null;
 
+        UUID childId = child.getId();
         Task task = taskRepository.findByRoutineIdAndAssignedToIdAndDueDateAndDeletedAtIsNull(routine.getId(), childId, today)
                 .orElse(null);
-
         if (task == null) {
             try {
                 task = createDailyTask(routine, child, today);
@@ -81,7 +97,6 @@ public class RoutineService {
                         .orElseThrow(() -> new IllegalStateException("Race condition: routine task not found after integrity violation"));
             }
         }
-
         return buildRoutineTaskResponse(task, routine, nowPrague);
     }
 
@@ -140,6 +155,7 @@ public class RoutineService {
         RoutineTaskResponse resp = new RoutineTaskResponse();
         resp.setTaskId(task.getId());
         resp.setName(task.getTitle());
+        resp.setPart(routine.getPart().name());
         resp.setSteps(stepResponses);
         resp.setStatus(task.getStatus());
         resp.setDeadline(deadlineTime.format(HH_MM));
@@ -242,6 +258,7 @@ public class RoutineService {
         if (req.getDaysOfWeek() != null) routine.setDaysOfWeek(req.getDaysOfWeek());
         if (req.getPointValue() != null) routine.setPointValue(req.getPointValue());
         if (req.getActive() != null) routine.setActive(req.getActive());
+        if (req.getPart() != null) routine.setPart(RoutinePart.valueOf(req.getPart()));
     }
 
     private void saveSteps(Routine routine, List<RoutineRequest.StepItem> items) {
@@ -266,6 +283,7 @@ public class RoutineService {
         r.setDaysOfWeek(routine.getDaysOfWeek());
         r.setPointValue(routine.getPointValue());
         r.setActive(routine.isActive());
+        r.setPart(routine.getPart().name());
         List<RoutineResponse.StepItem> steps = routineStepRepository.findByRoutineIdOrderByPosition(routine.getId())
                 .stream().map(s -> {
                     RoutineResponse.StepItem si = new RoutineResponse.StepItem();

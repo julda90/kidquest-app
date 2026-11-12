@@ -11,6 +11,8 @@ public interface RoutineRepository extends JpaRepository<Routine, UUID> {
 
     Optional<Routine> findFirstByChildIdAndActive(UUID childId, boolean active);
 
+    List<Routine> findByChildIdAndActive(UUID childId, boolean active);
+
     List<Routine> findByFamilyId(UUID familyId);
 
     List<Routine> findByChildId(UUID childId);

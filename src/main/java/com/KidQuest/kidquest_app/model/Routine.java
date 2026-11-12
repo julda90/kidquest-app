@@ -39,6 +39,10 @@ public class Routine {
     @Column(name = "point_value", nullable = false)
     private int pointValue = 10;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 10)
+    private RoutinePart part = RoutinePart.MORNING;
+
     @Column(nullable = false)
     private boolean active = true;
 

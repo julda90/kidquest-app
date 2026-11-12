@@ -17,18 +17,23 @@ const DAYS = [
 ]
 const DEFAULT_STEPS_SCHOOL    = [{ icon: '🌅', label: 'Vstát' }, { icon: '🪥', label: 'Zuby' }, { icon: '👕', label: 'Obléct' }, { icon: '🥣', label: 'Snídaně' }, { icon: '🎒', label: 'Batoh' }]
 const DEFAULT_STEPS_PRESCHOOL = [{ icon: '🌅', label: 'Vstát' }, { icon: '🪥', label: 'Zuby' }, { icon: '👕', label: 'Obléct' }, { icon: '🥣', label: 'Snídaně' }]
+const DEFAULT_STEPS_EVENING   = [{ icon: '🛁', label: 'Koupel' }, { icon: '🧸', label: 'Uklidit hračky' }, { icon: '👕', label: 'Pyžamo' }, { icon: '🪥', label: 'Zuby' }, { icon: '🛏️', label: 'Do postele' }, { icon: '😴', label: 'Spát bez rušení' }]
 
 function RoutineEditor({ routine, onSave, onCancel }) {
   const isNew = !routine?.id
+  const part  = routine?.part ?? 'MORNING'
+  const isEvening = part === 'EVENING'
+  const presetSteps = isEvening
+    ? DEFAULT_STEPS_EVENING
+    : (routine?._child?.age < 5 ? DEFAULT_STEPS_PRESCHOOL : DEFAULT_STEPS_SCHOOL)
   const defaultSteps = routine?.steps?.length
     ? routine.steps.map((s, i) => ({ position: i, icon: s.icon, label: s.label }))
-    : (routine?._child?.age < 5 ? DEFAULT_STEPS_PRESCHOOL : DEFAULT_STEPS_SCHOOL)
-        .map((s, i) => ({ ...s, position: i }))
+    : presetSteps.map((s, i) => ({ ...s, position: i }))
 
-  const [name,       setName]       = useState(routine?.name       ?? 'Ranní rutina')
-  const [deadline,   setDeadline]   = useState(routine?.deadline   ?? '07:30')
+  const [name,       setName]       = useState(routine?.name       ?? (isEvening ? 'Večerní rutina' : 'Ranní rutina'))
+  const [deadline,   setDeadline]   = useState(routine?.deadline   ?? (isEvening ? '20:00' : '07:30'))
   const [days,       setDays]       = useState(
-    (routine?.daysOfWeek ?? '1,2,3,4,5').split(',').map(Number)
+    (routine?.daysOfWeek ?? (isEvening ? '1,2,3,4,5,6,7' : '1,2,3,4,5')).split(',').map(Number)
   )
   const [pointValue, setPointValue] = useState(routine?.pointValue ?? 10)
   const [active,     setActive]     = useState(routine?.active     ?? true)
@@ -57,7 +62,7 @@ function RoutineEditor({ routine, onSave, onCancel }) {
     setSaving(true)
     try {
       const data = {
-        name, deadline, daysOfWeek: days.join(','), pointValue: Number(pointValue), active,
+        name, deadline, daysOfWeek: days.join(','), pointValue: Number(pointValue), active, part,
         childId: routine?.childId ?? routine?._child?.id,
         steps: steps.map((s, i) => ({ position: i, icon: s.icon, label: s.label })),
       }
@@ -71,7 +76,7 @@ function RoutineEditor({ routine, onSave, onCancel }) {
         <input style={{ display: 'block', width: '100%', marginTop: 4, padding: '6px 8px', borderRadius: 6, border: '1px solid #e5e7eb' }}
           value={name} onChange={e => setName(e.target.value)} />
       </label>
-      <label style={{ fontSize: 13 }}>Deadline
+      <label style={{ fontSize: 13 }}>{isEvening ? 'Čas do postele' : 'Deadline'}
         <input type="time" style={{ display: 'block', marginTop: 4, padding: '6px 8px', borderRadius: 6, border: '1px solid #e5e7eb' }}
           value={deadline} onChange={e => setDeadline(e.target.value)} />
       </label>
@@ -215,6 +220,56 @@ export default function Settings() {
 
   function handleLogout() { logout(); navigate('/login') }
 
+  function renderRoutineSection(part, title, hint) {
+    return (
+      <section className={styles.section}>
+        <div className={styles.sectionHeader}>
+          <h2 className={styles.sectionTitle}>{title}</h2>
+        </div>
+        <p style={{ fontSize: 13, color: '#6b7280', marginBottom: 12 }}>{hint}</p>
+        {children.map(child => {
+          const childRoutine = routines.find(r => r.childId === child.id && (r.part ?? 'MORNING') === part)
+          return (
+            <div key={child.id} style={{ marginBottom: 16, padding: 12, borderRadius: 8, background: '#f9fafb', border: '1px solid #e5e7eb' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <span style={{ fontWeight: 600, fontSize: 14 }}>{child.name}</span>
+                {childRoutine
+                  ? <div style={{ display: 'flex', gap: 6 }}>
+                      <button style={{ padding: '4px 10px', borderRadius: 6, fontSize: 12, background: '#3b82f6', color: '#fff' }}
+                        onClick={() => setRoutineModal({ item: { ...childRoutine, _child: child }, child })}>✏️ Upravit</button>
+                      <button style={{ padding: '4px 10px', borderRadius: 6, fontSize: 12, background: '#fee2e2', color: '#dc2626' }}
+                        onClick={() => setRoutineDeleteId(childRoutine.id)}>🗑️</button>
+                    </div>
+                  : <button style={{ padding: '4px 10px', borderRadius: 6, fontSize: 12, background: '#22c55e', color: '#fff' }}
+                      onClick={() => setRoutineModal({ item: { childId: child.id, _child: child, part }, child })}>+ Přidat rutinu</button>
+                }
+              </div>
+              {childRoutine && (
+                <div style={{ marginTop: 8, fontSize: 12, color: '#374151' }}>
+                  <span style={{ marginRight: 12 }}>⏰ {childRoutine.deadline}</span>
+                  <span style={{ marginRight: 12 }}>⭐ {childRoutine.pointValue} bodů</span>
+                  <span style={{ marginRight: 12 }}>
+                    {childRoutine.daysOfWeek.split(',').map(d => DAYS.find(x => x.iso === Number(d))?.cz).join(' ')}
+                  </span>
+                  <span style={{ color: childRoutine.active ? '#16a34a' : '#9ca3af' }}>
+                    {childRoutine.active ? '● Aktivní' : '○ Neaktivní'}
+                  </span>
+                  <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', marginTop: 6 }}>
+                    {childRoutine.steps?.map(s => (
+                      <span key={s.position} style={{ padding: '2px 8px', background: '#e0f2fe', borderRadius: 20, fontSize: 11 }}>
+                        {s.icon} {s.label}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )
+        })}
+      </section>
+    )
+  }
+
   if (loading) return <div className={styles.center}><span className={styles.spinner} /></div>
   if (error)   return <div className={styles.center}><p className={styles.errorMsg}>{error}</p></div>
 
@@ -286,55 +341,12 @@ export default function Settings() {
         )}
 
         {/* Ranní rutiny */}
-        {familyId && (
-          <section className={styles.section}>
-            <div className={styles.sectionHeader}>
-              <h2 className={styles.sectionTitle}>🌅 Ranní rutiny</h2>
-            </div>
-            <p style={{ fontSize: 13, color: '#6b7280', marginBottom: 12 }}>
-              Každé dítě může mít jednu aktivní rutinu. Dítě si kroky odškrtá ráno samo a odešle ke schválení.
-            </p>
-            {children.map(child => {
-              const childRoutine = routines.find(r => r.childId === child.id)
-              return (
-                <div key={child.id} style={{ marginBottom: 16, padding: 12, borderRadius: 8, background: '#f9fafb', border: '1px solid #e5e7eb' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <span style={{ fontWeight: 600, fontSize: 14 }}>{child.name}</span>
-                    {childRoutine
-                      ? <div style={{ display: 'flex', gap: 6 }}>
-                          <button style={{ padding: '4px 10px', borderRadius: 6, fontSize: 12, background: '#3b82f6', color: '#fff' }}
-                            onClick={() => setRoutineModal({ item: { ...childRoutine, _child: child }, child })}>✏️ Upravit</button>
-                          <button style={{ padding: '4px 10px', borderRadius: 6, fontSize: 12, background: '#fee2e2', color: '#dc2626' }}
-                            onClick={() => setRoutineDeleteId(childRoutine.id)}>🗑️</button>
-                        </div>
-                      : <button style={{ padding: '4px 10px', borderRadius: 6, fontSize: 12, background: '#22c55e', color: '#fff' }}
-                          onClick={() => setRoutineModal({ item: { childId: child.id, _child: child }, child })}>+ Přidat rutinu</button>
-                    }
-                  </div>
-                  {childRoutine && (
-                    <div style={{ marginTop: 8, fontSize: 12, color: '#374151' }}>
-                      <span style={{ marginRight: 12 }}>⏰ {childRoutine.deadline}</span>
-                      <span style={{ marginRight: 12 }}>⭐ {childRoutine.pointValue} bodů</span>
-                      <span style={{ marginRight: 12 }}>
-                        {childRoutine.daysOfWeek.split(',').map(d => DAYS.find(x => x.iso === Number(d))?.cz).join(' ')}
-                      </span>
-                      <span style={{ color: childRoutine.active ? '#16a34a' : '#9ca3af' }}>
-                        {childRoutine.active ? '● Aktivní' : '○ Neaktivní'}
-                      </span>
-                      <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', marginTop: 6 }}>
-                        {childRoutine.steps?.map(s => (
-                          <span key={s.position} style={{ padding: '2px 8px', background: '#e0f2fe', borderRadius: 20, fontSize: 11 }}>
-                            {s.icon} {s.label}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )
-            })}
-          </section>
-        )}
+        {familyId && renderRoutineSection('MORNING', '🌅 Ranní rutiny',
+          'Každé dítě může mít jednu ranní rutinu. Dítě si kroky odškrtá ráno samo a odešle ke schválení.')}
+
+        {/* Večerní rutiny */}
+        {familyId && renderRoutineSection('EVENING', '🌙 Večerní rutiny',
+          'Večerní rutina jednou denně — příprava na spaní a usnutí bez rušení ostatních. Dítě si kroky odškrtá večer a odešle ke schválení.')}
 
         {/* Rewards link */}
         <section className={styles.section}>
