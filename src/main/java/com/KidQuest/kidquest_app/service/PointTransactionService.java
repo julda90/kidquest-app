@@ -27,7 +27,13 @@ public class PointTransactionService {
         tx.setChild(childService.findById(childId));
         tx.setAmount(request.getAmount());
         tx.setReason(request.getReason());
-        tx.setType(TransactionType.MANUAL);
+        // Positive parent awards count toward XP/level (BONUS); negative
+        // corrections stay MANUAL so a deduction can never demote a child.
+        boolean reward = request.getAmount() != null && request.getAmount() > 0;
+        tx.setType(reward ? TransactionType.BONUS : TransactionType.MANUAL);
+        if (reward) {
+            tx.setBonusKind("PARENT");
+        }
         return toResponse(pointTransactionRepository.save(tx));
     }
 
